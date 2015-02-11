@@ -3,6 +3,8 @@
 
 #include "definition.h"
 
+#include "camera.h"
+
 #include "../../slib/ui/core.h"
 
 SLIB_MAP_NAMESPACE_START
