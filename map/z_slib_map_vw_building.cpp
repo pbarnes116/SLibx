@@ -12,10 +12,26 @@ public:
 		double longitude;
 		double latitude;
 		float altitude;
+		Boxlf bound;
 
-		sl_bool load(Ref<MapDataLoader> data, String type, const MapTileLocation& location)
+		sl_bool load(Ref<MapDataLoader> data, String type, const MapTileLocation& location, String objectFileName)
 		{
-			
+			Memory mem = data->loadData(type, location, objectFileName);
+			if (mem.isEmpty()) {
+				return sl_false;
+			}
+			MemoryReader reader(mem);
+			if (!reader.seek(5)) {
+				return sl_false;
+			}
+			sl_uint8 lenPNU;
+			if (!reader.readUint8(&lenPNU)) {
+				return sl_false;
+			}
+			if (!reader.seek(lenPNU)) {
+				return sl_false;
+			}
+			return sl_true;
 		}
 	};
 
@@ -52,30 +68,53 @@ public:
 			for (sl_uint32 i = 0; i < countObjects; i++) {
 				_Object obj;
 				sl_uint32 sig;
-				if (reader.readUint32(&sig)) {
-					if (sig == 0x02000003) {
-						sl_uint8 sig2;
-						if (reader.readUint8(&sig2)) {
-							if (sig2 == 0x08) {
-								sl_uint8 lenPNU;
-								if (reader.readUint8(&lenPNU)) {
-									if (reader.seek(lenPNU, Reader::positionCurrent)) {
-										double longitude, latitude;
-										if (reader.readDouble(&longitude)) {
-											if (reader.readDouble(&latitude)) {
-												float altitude;
-												if (reader.readFloat(&altitude)) {
-													obj.longitude = longitude;
-													obj.latitude = latitude;
-													obj.altitude = altitude;
-													reader.readUint32();
-													
-												}
-											}
-										}
-									}
-								}
-							}
+				if (!reader.readUint32(&sig)) {
+					break;
+				}
+				sl_uint8 sig2;
+				if (!reader.readUint8(&sig2)) {
+					break;
+				}
+				sl_uint8 lenPNU;
+				if (!reader.readUint8(&lenPNU)) {
+					break;
+				}
+				if (!reader.seek(lenPNU)) {
+					break;
+				}
+				double longitude, latitude;
+				float altitude;
+				if (!reader.readDouble(&longitude)) {
+					break;
+				}
+				if (!reader.readDouble(&latitude)) {
+					break;
+				}
+				if (!reader.readFloat(&altitude)) {
+					break;
+				}
+				obj.longitude = longitude;
+				obj.latitude = latitude;
+				obj.altitude = altitude;
+				if (!reader.seek(6 * 8)) {
+					break;
+				}
+				if (!reader.seek(1)) {
+					break;
+				}
+				sl_uint8 lenFileName;
+				if (!reader.readUint8(&lenFileName)) {
+					break;
+				}
+				char aFileName[256];
+				if (!reader.read(aFileName, (sl_uint32)lenFileName + 1)) {
+					break;
+				}
+				if (sig == 0x02000003) {
+					if (sig2 == 0x08) {
+						aFileName[255] = 0;
+						if (obj.load(data, type, location, String::fromUtf8(aFileName))) {
+							objects.add(obj);
 						}
 					}
 				}

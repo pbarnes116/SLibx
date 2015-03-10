@@ -236,13 +236,13 @@ void MapTileManager::_renderTile(MapTile* tile, RenderEngine* engine, MapEnviron
 		Vector3 ptBR = environment->transformView.transformPosition(tile->positions[1]);
 		Vector3 ptTL = environment->transformView.transformPosition(tile->positions[2]);
 		sl_uint32 nBehind = 0;
-		if (ptBL.z <= SLIB_EPSILLON) {
+		if (Math::isLessThanEpsilon(ptBL.z)) {
 			nBehind++;
 		}
-		if (ptBR.z <= SLIB_EPSILLON) {
+		if (Math::isLessThanEpsilon(ptBR.z)) {
 			nBehind++;
 		}
-		if (ptTL.z <= SLIB_EPSILLON) {
+		if (Math::isLessThanEpsilon(ptTL.z)) {
 			nBehind++;
 		}
 		if (nBehind == 3) {
@@ -251,7 +251,7 @@ void MapTileManager::_renderTile(MapTile* tile, RenderEngine* engine, MapEnviron
 		if (nBehind != 0) {
 			flagExtend = sl_true;
 		} else {
-			Triangle2D t;
+			Triangle2 t;
 			t.point1.x = ptBL.x / ptBL.z;
 			t.point1.y = ptBL.y / ptBL.z;
 			t.point2.x = ptBR.x / ptBR.z;

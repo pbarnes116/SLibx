@@ -14,7 +14,7 @@ void MapEnvironment::updateViewport(sl_uint32 _viewportWidth, sl_uint32 _viewpor
 	sl_real dist = (sl_real)(cameraViewEarth->getEyeLocation().altitude + 0.1f) * SLIG_GEO_EARTH_SCALE;
 	sl_real zNear = dist / 5;
 	sl_real zFar = (sl_real)(dist + SLIB_GEO_EARTH_RADIUS * SLIG_GEO_EARTH_SCALE * 3);
-	transformProjection = Transform3D::getPerspectiveProjectionFovYMatrix(SLIB_PI / 4, (float)viewportWidth / viewportHeight, zNear, zFar);
+	transformProjection = Transform3::getPerspectiveProjectionFovYMatrix(SLIB_PI / 4, (float)viewportWidth / viewportHeight, zNear, zFar);
 }
 
 void MapEnvironment::update()

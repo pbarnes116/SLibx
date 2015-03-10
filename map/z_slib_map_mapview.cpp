@@ -66,8 +66,8 @@ void MapView::onFrame(RenderEngine* engine)
 			String textStatus = getStatusText();
 			Size size = fontStatus->getStringExtent(textStatus);
 			fontStatus->drawString(
-				m_textureStatus->getImage(), m_environment->viewportWidth / 2 - (sl_uint32)(size.width / 2)
-				, STATUS_HEIGHT / 2 + (sl_uint32)(size.height / 2)
+				m_textureStatus->getImage(), m_environment->viewportWidth / 2 - (sl_uint32)(size.x / 2)
+				, STATUS_HEIGHT / 2 + (sl_uint32)(size.y / 2)
 				, textStatus, Color::white());
 			m_textureStatus->update();
 			engine->drawTexture2D(0, (sl_real)(m_environment->viewportHeight - STATUS_HEIGHT)
@@ -111,14 +111,14 @@ sl_bool MapView::onMouseEvent(MouseEvent& event)
 		if (!m_flagTouch2) {
 			sl_real dx = event.x - m_mouseBeforeX;
 			sl_real dy = event.y - m_mouseBeforeY;
-			Sphere earth(Transform3D::getTransformedOrigin(m_environment->transformView), SLIB_GEO_EARTH_RADIUS);
-			LineSegment3D dirScreenO = Transform3D::unprojectScreenPoint(m_environment->transformProjection, 0, 0, this->getClientRectangle());
-			LineSegment3D dirScreenX = Transform3D::unprojectScreenPoint(m_environment->transformProjection, 1, 0, this->getClientRectangle());
-			LineSegment3D dirScreenY = Transform3D::unprojectScreenPoint(m_environment->transformProjection, 0, 1, this->getClientRectangle());
+			Sphere earth(Transform3::getTransformedOrigin(m_environment->transformView), SLIB_GEO_EARTH_RADIUS);
+			Line3 dirScreenO = Transform3::unprojectScreenPoint(m_environment->transformProjection, 0, 0, this->getClientRectangle());
+			Line3 dirScreenX = Transform3::unprojectScreenPoint(m_environment->transformProjection, 1, 0, this->getClientRectangle());
+			Line3 dirScreenY = Transform3::unprojectScreenPoint(m_environment->transformProjection, 0, 1, this->getClientRectangle());
 			sl_real lx = (dirScreenO.getDirection().getNormalized() - dirScreenX.getDirection().getNormalized()).getLength();
 			sl_real ly = (dirScreenO.getDirection().getNormalized() - dirScreenY.getDirection().getNormalized()).getLength();
 			sl_real h = (sl_real)(m_environment->cameraViewEarth->getEyeLocation().altitude);
-			sl_real f = (sl_real)((h * 1.5f) * 180.0f / SLIB_GEO_EARTH_RADIUS / SLIB_PI);
+			sl_real f = (sl_real)(Math::getDegreeFromRadian(h * 1.5f) / SLIB_GEO_EARTH_RADIUS);
 			m_environment->cameraViewEarth->move(
 				dy * ly * f
 				, -dx * lx * f
