@@ -82,18 +82,15 @@ void MapCamera::updateViewMatrix()
 		Vector3 at = locAt.convertToPosition();
 		Vector3 eye = m_location.convertToPosition();
 		Matrix4 t = Transform3D::getLookAtMatrix(eye, at, Vector3::axisY());
-		m_matrixView = t;
 		if (m_tilt > 0) {
 			Vector3 raxis = (eye - at).cross(Vector3::axisY());
 			Matrix4 m = Transform3D::getTranslationMatrix(-at)
 				* Transform3D::getRotationMatrix(raxis, m_tilt * SLIB_PI / 180.0f)
 				* Transform3D::getTranslationMatrix(at);
 			eye = (Vector4(eye, 1.0f) * m).xyz();
-			t = Transform3D::getLookAtMatrix(eye, at, Vector3::axisY());
-			m_matrixViewTilt = t;
-		} else {
-			m_matrixViewTilt = m_matrixView;
+			t = Transform3D::getLookAtMatrix(eye, at, Vector3::axisY());			
 		}
+		m_matrixView = t;
 		m_flagValidMatrixView = sl_true;
 	}
 }

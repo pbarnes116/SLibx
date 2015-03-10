@@ -3,9 +3,12 @@
 
 #include "definition.h"
 
-#include "camera.h"
+#include "environment.h"
+#include "tile.h"
+#include "data.h"
 
-#include "../../slib/ui/core.h"
+#include "../../slib/ui/view.h"
+#include "../../slib/image/freetype.h"
 
 SLIB_MAP_NAMESPACE_START
 class MapView : public RenderView
@@ -15,13 +18,40 @@ public:
 	~MapView();
 
 public:
+	virtual void release();
+
 	virtual void onFrame(RenderEngine* engine);
+	virtual sl_bool onMouseEvent(MouseEvent& event);
+	virtual sl_bool onMouseWheelEvent(MouseWheelEvent& event);
+
+	virtual String formatLatitude(double f);
+	virtual String formatLongitude(double f);
+	virtual String formatAltitude(double f);
+	virtual String getStatusText();
 
 protected:
 	void initialize();
 
 protected:
 	sl_bool m_flagInit;
+
+	Ref<MapEnvironment> m_environment;
+
+	Ref<MapTileManager_DEM> m_tileManagerDEM;
+
+	Ref<Texture> m_textureStatus;
+	
+	SLIB_PROPERTY_SIMPLE(Ref<FreeType>, StatusFont);
+	SLIB_PROPERTY_SIMPLE(Ref<MapDataLoaderPack>, DataLoader);
+
+protected:
+	sl_real m_mouseBeforeX;
+	sl_real m_mouseBeforeY;
+	sl_bool m_flagTouch2;
+	sl_real m_mouseBefore2X;
+	sl_real m_mouseBefore2Y;
+	sl_real m_mouseBeforeRightX;
+	sl_real m_mouseBeforeRightY;
 };
 SLIB_MAP_NAMESPACE_END
 

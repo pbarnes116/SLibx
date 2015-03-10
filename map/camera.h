@@ -8,7 +8,7 @@
 
 SLIB_MAP_NAMESPACE_START
 
-class MapCamera
+class MapCamera : public Referable
 {
 public:
 	MapCamera();
@@ -33,18 +33,13 @@ public:
 
 	void move(sl_geo_val latitudeOffset, sl_geo_val longitudeOffset, sl_geo_val altitudeOffset);
 	void moveTo(sl_geo_val latitude, sl_geo_val longitude, sl_geo_val altitude);
-	void zoom(sl_geo_val ratio, sl_geo_val altitudeMin = 100, sl_geo_val altitudeMax = 12000000);
+	void zoom(sl_geo_val ratio, sl_geo_val altitudeMin = 20, sl_geo_val altitudeMax = 12000000);
 	void rotateZ(sl_real angle);
 
 	SLIB_INLINE Matrix4 getViewMatrix()
 	{
 		updateViewMatrix();
 		return m_matrixView;
-	}
-	SLIB_INLINE Matrix4 getTiltViewMatrix()
-	{
-		updateViewMatrix();
-		return m_matrixViewTilt;
 	}
 
 protected:
@@ -54,7 +49,6 @@ protected:
 
 	sl_bool m_flagValidMatrixView;
 	Matrix4 m_matrixView;
-	Matrix4 m_matrixViewTilt;
 
 	void updateViewMatrix();
 };
