@@ -133,7 +133,7 @@ sl_bool SecureFilePackage::createFromFiles(String filePath, const CreateParam& p
 	enc.setKey(password);
 #define FILE_READ_BUFFER_SIZE (1024*256)
 	sl_uint8* block = (sl_uint8*)(Base::createMemory(FILE_READ_BUFFER_SIZE));
-	for (int i = 0; i < nFiles; i++) {
+	for (sl_size i = 0; i < nFiles; i++) {
 		String fileName = listSourceFilePaths[i];
 		String path = pathSourceBase + fileName;
 
