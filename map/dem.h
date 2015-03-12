@@ -20,9 +20,9 @@ struct DEM_Vertex
 class DEM : public Referable
 {
 public:
-	sl_geo_val* dem;
+	double* dem;
 	sl_uint32 N;
-	Array<sl_geo_val> array;
+	Array<double> array;
 
 public:
 	SLIB_INLINE DEM()

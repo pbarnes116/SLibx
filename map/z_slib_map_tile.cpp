@@ -66,23 +66,23 @@ void MapTileManager::_setTileLocation(MapTile* tile, sl_uint32 _level, sl_uint32
 	// bottom-left
 	loc.latitude = tile->rect.bottomLeft.latitude;
 	loc.longitude = tile->rect.bottomLeft.longitude;
-	tile->positions[0] = loc.convertToPosition();
+	tile->positions[0] = Earth::getCartesianPosition(loc);
 	// bottom-right
 	loc.latitude = tile->rect.bottomLeft.latitude;
 	loc.longitude = tile->rect.topRight.longitude;
-	tile->positions[1] = loc.convertToPosition();
+	tile->positions[1] = Earth::getCartesianPosition(loc);
 	// top-left
 	loc.latitude = tile->rect.topRight.latitude;
 	loc.longitude = tile->rect.bottomLeft.longitude;
-	tile->positions[2] = loc.convertToPosition();
+	tile->positions[2] = Earth::getCartesianPosition(loc);
 	// top-right
 	loc.latitude = tile->rect.topRight.latitude;
 	loc.longitude = tile->rect.topRight.longitude;
-	tile->positions[3] = loc.convertToPosition();
+	tile->positions[3] = Earth::getCartesianPosition(loc);
 	// center
 	loc.latitude = (tile->rect.bottomLeft.latitude + tile->rect.topRight.latitude) / 2;
 	loc.longitude = (tile->rect.topRight.longitude + tile->rect.bottomLeft.longitude) / 2;
-	tile->positionCenter = loc.convertToPosition();
+	tile->positionCenter = Earth::getCartesianPosition(loc);
 }
 
 void MapTileManager::_updateRenderState(MapEnvironment* environment)

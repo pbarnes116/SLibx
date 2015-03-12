@@ -11,6 +11,7 @@
 #include "../../slib/image/freetype.h"
 
 SLIB_MAP_NAMESPACE_START
+class MapTileManager_VWBuilding;
 class MapView : public RenderView
 {
 public:
@@ -38,6 +39,7 @@ protected:
 	Ref<MapEnvironment> m_environment;
 
 	Ref<MapTileManager_DEM> m_tileManagerDEM;
+	Ref<MapTileManager_VWBuilding> m_tileManagerVWBuilding;
 
 	Ref<Texture> m_textureStatus;
 	

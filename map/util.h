@@ -13,8 +13,8 @@ class MapTileLocation
 {
 public:
 	sl_uint32 level;
-	sl_geo_val y; // latitude
-	sl_geo_val x; // longitude
+	double y; // latitude
+	double x; // longitude
 };
 
 class MapTilePath

@@ -6,9 +6,9 @@
 SLIB_MAP_NAMESPACE_START
 sl_bool DEM::initialize(sl_uint32 _N)
 {
-	Array<sl_geo_val> _array = Array<sl_geo_val>::create(_N * _N);
+	Array<double> _array = Array<double>::create(_N * _N);
 	if (_array.isNotEmpty()) {
-		sl_geo_val* _dem = _array.getBuf();
+		double* _dem = _array.getBuf();
 		for (sl_size i = 0; i < _array.count(); i++) {
 			_dem[i] = 0;
 		}
@@ -28,7 +28,7 @@ sl_bool DEM::initializeFromFloatData(sl_uint32 _N, const void* _data, sl_size si
 	if (!initialize(_N)) {
 		return sl_false;
 	}
-	sl_geo_val* _dem = dem;
+	double* _dem = dem;
 	sl_uint8* data = (sl_uint8*)_data;
 	for (sl_uint32 y = 0; y < _N; y++) {
 		for (sl_uint32 x = 0; x < _N; x++) {
@@ -45,12 +45,12 @@ void DEM::makeMesh(Primitive& out, sl_uint32 M, const GeoRectangle& region, cons
 	if (M <= 1) {
 		return;
 	}
-	sl_geo_val lat0 = region.bottomLeft.latitude;
-	sl_geo_val lon0 = region.bottomLeft.longitude;
-	sl_geo_val lat1 = region.topRight.latitude;
-	sl_geo_val lon1 = region.topRight.longitude;
-	sl_geo_val dlat = lat1 - lat0;
-	sl_geo_val dlon = lon1 - lon0;
+	double lat0 = region.bottomLeft.latitude;
+	double lon0 = region.bottomLeft.longitude;
+	double lat1 = region.topRight.latitude;
+	double lon1 = region.topRight.longitude;
+	double dlat = lat1 - lat0;
+	double dlon = lon1 - lon0;
 
 	sl_real mx0 = rectDEM.left * (N - 1);
 	sl_real my0 = rectDEM.top * (N - 1);
@@ -110,7 +110,7 @@ void DEM::makeMesh(Primitive& out, sl_uint32 M, const GeoRectangle& region, cons
 			} else {
 				loc.altitude = 0;
 			}
-			pv->position = loc.convertToPosition();
+			pv->position = Earth::getCartesianPosition(loc);
 			pv->altitude = (sl_real)(loc.altitude);
 			pv->texCoord.x = tx0 + dtx * x / (M - 1);
 			pv->texCoord.y = ty0 + dty * y / (M - 1);

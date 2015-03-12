@@ -1,4 +1,5 @@
 ﻿#include "mapview.h"
+#include "vw_building_tile.h"
 
 #define STATUS_WIDTH 2048
 #define STATUS_HEIGHT 40
@@ -16,7 +17,10 @@ MapView::MapView()
 	m_environment->view = this;
 
 	m_tileManagerDEM = new MapTileManager_DEM;
+	m_tileManagerVWBuilding = new MapTileManager_VWBuilding;
+
 	initializeDataLoader(new MapDataLoaderPack);
+
 }
 
 MapView::~MapView()
@@ -27,6 +31,7 @@ MapView::~MapView()
 void MapView::release()
 {
 	m_tileManagerDEM->release();
+	m_tileManagerVWBuilding->release();
 }
 
 void MapView::initialize()
@@ -35,6 +40,9 @@ void MapView::initialize()
 
 	m_tileManagerDEM->setDataLoader(getDataLoader());
 	m_tileManagerDEM->initialize();
+
+	m_tileManagerVWBuilding->setDataLoader(getDataLoader());
+	m_tileManagerVWBuilding->initialize();
 
 	m_textureStatus = Texture::create(Image::create(STATUS_WIDTH, STATUS_HEIGHT));
 }
@@ -54,6 +62,7 @@ void MapView::onFrame(RenderEngine* engine)
 	engine->setDepthWriteEnabled(sl_true);
 
 	m_tileManagerDEM->renderTiles(engine, m_environment);
+	m_tileManagerVWBuilding->renderTiles(engine, m_environment);
 
 	// render status
 	{
@@ -111,14 +120,14 @@ sl_bool MapView::onMouseEvent(MouseEvent& event)
 		if (!m_flagTouch2) {
 			sl_real dx = event.x - m_mouseBeforeX;
 			sl_real dy = event.y - m_mouseBeforeY;
-			Sphere earth(Transform3::getTransformedOrigin(m_environment->transformView), SLIB_GEO_EARTH_RADIUS);
+			Sphere earth(Transform3::getTransformedOrigin(m_environment->transformView), (sl_real)(Earth::getAverageRadius()));
 			Line3 dirScreenO = Transform3::unprojectScreenPoint(m_environment->transformProjection, 0, 0, this->getClientRectangle());
 			Line3 dirScreenX = Transform3::unprojectScreenPoint(m_environment->transformProjection, 1, 0, this->getClientRectangle());
 			Line3 dirScreenY = Transform3::unprojectScreenPoint(m_environment->transformProjection, 0, 1, this->getClientRectangle());
 			sl_real lx = (dirScreenO.getDirection().getNormalized() - dirScreenX.getDirection().getNormalized()).getLength();
 			sl_real ly = (dirScreenO.getDirection().getNormalized() - dirScreenY.getDirection().getNormalized()).getLength();
 			sl_real h = (sl_real)(m_environment->cameraViewEarth->getEyeLocation().altitude);
-			sl_real f = (sl_real)(Math::getDegreeFromRadian(h * 1.5f) / SLIB_GEO_EARTH_RADIUS);
+			sl_real f = (sl_real)(Math::getDegreeFromRadian(h * 1.5f) / Earth::getAverageRadius());
 			m_environment->cameraViewEarth->move(
 				dy * ly * f
 				, -dx * lx * f

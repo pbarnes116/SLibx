@@ -31,9 +31,9 @@ public:
 	}
 	void setRotationZ(sl_real degree);
 
-	void move(sl_geo_val latitudeOffset, sl_geo_val longitudeOffset, sl_geo_val altitudeOffset);
-	void moveTo(sl_geo_val latitude, sl_geo_val longitude, sl_geo_val altitude);
-	void zoom(sl_geo_val ratio, sl_geo_val altitudeMin = 20, sl_geo_val altitudeMax = 12000000);
+	void move(double latitudeOffset, double longitudeOffset, double altitudeOffset);
+	void moveTo(double latitude, double longitude, double altitude);
+	void zoom(double ratio, double altitudeMin = 20, double altitudeMax = 12000000);
 	void rotateZ(sl_real angle);
 
 	SLIB_INLINE Matrix4 getViewMatrix()

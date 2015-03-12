@@ -27,12 +27,12 @@ void MapCamera::setRotationZ(sl_real angle)
 	m_flagValidMatrixView = sl_false;
 }
 
-void MapCamera::move(sl_geo_val latitude, sl_geo_val longitude, sl_geo_val altitude)
+void MapCamera::move(double latitude, double longitude, double altitude)
 {
 	moveTo(m_location.latitude + latitude, m_location.longitude + longitude, m_location.altitude + altitude);
 }
 
-void MapCamera::moveTo(sl_geo_val latitude, sl_geo_val longitude, sl_geo_val altitude)
+void MapCamera::moveTo(double latitude, double longitude, double altitude)
 {
 	m_location.altitude = altitude;
 	m_location.latitude = latitude;
@@ -52,10 +52,10 @@ void MapCamera::moveTo(sl_geo_val latitude, sl_geo_val longitude, sl_geo_val alt
 	m_flagValidMatrixView = sl_false;
 }
 
-void MapCamera::zoom(sl_geo_val ratio, sl_geo_val _min, sl_geo_val _max)
+void MapCamera::zoom(double ratio, double _min, double _max)
 {
 	if (ratio > 0) {
-		sl_geo_val h = m_location.altitude * ratio;
+		double h = m_location.altitude * ratio;
 		if (h < _min) {
 			h = _min;
 		}
@@ -79,8 +79,8 @@ void MapCamera::updateViewMatrix()
 		locAt.altitude = 0;
 		locAt.latitude = m_location.latitude;
 		locAt.longitude = m_location.longitude;
-		Vector3 at = locAt.convertToPosition();
-		Vector3 eye = m_location.convertToPosition();
+		Vector3 at = Earth::getCartesianPosition(locAt);
+		Vector3 eye = Earth::getCartesianPosition(m_location);
 		Matrix4 t = Transform3::getLookAtMatrix(eye, at, Vector3::axisY());
 		if (m_tilt > 0) {
 			Vector3 raxis = (eye - at).cross(Vector3::axisY());
