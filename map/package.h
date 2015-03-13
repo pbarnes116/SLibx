@@ -28,7 +28,7 @@ public:
 	sl_bool write(sl_int32 offsetX, sl_int32 offsetY, sl_int32 offsetZoom, const Memory& data);
 
 	Memory	read(sl_int32 offsetX, sl_int32 offsetY, sl_int32 offsetZoom, sl_int32 version = 0);
-
+	Memory	read(const MapTileLocation& loc);
 	SLIB_INLINE void close()
 	{
 		if (m_flagOpen) {

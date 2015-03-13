@@ -16,12 +16,11 @@ void MapPackage::create(const String& filePath)
 	if (m_pkgFile->openForWrite()) {
 		Memory header = getHeader();
 		sl_int32 offsetTableSize = sizeof(sl_int32)* 256 * 256 * 8;
-		sl_int32* offsetTable = (sl_int32*)Base::createMemory(offsetTableSize);
-		Base::zeroMemory(offsetTable, offsetTableSize);
+		SLIB_SCOPED_ARRAY(sl_int32, offsetTable, offsetTableSize);
+		Base::zeroMemory(offsetTable, offsetTableSize * sizeof(sl_int32));
 		m_pkgFile->write(header.getBuf(), header.getSize());
 		m_pkgFile->write(offsetTable, offsetTableSize);
 		m_pkgFile->seekToBegin();
-		Base::freeMemory(offsetTable);
 		m_pkgFile->close();
 	}
 }
@@ -67,7 +66,7 @@ sl_bool MapPackage::open(const String& filePath)
 sl_int32 MapPackage::getOffset(sl_int32 x, sl_int32 y, sl_int32 zoom)
 {
 	sl_int32 ret = -1;
-	sl_int32 offsetToTable = PACKAGE_HEADER_SIZE + (zoom * 256 * 256 + y * 256 + x) * sizeof(sl_int32);
+	sl_int32 offsetToTable = PACKAGE_HEADER_SIZE + ((zoom -1) * 256 * 256 + y * 256 + x) * sizeof(sl_int32);
 	if (offsetToTable + 4 < m_pkgFile->getSize()) {
 		m_pkgFile->seek(offsetToTable, File::positionBegin);
 		m_pkgFile->read(&ret, sizeof(sl_int32));
@@ -139,17 +138,17 @@ sl_bool MapPackage::write(sl_int32 offsetX, sl_int32 offsetY, sl_int32 offsetZoo
 	sl_bool ret = sl_false;
 	if (m_flagOpen && data.isNotEmpty()) {
 		if (offsetZoom > 0) {
-			sl_int32 offset = getOffset(offsetX, offsetY, offsetZoom);
-			if (offset != -1) {
-				Memory packageItem = createItem(data, offset);
+			//sl_int32 offset = getOffset(offsetX, offsetY, offsetZoom);
+			//if (offset != -1) {
+				Memory packageItem = createItem(data, 0);
 				sl_int32 itemPosition = (sl_int32)m_pkgFile->getSize();
-				sl_int32 tblOffset = PACKAGE_HEADER_SIZE + (offsetZoom * 256 * 256 + offsetY * 256 + offsetX) * sizeof(sl_int32);
+				sl_int32 tblOffset = PACKAGE_HEADER_SIZE + ((offsetZoom - 1) * 256 * 256 + offsetY * 256 + offsetX) * sizeof(sl_int32);
 				m_pkgFile->seek(tblOffset, File::positionBegin);
 				m_pkgFile->write(&itemPosition, sizeof(sl_int32));
 				m_pkgFile->seekToEnd();
 				m_pkgFile->write(packageItem.getBuf(), packageItem.getSize());
 				ret = sl_true;
-			}
+			//}
 		}
 	}
 	return ret;
@@ -161,17 +160,30 @@ Memory MapPackage::read(sl_int32 offsetX, sl_int32 offsetY, sl_int32 offsetZoom,
 	sl_int32 currentVersion = 0;
 	sl_int32 itemOffset = getOffset(offsetX, offsetY, offsetZoom);
 	Memory item;
-	if (itemOffset != -1 && currentVersion < version) {
+	while (itemOffset != -1 && currentVersion < version + 1) {
 		item = getItem(itemOffset);
 		itemOffset = getNextItemOffset(item);
 		currentVersion++;
 	}
-	if (currentVersion == version && item.isNotEmpty()) {
+	if (currentVersion == version + 1 && item.isNotEmpty()) {
 		ret = getDataFromItem(item);
 	}
 	return ret;
 }
 
+Memory MapPackage::read(const MapTileLocation& loc)
+{	
+	sl_int32 offsetX, offsetY;
+	getPackageFileOffsetXY(loc, offsetX, offsetY);
+	sl_int32 zoom = loc.level;
+	if (zoom <= 18 && zoom > 10) {
+		zoom = zoom - 10;
+	}
+	else if (zoom <= 10 && zoom > 2) {
+		zoom = (zoom - 2);
+	}
+	return read(offsetX, offsetY, zoom);
+}
 
 String MapPackage::makePackageFilePath(const MapTileLocation& location, const String& subFolderName, String* _packagePath /* = sl_null */, String* _filePath /* = sl_null */)
 {
