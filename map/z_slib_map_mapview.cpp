@@ -11,7 +11,7 @@ MapView::MapView()
 
 	m_flagInit = sl_false;
 
-	setRenderMode(renderModeWhenDirty);
+	//setRenderMode(renderModeWhenDirty);
 
 	m_environment = new MapEnvironment;
 	m_environment->view = this;
@@ -65,7 +65,7 @@ void MapView::onFrame(RenderEngine* engine)
 	m_tileManagerVWBuilding->renderTiles(engine, m_environment);
 
 	// render status
-	{
+	if (0) {
 		Ref<FreeType> fontStatus = getStatusFont();
 		if (fontStatus.isNotNull()) {
 			engine->setDepthTest(sl_false);

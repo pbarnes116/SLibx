@@ -108,9 +108,12 @@ public:
 			if (mesh.memThumbnailTexture.size() != nThumbSize) {
 				return sl_false;
 			}
-			mesh.texture = Texture::create(Image::loadFromMemory(mesh.memThumbnailTexture));
+			//mesh.texture = Texture::create(Image::loadFromMemory(data->loadData(building.type, building.location, mesh.textureFileName)));
 			if (mesh.texture.isNull()) {
-				return sl_false;
+				mesh.texture = Texture::create(Image::loadFromMemory(mesh.memThumbnailTexture));
+				if (mesh.texture.isNull()) {
+					return sl_false;
+				}
 			}
 			building.meshes.add(mesh);
 		}

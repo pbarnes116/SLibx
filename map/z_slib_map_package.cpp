@@ -171,4 +171,72 @@ Memory MapPackage::read(sl_int32 offsetX, sl_int32 offsetY, sl_int32 offsetZoom,
 	}
 	return ret;
 }
+
+
+String MapPackage::makePackageFilePath(const MapTileLocation& location, const String& subFolderName, String* _packagePath /* = sl_null */, String* _filePath /* = sl_null */)
+{
+	String zoomFolderPath = "";
+	sl_int32 tilesNum = 1 << location.level;
+	sl_int32 blockX = (sl_int32)((location.x + 180.0) / 360.0 * tilesNum);
+	sl_int32 blockY = (sl_int32)((location.y + 90.0) / 180.0 * tilesNum);
+	sl_int32 fragmentNum = 1;
+	if (location.level <= 18 && location.level > 10) {
+		fragmentNum = 1 << (location.level - 10);
+		zoomFolderPath = _SLT("P11-18");
+	} else if (location.level <= 10 && location.level > 2) {
+		fragmentNum = 1 << (location.level - 2);
+		zoomFolderPath = _SLT("P03-10");
+	} else {
+		fragmentNum = 1 << (location.level);
+		zoomFolderPath = _SLT("P00-02");
+	}
+	sl_int32 packageX = blockX / fragmentNum;
+	sl_int32 packageY = blockY / fragmentNum;
+	sl_int32 packageOffsetX = blockX % fragmentNum;
+	sl_int32 packageOffsetY = blockY % fragmentNum;
+
+	String filePath = String::fromInt32(packageX) + _SLT(".pkg");
+	String pkgPath = zoomFolderPath + _SLT("/") + String::fromInt32(packageY);
+	if (_packagePath) {
+		*_packagePath = pkgPath;
+	}
+	if (_filePath) {
+		*_filePath = filePath;
+	}
+	return pkgPath + _SLT("/") + filePath;
+}
+
+String MapPackage::makePackageFilePath(const LatLon& location, sl_int32 zoomLevel, const String& subFolderName, String* packagePath /* = sl_null */, String* filePath /* = sl_null */)
+{
+	MapTileLocation newLoc;
+	newLoc.x = location.longitude;
+	newLoc.y = location.latitude;
+	newLoc.level = zoomLevel;
+	return makePackageFilePath(newLoc, subFolderName, packagePath, filePath);
+}
+
+void MapPackage::getPackageFileOffsetXY(const MapTileLocation& location, sl_int32& blockOffsetX, sl_int32& blockOffsetY)
+{
+	sl_int32 tilesNum = 1 << location.level;
+	sl_int32 blockX = (sl_int32)((location.x + 180.0f) / 360.0f * tilesNum);
+	sl_int32 blockY = (sl_int32)((location.y + 90.0f) / 180.0f * tilesNum);
+	sl_int32 fragmentNum = 1;
+	if (location.level <= 18 && location.level > 10) {
+		fragmentNum = 1 << (location.level - 10);
+	} else if (location.level <= 10 && location.level > 2) {
+		fragmentNum = 1 << (location.level - 2);
+	}
+	blockOffsetX = blockX % fragmentNum;
+	blockOffsetY = blockY % fragmentNum;
+}
+
+void MapPackage::getPackageFileOffsetXY(const LatLon& location, sl_int32 zoomLevel, sl_int32& blockOffsetX, sl_int32& blockOffsetY)
+{
+	MapTileLocation newLoc;
+	newLoc.x = location.longitude;
+	newLoc.y = location.latitude;
+	newLoc.level = zoomLevel;
+	return getPackageFileOffsetXY(newLoc, blockOffsetX, blockOffsetY);
+}
+
 SLIB_MAP_NAMESPACE_END

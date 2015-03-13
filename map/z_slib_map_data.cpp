@@ -1,5 +1,6 @@
 
 #include "data.h"
+#include "package.h"
 #include "../../slib/core/file.h"
 #include "../sfile/secure_file_pack.h"
 
@@ -34,6 +35,19 @@ MapData_GenericFileLoader::MapData_GenericFileLoader(String basePath, String ext
 Memory MapData_GenericFileLoader::loadData(const String& type, const MapTileLocation& location, const String& _subPath)
 {
 	String prefix = getBasePath() + _SLT("/") + type + _SLT("/");
+	// map-standard-package
+	{
+		String path = prefix + MapPackage::makePackageFilePath(location, String::null());
+		MapPackage package;
+		if (package.open(path)) {
+			sl_int32 offsetX, offsetY;
+			MapPackage::getPackageFileOffsetXY(location, offsetX, offsetY);
+			Memory mem = package.read(offsetX, offsetY, location.level);
+			if (mem.isNotEmpty()) {
+				return mem;
+			}
+		}
+	}
 	String packagePath;
 	String filePath;
 	// generic style path
@@ -74,8 +88,8 @@ Memory MapData_GenericFileLoader::loadData(const String& type, const MapTileLoca
 Memory MapData_GenericFileLoader::_readData(const String& packagePath, const String& filePath)
 {
 	String path = packagePath + _SLT("/") + filePath;
-	if (File::exists(filePath)) {
-		return File::readAllBytes(filePath);
+	if (File::exists(path)) {
+		return File::readAllBytes(path);
 	} else {
 		path = packagePath + _SLT(".slp");
 		if (File::exists(path)) {

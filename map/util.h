@@ -24,15 +24,6 @@ public:
 	static String makeVWStylePath(const MapTileLocation& location, String* packagePath = sl_null, String* filePath = sl_null);
 };
 
-
-class PackageFilePath
-{
-public:
-	static String makePackageFilePath(const MapTileLocation& location, const String& subFolderName, String* packagePath = sl_null, String* filePath = sl_null);
-	static String makePackageFilePath(const LatLon& location, sl_int32 zoomLevel, const String& subFolderName, String* packagePath = sl_null, String* filePath = sl_null);
-	static void getPackageFileOffsetXY(const MapTileLocation& location, sl_int32& blockOffsetX, sl_int32& blockOffsetY);
-	static void getPackageFileOffsetXY(const LatLon& location, sl_int32 zoomLevel, sl_int32& blockOffsetX, sl_int32& blockOffsetY);
-};
 SLIB_MAP_NAMESPACE_END
 
 #endif
