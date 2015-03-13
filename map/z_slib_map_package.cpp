@@ -187,7 +187,7 @@ Memory MapPackage::read(const MapTileLocation& loc)
 String MapPackage::makePackageFilePath(const MapTileLocation& location, const String& subFolderName, String* _packagePath /* = sl_null */, String* _filePath /* = sl_null */)
 {
 	String zoomFolderPath = "";
-	sl_int32 tilesNum = 1 << location.level;
+	sl_int32 tilesNum = 2 << location.level;
 	sl_int32 blockX = (sl_int32)((location.x + 180.0) / 360.0 * tilesNum);
 	sl_int32 blockY = (sl_int32)((location.y + 90.0) / 180.0 * tilesNum);
 	sl_int32 fragmentNum = 1;
@@ -228,7 +228,7 @@ String MapPackage::makePackageFilePath(const LatLon& location, sl_int32 zoomLeve
 
 void MapPackage::getPackageFileOffsetXY(const MapTileLocation& location, sl_int32& blockOffsetX, sl_int32& blockOffsetY)
 {
-	sl_int32 tilesNum = 1 << location.level;
+	sl_int32 tilesNum = 2 << location.level;
 	sl_int32 blockX = (sl_int32)((location.x + 180.0f) / 360.0f * tilesNum);
 	sl_int32 blockY = (sl_int32)((location.y + 90.0f) / 180.0f * tilesNum);
 	sl_int32 fragmentNum = 1;
