@@ -147,6 +147,8 @@ public:
 	Rectangle rectPicture;
 	Ref<Texture> texture;
 
+	Primitive primitive;
+
 	_MapTile_DEM()
 	{
 	}
@@ -236,6 +238,12 @@ sl_bool MapTileManager_DEM::initializeTile(MapTile* _tile, MapTile* _parent)
 			tile->rectDEM = Rectangle(0, 0, 1, 1);
 		}
 	}
+	if (tile->dem.isNotNull()) {
+		tile->dem->makeMesh(tile->primitive, 17, tile->rect, tile->rectDEM, tile->rectPicture);
+	} else {
+		DEM dem;
+		dem.makeMesh(tile->primitive, 17, tile->rect, tile->rectDEM, tile->rectPicture);
+	}
 	return sl_true;
 }
 
@@ -253,14 +261,7 @@ void MapTileManager_DEM::renderTile(MapTile* _tile, RenderEngine* engine, MapEnv
 	Ref<DEM> dem = tile->dem;
 	if (texture.isNotNull()) {
 		m_programTile->setTexture(texture);
-		Primitive primitive;
-		if (dem.isNotNull()) {
-			dem->makeMesh(primitive, 17, tile->rect, tile->rectDEM, tile->rectPicture);
-		} else {
-			DEM dem;
-			dem.makeMesh(primitive, 17, tile->rect, tile->rectDEM, tile->rectPicture);
-		}
-		engine->draw(m_programTile, &primitive);
+		engine->draw(m_programTile, &(tile->primitive));
 	}
 }
 

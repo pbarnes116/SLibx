@@ -3,6 +3,8 @@
 
 #include "definition.h"
 
+#include "util.h"
+
 #include "../../slib/core/object.h"
 #include "../../slib/core/file.h"
 
@@ -58,6 +60,12 @@ private:
 	Memory		getItem(sl_int32 offset);
 	Memory		getDataFromItem(const Memory& item);
 	Memory		createItem(const Memory& data, sl_int32 oldItemOffset);
+
+public:
+	static String makePackageFilePath(const MapTileLocation& location, const String& subFolderName, String* packagePath = sl_null, String* filePath = sl_null);
+	static String makePackageFilePath(const LatLon& location, sl_int32 zoomLevel, const String& subFolderName, String* packagePath = sl_null, String* filePath = sl_null);
+	static void getPackageFileOffsetXY(const MapTileLocation& location, sl_int32& blockOffsetX, sl_int32& blockOffsetY);
+	static void getPackageFileOffsetXY(const LatLon& location, sl_int32 zoomLevel, sl_int32& blockOffsetX, sl_int32& blockOffsetY);
 };
 
 SLIB_MAP_NAMESPACE_END
