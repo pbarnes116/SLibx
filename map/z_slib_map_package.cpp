@@ -95,7 +95,7 @@ Memory MapPackage::getDataFromItem(const Memory& item)
 		sl_int64 itemUpdateTime = reader.readInt64();
 		sl_int32 itemNextOffset = reader.readInt32();
 		sl_int64 position = reader.getPosition();
-		ret = Memory::create(item.getSize() - position);
+		ret = Memory::create(item.getSize() - (sl_size)position);
 		reader.read(ret.getBuf(), ret.getSize());
 	}
 	return ret;
