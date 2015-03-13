@@ -9,10 +9,10 @@ SLIB_MAP_NAMESPACE_START
 
 void MapPackage::create(const String& filePath)
 {
+	m_pkgFile->setPath(filePath);
 	String dirPath = File::getParentDirectoryPath(m_pkgFile->getPath());
 	File dir(dirPath);
 	dir.createDirectories();
-	m_pkgFile->setPath(filePath);
 	if (m_pkgFile->openForWrite()) {
 		Memory header = getHeader();
 		sl_int32 offsetTableSize = sizeof(sl_int32)* 256 * 256 * 8;
@@ -31,7 +31,6 @@ Memory MapPackage::getHeader()
 	Base::zeroMemory(ret.getBuf(), ret.getSize());
 	String packageIdentify = PACKAGE_IDENTIFY;
 	Utf8StringBuffer buffer = packageIdentify.getUtf8();
-	m_pkgFile->openForWrite();
 	ret.write(buffer.sz, buffer.len);
 	return ret;
 }

@@ -62,13 +62,17 @@ String PackageFilePath::makePackageFilePath(const MapTileLocation& location, con
 		fragmentNum = 1 << (location.level - 2);
 		zoomFolderPath = _SLT("P03-10");
 	}
+	else {
+		fragmentNum = 1 << (location.level);
+		zoomFolderPath = _SLT("P00-02");
+	}
 	sl_int32 packageX = blockX / fragmentNum;
 	sl_int32 packageY = blockY / fragmentNum;
 	sl_int32 packageOffsetX = blockX % fragmentNum;
 	sl_int32 packageOffsetY = blockY % fragmentNum;
 
-	String filePath = packageX + _SLT(".pkg");
-	String pkgPath = zoomFolderPath + _SLT("/") + packageY;
+	String filePath = String::fromInt32(packageX) + _SLT(".pkg");
+	String pkgPath = zoomFolderPath + _SLT("/") + String::fromInt32(packageY);
 	if (_packagePath) {
 		*_packagePath = pkgPath;
 	}
@@ -90,8 +94,8 @@ String PackageFilePath::makePackageFilePath(const LatLon& location, sl_int32 zoo
 void PackageFilePath::getPackageFileOffsetXY(const MapTileLocation& location, sl_int32& blockOffsetX, sl_int32& blockOffsetY)
 {
 	sl_int32 tilesNum = 1 << location.level;
-	sl_int32 blockX = (sl_int32)((location.x + 180.0) / 360.0 * tilesNum);
-	sl_int32 blockY = (sl_int32)((location.y + 90.0) / 180.0 * tilesNum);
+	sl_int32 blockX = (sl_int32)((location.x + 180.0f) / 360.0f * tilesNum);
+	sl_int32 blockY = (sl_int32)((location.y + 90.0f) / 180.0f * tilesNum);
 	sl_int32 fragmentNum = 1;
 	if (location.level <= 18 && location.level > 10) {
 		fragmentNum = 1 << (location.level - 10);
