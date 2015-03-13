@@ -154,19 +154,18 @@ sl_bool MapPackage::write(sl_int32 offsetX, sl_int32 offsetY, sl_int32 offsetZoo
 	return ret;
 }
 
-Memory MapPackage::read(sl_int32 offsetX, sl_int32 offsetY, sl_int32 offsetZoom, sl_int32 version)
+Memory MapPackage::read(sl_int32 offsetX, sl_int32 offsetY, sl_int32 offsetZoom)
 {
 	Memory ret;
 	sl_int32 currentVersion = 0;
 	sl_int32 itemOffset = getOffset(offsetX, offsetY, offsetZoom);
 	Memory item;
-	while (itemOffset != -1 && currentVersion < version + 1) {
+	if (itemOffset != -1) {
 		item = getItem(itemOffset);
-		itemOffset = getNextItemOffset(item);
-		currentVersion++;
-	}
-	if (currentVersion == version + 1 && item.isNotEmpty()) {
-		ret = getDataFromItem(item);
+		if (item.isNotEmpty()) {
+			ret = getDataFromItem(item);
+		}
+		
 	}
 	return ret;
 }
