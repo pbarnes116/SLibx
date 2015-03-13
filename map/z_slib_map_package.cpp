@@ -21,6 +21,7 @@ void MapPackage::create(const String& filePath)
 		m_pkgFile->write(header.getBuf(), header.getSize());
 		m_pkgFile->write(offsetTable, offsetTableSize);
 		m_pkgFile->seekToBegin();
+		Base::freeMemory(offsetTable);
 		m_pkgFile->close();
 	}
 }
