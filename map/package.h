@@ -23,14 +23,12 @@ public:
 	SLIB_INLINE MapPackage(const String& encKey)
 	{
 		m_flagOpen = sl_false;
-		m_encryption = new AES256;
-		m_encryption->setKey_SHA256(encKey);
+		m_encryption.setKey_SHA256(encKey);
 	}
 
 	~MapPackage()
 	{
 		close();
-		m_encryption.setNull();
 	}
 
 public:
@@ -51,7 +49,7 @@ public:
 
 	SLIB_INLINE void setEncryptionKey(const String& key)
 	{
-		m_encryption->setKey_SHA256(key);
+		m_encryption.setKey_SHA256(key);
 	}
 
 	SLIB_INLINE Ref<File> getFileInstance() const
@@ -77,7 +75,7 @@ private:
 	Memory		getItem(sl_int32 offset);
 	Memory		getDataFromItem(const Memory& item);
 
-	Ref<AES256> m_encryption;
+	AES256 m_encryption;
 };
 
 SLIB_MAP_NAMESPACE_END

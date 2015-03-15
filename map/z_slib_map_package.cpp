@@ -114,7 +114,7 @@ Memory MapPackage::getDataFromItem(const Memory& item)
 		reader.read(encData.getBuf(), encData.getSize());
 
 		Memory decData = Memory::create(encData.getSize() + 256);
-		sl_size decSize = m_encryption->decrypt_CBC_PKCS7Padding(encData.getBuf(), encData.getSize(), decData.getBuf());
+		sl_size decSize = m_encryption.decrypt_CBC_PKCS7Padding(encData.getBuf(), encData.getSize(), decData.getBuf());
 		ret = Memory(decData.getBuf(), decSize);
 	}
 	return ret;
@@ -126,7 +126,7 @@ Memory MapPackage::createItem(const Memory& data, sl_int32 oldItemOffset)
 	MemoryWriter writer;
 
 	Memory encryption = Memory::create(data.getSize() + 256);
-	sl_size encryptSize = m_encryption->encrypt_CBC_PKCS7Padding(data.getBuf(), data.getSize(), encryption.getBuf());
+	sl_size encryptSize = m_encryption.encrypt_CBC_PKCS7Padding(data.getBuf(), data.getSize(), encryption.getBuf());
 	sl_int64 curTime = Time::now().getSecondsCount();
 	writer.writeInt32(PACKAGE_ITEM_IDENTIFY);
 
