@@ -37,9 +37,9 @@ public:
 		SLIB_SAFE_STATIC(slib::Ref<AES256>, _packageEncryptionInstance, new AES256);
 		return _packageEncryptionInstance;
 	}
-	static SLIB_INLINE void setEncryptionKey(const void* key)
+	static SLIB_INLINE void setEncryptionKey(const String& key)
 	{
-		getEncryptionInstance()->setKey(key);
+		getEncryptionInstance()->setKey_SHA256(key);
 	}
 public:
 	sl_bool open(const String& fileName, MapPackageType type);
