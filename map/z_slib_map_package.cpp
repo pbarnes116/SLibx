@@ -114,7 +114,7 @@ Memory MapPackage::getDataFromItem(const Memory& item)
 		reader.read(encData.getBuf(), encData.getSize());
 
 		Memory decData = Memory::create(encData.getSize() + 256);
-		sl_size decSize = getEncryptionInstance()->decrypt_CBC_PKCS7Padding(encData.getBuf(), encData.getSize(), decData.getBuf());
+		sl_size decSize = m_encryption->decrypt_CBC_PKCS7Padding(encData.getBuf(), encData.getSize(), decData.getBuf());
 		ret = Memory(decData.getBuf(), decSize);
 	}
 	return ret;
@@ -126,7 +126,7 @@ Memory MapPackage::createItem(const Memory& data, sl_int32 oldItemOffset)
 	MemoryWriter writer;
 
 	Memory encryption = Memory::create(data.getSize() + 256);
-	sl_size encryptSize = getEncryptionInstance()->encrypt_CBC_PKCS7Padding(data.getBuf(), data.getSize(), encryption.getBuf());
+	sl_size encryptSize = m_encryption->encrypt_CBC_PKCS7Padding(data.getBuf(), data.getSize(), encryption.getBuf());
 	sl_int64 curTime = Time::now().getSecondsCount();
 	writer.writeInt32(PACKAGE_ITEM_IDENTIFY);
 
@@ -180,9 +180,8 @@ Memory MapPackage::read(const String& dirPath, const MapTileLocation& loc, MapPa
 	sl_int32 offsetX, offsetY, zoom;
 	String path = dirPath + _SLT("/") + getPackageFilePathAndOffset(loc, type, offsetX, offsetY, zoom);
 	Memory ret;
-	MapPackage p;
-	if (p.open(path, type)) {
-		ret = p.read(offsetX, offsetY, zoom);
+	if (open(path, type)) {
+		ret = read(offsetX, offsetY, zoom);
 	}
 	return ret;
 }
@@ -192,9 +191,8 @@ sl_bool MapPackage::write(const String& dirPath, const MapTileLocation& loc, con
 	sl_int32 offsetX, offsetY, zoom;
 	String path = dirPath + _SLT("/") +getPackageFilePathAndOffset(loc, type, offsetX, offsetY, zoom);
 	sl_bool ret = sl_false;
-	MapPackage p;
-	if (p.open(path, type)) {
-		ret = p.write(offsetX, offsetY, zoom, data);
+	if (open(path, type)) {
+		ret = write(offsetX, offsetY, zoom, data);
 	}
 	return ret;
 }
@@ -204,7 +202,6 @@ String MapPackage::getPackageFilePathAndOffset(const MapTileLocation& location, 
 	String zoomFolderPath = "";
 	zoom = location.level;
 	sl_int32 tilesNum = 1;
-	String subPackageFolderPath = _SLT("");
 
 	if (type == VWorldMap3DPackage || type == VWorldMapPackage) {
 		zoom = location.level + 4;
@@ -219,20 +216,7 @@ String MapPackage::getPackageFilePathAndOffset(const MapTileLocation& location, 
 		zoom = location.level;
 		zoomFolderPath = _SLT("P00-04");
 	}
-	switch (type) {
-	case VWorldMap3DPackage:
-		subPackageFolderPath = _SLT("VW3D");
-		break;
-	case GoogleMapPackage:
-		subPackageFolderPath = _SLT("GEDat");
-		break;
-	case VWorldMapPackage:
-		subPackageFolderPath = _SLT("VWTile");
-		break;
-	case OpenStreetMapPackage:
-		subPackageFolderPath = _SLT("OSM");
-		break;
-	}
+	
 	tilesNum = 2 << zoom;
 	
 	sl_int32 packageX = (sl_int32)(location.x / tilesNum);
@@ -241,7 +225,7 @@ String MapPackage::getPackageFilePathAndOffset(const MapTileLocation& location, 
 	outY = (sl_int32)location.y % tilesNum;
 
 	String filePath = String::fromInt32(packageX) + _SLT(".pkg");
-	String pkgPath = subPackageFolderPath + _SLT("/") + zoomFolderPath + _SLT("/") + String::fromInt32(packageY);
+	String pkgPath = zoomFolderPath + _SLT("/") + String::fromInt32(packageY);
 	
 	return pkgPath + _SLT("/") + filePath;
 }

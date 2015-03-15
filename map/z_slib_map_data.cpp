@@ -36,8 +36,8 @@ Memory MapData_GenericFileLoader::loadData(const String& type, const MapTileLoca
 {
 	// map-standard-package
  	{
-		MapPackage::setEncryptionKey(_SLT("TestPackageKey"));
-		Memory mem = MapPackage::read(getBasePath() + _SLT("/") + type, location, MapPackage::VWorldMapPackage);
+		Ref<MapPackage> pkgReader = new MapPackage(_SLT("TestPackageKey"));
+		Memory mem = pkgReader->read(getBasePath() + _SLT("/") + type, location, MapPackage::VWorldMapPackage);
 		if (mem.isNotEmpty()) {
 			return mem;
 		}
