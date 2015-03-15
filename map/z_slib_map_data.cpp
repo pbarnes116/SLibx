@@ -36,18 +36,18 @@ Memory MapData_GenericFileLoader::loadData(const String& type, const MapTileLoca
 {
 	String prefix = getBasePath() + _SLT("/") + type + _SLT("/");
 	// map-standard-package
-	{
-		String path = prefix + MapPackage::makePackageFilePath(location, String::null());
-		MapPackage package;
-		if (package.open(path)) {
-			sl_int32 offsetX, offsetY;
-			MapPackage::getPackageFileOffsetXY(location, offsetX, offsetY);
-			Memory mem = package.read(offsetX, offsetY, location.level);
-			if (mem.isNotEmpty()) {
-				return mem;
-			}
-		}
-	}
+// 	{
+// 		String path = prefix + MapPackage::makePackageFilePath(location, String::null());
+// 		MapPackage package;
+// 		if (package.open(path)) {
+// 			sl_int32 offsetX, offsetY;
+// 			MapPackage::getPackageFileOffsetXY(location, offsetX, offsetY);
+// 			Memory mem = package.read(offsetX, offsetY, location.level);
+// 			if (mem.isNotEmpty()) {
+// 				return mem;
+// 			}
+// 		}
+// 	}
 	String packagePath;
 	String filePath;
 	// generic style path
