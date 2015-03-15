@@ -34,20 +34,15 @@ MapData_GenericFileLoader::MapData_GenericFileLoader(String basePath, String ext
 
 Memory MapData_GenericFileLoader::loadData(const String& type, const MapTileLocation& location, const String& _subPath)
 {
-	String prefix = getBasePath() + _SLT("/") + type + _SLT("/");
 	// map-standard-package
-// 	{
-// 		String path = prefix + MapPackage::makePackageFilePath(location, String::null());
-// 		MapPackage package;
-// 		if (package.open(path)) {
-// 			sl_int32 offsetX, offsetY;
-// 			MapPackage::getPackageFileOffsetXY(location, offsetX, offsetY);
-// 			Memory mem = package.read(offsetX, offsetY, location.level);
-// 			if (mem.isNotEmpty()) {
-// 				return mem;
-// 			}
-// 		}
-// 	}
+ 	{
+		MapPackage::setEncryptionKey(_SLT("TestPackageKey"));
+		Memory mem = MapPackage::read(getBasePath() + _SLT("/") + type, location, MapPackage::VWorldMapPackage);
+		if (mem.isNotEmpty()) {
+			return mem;
+		}
+ 	}
+	String prefix = getBasePath() + _SLT("/") + type + _SLT("/");
 	String packagePath;
 	String filePath;
 	// generic style path

@@ -32,7 +32,7 @@ public:
 
 	static sl_bool write(const String& dirPath, const MapTileLocation& loc, const Memory& data, MapPackageType type);
 	static Memory read(const String& dirPath, const MapTileLocation& loc, MapPackageType type);
-	static SLIB_INLINE Ref<AES256> getEncryptionInstance()
+	static Ref<AES256> getEncryptionInstance()
 	{
 		SLIB_SAFE_STATIC(slib::Ref<AES256>, _packageEncryptionInstance, new AES256);
 		return _packageEncryptionInstance;

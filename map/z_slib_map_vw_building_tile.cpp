@@ -70,7 +70,7 @@ void MapTileManager_VWBuilding::renderTile(MapTile* _tile, RenderEngine* engine,
 			GeoLocation loc;
 			loc.longitude = building.longitude;
 			loc.latitude = building.latitude;
-			loc.altitude = building.height;
+			loc.altitude = building.altitude + building.height;
 			Vector3 pos = Earth::getCartesianPosition(loc);
 			Matrix4 m;
 			m.setRow0(Vector4(0, 0, -1, 0));

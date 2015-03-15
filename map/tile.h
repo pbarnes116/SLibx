@@ -82,7 +82,7 @@ protected:
 	Time m_timeLastRenderRequest;
 
 private:
-	static void _threadManageTile(WeakRef<MapTileManager> manager);
+	static void _threadManageTile(MapTileManager* manager);
 	void _runThreadManageTileStep();
 };
 

@@ -21,7 +21,7 @@ MapTileManager::~MapTileManager()
 
 void MapTileManager::initialize()
 {
-	m_threadManage = Thread::start(SLIB_CALLBACK_PARAM1(&MapTileManager::_threadManageTile, (WeakRef<MapTileManager>)this));
+	m_threadManage = Thread::start(SLIB_CALLBACK_PARAM1(&MapTileManager::_threadManageTile, this));
 }
 
 void MapTileManager::release()
@@ -97,17 +97,10 @@ sl_bool MapTileManager::_checkTileVisibleInViewFrustum(MapTile* tile)
 	return flag;
 }
 
-void MapTileManager::_threadManageTile(WeakRef<MapTileManager> _manager)
+void MapTileManager::_threadManageTile(MapTileManager* manager)
 {
 	while (!Thread::isStoppingCurrent()) {
-		{
-			Ref<MapTileManager> manager = _manager.lock();
-			if (manager.isNotNull()) {
-				manager->_runThreadManageTileStep();
-			} else {
-				return;
-			}
-		}
+		manager->_runThreadManageTileStep();
 		Thread::sleep(20);
 	}
 }
