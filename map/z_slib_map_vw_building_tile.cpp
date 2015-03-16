@@ -67,10 +67,9 @@ void MapTileManager_VWBuilding::renderTile(MapTile* _tile, RenderEngine* engine,
 		VW_Building& building = buildings[iBuilding];
 		// world matrix
 		{
-			GeoLocation loc;
-			loc.longitude = building.longitude;
-			loc.latitude = building.latitude;
-			loc.altitude = building.altitude + building.height;
+			SphericalGlobe sg(Earth::getEquatorialRadius());
+			Vector3lf c = building.bound.getCenter();
+			GeoLocation loc = sg.getGeoLocation(Vector3lf(-c.y, c.z, -c.x));
 			Vector3 pos = Earth::getCartesianPosition(loc);
 			Matrix4 m;
 			m.setRow0(Vector4(0, 0, -1, 0));
