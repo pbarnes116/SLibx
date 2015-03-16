@@ -7,15 +7,15 @@
 
 SLIB_MAP_NAMESPACE_START
 
-void MapPackage::create(const String& filePath, MapPackageType type)
+void MapPackage::create(const String& filePath)
 {
 	m_pkgFile->setPath(filePath);
 	String dirPath = File::getParentDirectoryPath(m_pkgFile->getPath());
 	File dir(dirPath);
 	dir.createDirectories();
 	if (m_pkgFile->openForWrite()) {
-		Memory header = getHeader(type);
-		sl_int32 offsetTableSize = sizeof(sl_int32)* 256 * 256 * 8;
+		Memory header = getHeader();
+		sl_int32 offsetTableSize = sizeof(sl_int32)* m_nTilesXNum * m_nTilesYNum;
 		SLIB_SCOPED_ARRAY(sl_int32, offsetTable, offsetTableSize);
 		Base::zeroMemory(offsetTable, offsetTableSize * sizeof(sl_int32));
 		m_pkgFile->write(header.getBuf(), header.getSize());
@@ -25,7 +25,7 @@ void MapPackage::create(const String& filePath, MapPackageType type)
 	}
 }
 
-Memory MapPackage::getHeader(MapPackageType type)
+Memory MapPackage::getHeader()
 {
 	Memory ret = Memory::create(PACKAGE_HEADER_SIZE);
 	MemoryWriter writer(ret);
@@ -34,14 +34,15 @@ Memory MapPackage::getHeader(MapPackageType type)
 	String packageIdentify = PACKAGE_IDENTIFY;
 	Utf8StringBuffer buffer = packageIdentify.getUtf8();
 	writer.write(buffer.sz, buffer.len);
-	writer.writeInt32CVLI(type);
+	writer.writeInt32CVLI(m_nTilesXNum);
+	writer.writeInt32CVLI(m_nTilesYNum);
 	return ret;
 }
 
-sl_bool MapPackage::check(MapPackageType type)
+sl_bool MapPackage::checkHeader()
 {
 	sl_bool ret = sl_true;
-	Memory originalHeader = getHeader(type);
+	Memory originalHeader = getHeader();
 	Memory header = Memory::create(PACKAGE_HEADER_SIZE);
 	m_pkgFile->read(header.getBuf(), header.getSize());
 	if (Base::compareMemory(originalHeader.getBuf(), header.getBuf(), PACKAGE_HEADER_SIZE) != 0) {
@@ -50,32 +51,32 @@ sl_bool MapPackage::check(MapPackageType type)
 	return ret;
 }
 
-sl_bool MapPackage::open(const String& filePath, MapPackageType type)
+sl_bool MapPackage::open(const String& filePath, sl_bool flagReadOnly)
 {
 	close();
 	m_pkgFile = new File();
-	if (!File::exists(filePath)) {
-		create(filePath, type);
+	if (!File::exists(filePath) && !flagReadOnly) {
+		create(filePath);
 		m_pkgFile->close();
 	}
 	sl_bool flagOpen = m_pkgFile->open(filePath, File::modeReadWriteNoTruncate);
-	if (flagOpen && check(type)) {
+	if (flagOpen && checkHeader()) {
 		m_flagOpen = sl_true;
 		return sl_true;
 	}
 	return sl_false;
 }
 
-static inline sl_int32 getTableOffset(sl_int32 offsetX, sl_int32 offsetY, sl_int32 zoom)
+sl_int32 MapPackage::getTableOffset(sl_int32 offsetX, sl_int32 offsetY)
 {
-	sl_int32 ret = PACKAGE_HEADER_SIZE + (zoom * 256 * 256 + offsetY * 256 + offsetX) * sizeof(sl_int32);
+	sl_int32 ret = PACKAGE_HEADER_SIZE + (offsetY * m_nTilesXNum + offsetX) * sizeof(sl_int32);
 	return ret;
 }
 
-sl_int32 MapPackage::getItemOffset(sl_int32 x, sl_int32 y, sl_int32 zoom)
+sl_int32 MapPackage::getItemOffset(sl_int32 x, sl_int32 y)
 {
 	sl_int32 ret = -1;
-	sl_int32 offsetToTable = getTableOffset(x, y, zoom);
+	sl_int32 offsetToTable = getTableOffset(x, y);
 	if (offsetToTable + 4 < m_pkgFile->getSize()) {
 		m_pkgFile->seek(offsetToTable, File::positionBegin);
 		m_pkgFile->read(&ret, sizeof(sl_int32));
@@ -101,52 +102,105 @@ Memory MapPackage::getItem(sl_int32 itemOffset)
 	return ret;
 }
 
-Memory MapPackage::getDataFromItem(const Memory& item)
+static SLIB_INLINE void writeString(MemoryWriter& writer, const String& str) {
+	Utf8StringBuffer buffer = str.getUtf8();
+	writer.writeUint32CVLI(buffer.len);
+	if (buffer.len > 0) {
+		writer.write(buffer.sz, buffer.len);
+	}
+}
+
+static SLIB_INLINE String readString(MemoryReader& reader)
 {
-	Memory ret;
-	if (item.isNotEmpty()) {
-		MemoryReader reader(item);
-		sl_int64 itemUpdateTime = reader.readInt64();
-		sl_int32 itemNextOffset = reader.readInt32();
-		sl_size position = reader.getPosition();
-
-		Memory encData = Memory::create(item.getSize() - position);
-		reader.read(encData.getBuf(), encData.getSize());
-
-		Memory decData = Memory::create(encData.getSize() + 256);
-		sl_size decSize = m_encryption.decrypt_CBC_PKCS7Padding(encData.getBuf(), encData.getSize(), decData.getBuf());
-		ret = Memory(decData.getBuf(), decSize);
+	sl_uint32 nameLen = reader.readUint32CVLI();
+	String ret = _SLT("");
+	if (nameLen > 0){
+		slib::ScopedArray<sl_uint8> strName(nameLen);
+		reader.read(strName + 0, nameLen);
+		ret = String::fromUtf8((sl_str8)(strName + 0), nameLen);
 	}
 	return ret;
 }
 
-Memory MapPackage::createItem(const Memory& data, sl_int32 oldItemOffset)
+static inline void writeItemData(MemoryWriter& writer, const String& key, const Memory& data)
+{
+	writeString(writer, key);
+	writer.writeInt32CVLI(data.getSize());
+	writer.write(data.getBuf(), data.getSize());
+}
+
+static inline Memory readItemData(MemoryReader& reader, String& key)
 {
 	Memory ret;
-	MemoryWriter writer;
-
-	Memory encryption = Memory::create(data.getSize() + 256);
-	sl_size encryptSize = m_encryption.encrypt_CBC_PKCS7Padding(data.getBuf(), data.getSize(), encryption.getBuf());
-	sl_int64 curTime = Time::now().getSecondsCount();
-	writer.writeInt32(PACKAGE_ITEM_IDENTIFY);
-
-	sl_int64 pkgSize = sizeof(sl_int64) + sizeof(sl_int32) + encryptSize;
-	writer.writeInt32((sl_uint32)pkgSize);
-	writer.writeInt64(curTime);
-	writer.writeInt32(oldItemOffset);
-	writer.write(encryption.getBuf(), encryptSize);
-	ret = writer.getData();
-
+	key = readString(reader);
+	sl_int32 itemSize = reader.readInt32CVLI();
+	if (itemSize > 0) {
+		ret = Memory(itemSize);
+		reader.read(ret.getBuf(), itemSize);
+	}
+	
 	return ret;
 }
 
-sl_bool MapPackage::write(sl_int32 offsetX, sl_int32 offsetY, sl_int32 offsetZoom, const Memory& data)
+Map<String, Memory> MapPackage::getDataFromItem(const Memory& encData)
+{
+	Map<String, Memory> ret;
+	Memory item;
+	if (encData.isNotEmpty()) {
+		Memory decData = Memory::create(encData.getSize() + 256);
+		sl_size decSize = m_encryption.decrypt_CBC_PKCS7Padding(encData.getBuf(), encData.getSize(), decData.getBuf());
+		item = Memory(decData.getBuf(), decSize);
+	}
+	if (item.isNotEmpty()) {
+		MemoryReader reader(item);
+		sl_int64 itemUpdateTime = reader.readInt64CVLI();
+		sl_int32 itemNextOffset = reader.readInt32CVLI();
+		sl_int32 itemCount = reader.readInt32CVLI();
+		for (sl_int32 i = 0; i < itemCount; i++) {
+			String key = _SLT("");
+			Memory itemData = readItemData(reader, key);
+			if (itemData.isNotEmpty()) {
+				ret.put(key, itemData);
+			}
+		}
+	}
+	return ret;
+}
+
+Memory MapPackage::createItem(const Map<String, Memory>& itemData, sl_int32 oldItemOffset)
+{
+	MemoryWriter writer;
+
+	sl_int64 curTime = Time::now().getSecondsCount();
+
+	writer.writeInt64CVLI(curTime);
+	writer.writeInt32CVLI(oldItemOffset);
+	
+	sl_int32 itemCount = itemData.getCount();
+	writer.writeInt32CVLI(itemCount);
+
+	auto itemIter = itemData.iterator();
+	Pair<String, Memory> pairValue;
+	while (itemIter.next(&pairValue)) {
+		writeItemData(writer, pairValue.key, pairValue.value);
+	}
+	
+	Memory item = writer.getData();
+
+	Memory encryption = Memory::create(item.getSize() + 256);
+	sl_size encryptSize = m_encryption.encrypt_CBC_PKCS7Padding(item.getBuf(), item.getSize(), encryption.getBuf());
+
+	Memory ret(encryption.getBuf(), encryptSize);
+	return ret;
+}
+
+sl_bool MapPackage::write(sl_int32 offsetX, sl_int32 offsetY, const Map<String, Memory>& itemData)
 {
 	sl_bool ret = sl_false;
-	if (m_flagOpen && data.isNotEmpty()) {
-		Memory packageItem = createItem(data, 0);
+	if (m_flagOpen && itemData.getCount() > 0) {
+		Memory packageItem = createItem(itemData, 0);
 		sl_int32 itemPosition = (sl_int32)m_pkgFile->getSize();
-		sl_int32 tblOffset = getTableOffset(offsetX, offsetY, offsetZoom);
+		sl_int32 tblOffset = getTableOffset(offsetX, offsetY);
 
 		m_pkgFile->seek(tblOffset, File::positionBegin);
 		sl_int32 nRet = m_pkgFile->write(&itemPosition, sizeof(sl_int32));
@@ -155,7 +209,20 @@ sl_bool MapPackage::write(sl_int32 offsetX, sl_int32 offsetY, sl_int32 offsetZoo
 		}
 
 		m_pkgFile->seekToEnd();
-		nRet = m_pkgFile->write(packageItem.getBuf(), packageItem.getSize());
+
+		sl_int32 itemIdentify = PACKAGE_ITEM_IDENTIFY;
+		nRet = m_pkgFile->write(&itemIdentify, sizeof(itemIdentify));
+		if (nRet != sizeof(itemIdentify)) {
+			return sl_false;
+		}
+
+		sl_int32 packageSize = packageItem.getSize();
+		nRet = m_pkgFile->write(&packageSize, sizeof(packageSize));
+		if (nRet != sizeof(packageSize)) {
+			return sl_false;
+		}
+
+		nRet = m_pkgFile->write(packageItem.getBuf(), packageSize);
 		if (nRet != packageItem.getSize()) {
 			return sl_false;
 		}
@@ -164,68 +231,55 @@ sl_bool MapPackage::write(sl_int32 offsetX, sl_int32 offsetY, sl_int32 offsetZoo
 	return ret;
 }
 
-Memory MapPackage::read(sl_int32 offsetX, sl_int32 offsetY, sl_int32 offsetZoom)
+Memory MapPackage::read(sl_int32 offsetX, sl_int32 offsetY, const String& subName)
 {
 	Memory ret;
 	sl_int32 currentVersion = 0;
-	sl_int32 itemOffset = getItemOffset(offsetX, offsetY, offsetZoom);
+	sl_int32 itemOffset = getItemOffset(offsetX, offsetY);
 	if (itemOffset != -1) {
-		ret = getDataFromItem(getItem(itemOffset));
+		Map<String, Memory> items = getDataFromItem(getItem(itemOffset));
+		Memory defaultItemValue;
+		ret = items.getValue(subName, defaultItemValue);
 	}
 	return ret;
 }
 
-Memory MapPackage::read(const String& dirPath, const MapTileLocation& loc, MapPackageType type)
+Memory MapPackage::read(const String& dirPath, const MapTileLocation& loc, const String& subName)
 {	
-	sl_int32 offsetX, offsetY, zoom;
-	String path = dirPath + _SLT("/") + getPackageFilePathAndOffset(loc, type, offsetX, offsetY, zoom);
+	sl_int32 offsetX, offsetY;
+	String path = dirPath + _SLT("/") + getPackageFilePathAndOffset(loc, offsetX, offsetY);
 	Memory ret;
-	if (open(path, type)) {
-		ret = read(offsetX, offsetY, zoom);
+	if (open(path, sl_true)) {
+		ret = read(offsetX, offsetY, subName);
 	}
+	close();
 	return ret;
 }
 
-sl_bool MapPackage::write(const String& dirPath, const MapTileLocation& loc, const Memory& data, MapPackageType type)
+sl_bool MapPackage::write(const String& dirPath, const MapTileLocation& loc, const Map<String, Memory>& itemData)
 {
-	sl_int32 offsetX, offsetY, zoom;
-	String path = dirPath + _SLT("/") +getPackageFilePathAndOffset(loc, type, offsetX, offsetY, zoom);
+	sl_int32 offsetX, offsetY;
+	String path = dirPath + _SLT("/") +getPackageFilePathAndOffset(loc, offsetX, offsetY);
 	sl_bool ret = sl_false;
-	if (open(path, type)) {
-		ret = write(offsetX, offsetY, zoom, data);
+	if (open(path, sl_false)) {
+		ret = write(offsetX, offsetY, itemData);
 	}
+	close();
 	return ret;
 }
 
-String MapPackage::getPackageFilePathAndOffset(const MapTileLocation& location, MapPackageType type, sl_int32& outX, sl_int32& outY, sl_int32& zoom)
+String MapPackage::getPackageFilePathAndOffset(const MapTileLocation& location, sl_int32& outX, sl_int32& outY)
 {
 	String zoomFolderPath = "";
-	zoom = location.level;
 	sl_int32 tilesNum = 1;
 
-	if (type == VWorldMap3DPackage || type == VWorldMapPackage) {
-		zoom = location.level + 4;
-	}
-	if (zoom <= 20 && zoom > 12) {
-		zoom = zoom - 13;
-		zoomFolderPath = _SLT("P13-20");
-	} else if (zoom <= 12 && zoom > 4) {
-		zoom = zoom - 5;
-		zoomFolderPath = _SLT("P05-12");
-	} else {
-		zoom = location.level;
-		zoomFolderPath = _SLT("P00-04");
-	}
-	
-	tilesNum = 2 << zoom;
-	
-	sl_int32 packageX = (sl_int32)(location.x / tilesNum);
-	sl_int32 packageY = (sl_int32)(location.y / tilesNum);
-	outX = (sl_int32)location.x % tilesNum;
-	outY = (sl_int32)location.y % tilesNum;
+	sl_int32 packageX = (sl_int32)(location.x / m_nTilesXNum);
+	sl_int32 packageY = (sl_int32)(location.y / m_nTilesYNum);
+	outX = (sl_int32)location.x % m_nTilesXNum;
+	outY = (sl_int32)location.y % m_nTilesYNum;
 
 	String filePath = String::fromInt32(packageX) + _SLT(".pkg");
-	String pkgPath = zoomFolderPath + _SLT("/") + String::fromInt32(packageY);
+	String pkgPath = String::fromInt32(location.level) + _SLT("/") + String::fromInt32(packageY);
 	
 	return pkgPath + _SLT("/") + filePath;
 }

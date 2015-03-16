@@ -36,12 +36,13 @@ Memory MapData_GenericFileLoader::loadData(const String& type, const MapTileLoca
 {
 	// map-standard-package
  	{
-		MapPackage pkgReader(_SLT("TestPackageKey"));
-		Memory mem = pkgReader.read(getBasePath() + _SLT("/") + type, location, MapPackage::VWorldMapPackage);
+		MapPackage pkgReader(_SLT("af347f25c8a5bfa782526529a9b63e97aa631453d5e7a9c1b765448c4634f5ef"), 256, 256);
+		Memory mem = pkgReader.read(getBasePath() + _SLT("/") + type, location);
 		if (mem.isNotEmpty()) {
 			return mem;
 		}
  	}
+
 	String prefix = getBasePath() + _SLT("/") + type + _SLT("/");
 	String packagePath;
 	String filePath;
