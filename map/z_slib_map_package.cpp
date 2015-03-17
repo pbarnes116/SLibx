@@ -59,7 +59,14 @@ sl_bool MapPackage::open(const String& filePath, sl_bool flagReadOnly)
 		create(filePath);
 		m_pkgFile->close();
 	}
-	sl_bool flagOpen = m_pkgFile->open(filePath, File::modeReadWriteNoTruncate);
+	sl_bool flagOpen;
+	if (flagReadOnly) {
+		flagOpen = m_pkgFile->open(filePath, File::modeRead);
+	}
+	else {
+		flagOpen = m_pkgFile->open(filePath, File::modeReadWriteNoTruncate);
+	}
+	
 	if (flagOpen && checkHeader()) {
 		m_flagOpen = sl_true;
 		return sl_true;
