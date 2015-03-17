@@ -43,7 +43,7 @@ class MapData_GenericFileLoader : public MapDataLoader
 {
 public:
 	MapData_GenericFileLoader();
-	MapData_GenericFileLoader(String basePath, String ext, String password);
+	MapData_GenericFileLoader(String basePath, String ext, String password, sl_uint32 packageDimension);
 
 public:
 	Memory loadData(const String& type, const MapTileLocation& location, const String& subPath);
@@ -51,6 +51,7 @@ public:
 	SLIB_PROPERTY_SIMPLE(String, BasePath);
 	SLIB_PROPERTY_SIMPLE(String, Ext);
 	SLIB_PROPERTY_SIMPLE(String, SecureFilePackagePassword);
+	SLIB_PROPERTY_SIMPLE(sl_uint32, PackageDimension);
 
 protected:
 	Memory _readData(const String& packagePath, const String& filePath);

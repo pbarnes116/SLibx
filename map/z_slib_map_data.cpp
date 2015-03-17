@@ -25,19 +25,20 @@ MapData_GenericFileLoader::MapData_GenericFileLoader()
 {
 }
 
-MapData_GenericFileLoader::MapData_GenericFileLoader(String basePath, String ext, String password)
+MapData_GenericFileLoader::MapData_GenericFileLoader(String basePath, String ext, String password, sl_uint32 packageDimension)
 {
 	setBasePath(basePath);
 	setExt(ext);
 	setSecureFilePackagePassword(password);
+	setPackageDimension(packageDimension);
 }
 
 Memory MapData_GenericFileLoader::loadData(const String& type, const MapTileLocation& location, const String& _subPath)
 {
 	// map-standard-package
  	{
-		MapPackage pkgReader(_SLT("af347f25c8a5bfa782526529a9b63e97aa631453d5e7a9c1b765448c4634f5ef"), 256, 256);
-		Memory mem = pkgReader.read(getBasePath() + _SLT("/") + type, location);
+		MapPackage pkgReader(getSecureFilePackagePassword(), getPackageDimension(), getPackageDimension());
+		Memory mem = pkgReader.read(getBasePath() + _SLT("/") + type, location, _subPath);
 		if (mem.isNotEmpty()) {
 			return mem;
 		}
