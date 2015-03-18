@@ -1,5 +1,6 @@
 ﻿#include "mapview.h"
 #include "vw_building_tile.h"
+#include "gis_tile.h"
 
 #define STATUS_WIDTH 2048
 #define STATUS_HEIGHT 40
@@ -19,6 +20,8 @@ MapView::MapView()
 	m_tileManagerDEM = new MapTileManager_DEM;
 	m_tileManagerVWBuilding = new MapTileManager_VWBuilding;
 
+	m_tileManagerGISLine = new MapTileManager_GIS_Line;
+	m_tileManagerGISPoi = new MapTileManager_GIS_Poi;
 	initializeDataLoader(new MapDataLoaderPack);
 
 }
@@ -32,6 +35,8 @@ void MapView::release()
 {
 	m_tileManagerDEM->release();
 	m_tileManagerVWBuilding->release();
+	m_tileManagerGISLine->release();
+	m_tileManagerGISPoi->release();
 }
 
 void MapView::initialize()
@@ -43,6 +48,11 @@ void MapView::initialize()
 
 	m_tileManagerVWBuilding->setDataLoader(getDataLoader());
 	m_tileManagerVWBuilding->initialize();
+
+	m_tileManagerGISLine->setDataLoader(getDataLoader());
+	m_tileManagerGISLine->initialize();
+	m_tileManagerGISPoi->setDataLoader(getDataLoader());
+	m_tileManagerGISPoi->initialize();
 
 	m_textureStatus = Texture::create(Image::create(STATUS_WIDTH, STATUS_HEIGHT));
 }
@@ -64,6 +74,8 @@ void MapView::onFrame(RenderEngine* engine)
 	m_tileManagerDEM->renderTiles(engine, m_environment);
 	m_tileManagerVWBuilding->renderTiles(engine, m_environment);
 
+	m_tileManagerGISLine->renderTiles(engine, m_environment);
+	m_tileManagerGISPoi->renderTiles(engine, m_environment);
 	// render status
 	if (0) {
 		Ref<FreeType> fontStatus = getStatusFont();

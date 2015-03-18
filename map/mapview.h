@@ -12,6 +12,8 @@
 
 SLIB_MAP_NAMESPACE_START
 class MapTileManager_VWBuilding;
+class MapTileManager_GIS_Line;
+class MapTileManager_GIS_Poi;
 class MapView : public RenderView
 {
 public:
@@ -40,7 +42,9 @@ protected:
 
 	Ref<MapTileManager_DEM> m_tileManagerDEM;
 	Ref<MapTileManager_VWBuilding> m_tileManagerVWBuilding;
-
+	
+	Ref<MapTileManager_GIS_Poi> m_tileManagerGISPoi;
+	Ref<MapTileManager_GIS_Line> m_tileManagerGISLine;
 	Ref<Texture> m_textureStatus;
 	
 	SLIB_PROPERTY_SIMPLE(Ref<FreeType>, StatusFont);
