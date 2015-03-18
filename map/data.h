@@ -64,6 +64,7 @@ public:
 	Ref<MapDataLoaderList> dem;
 	Ref<MapDataLoaderList> building;
 	Ref<MapDataLoaderList> gis;
+
 	SLIB_INLINE MapDataLoaderPack()
 	{
 		picture = new MapDataLoaderList;

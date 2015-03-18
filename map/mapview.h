@@ -45,6 +45,7 @@ protected:
 	
 	Ref<MapTileManager_GIS_Poi> m_tileManagerGISPoi;
 	Ref<MapTileManager_GIS_Line> m_tileManagerGISLine;
+
 	Ref<Texture> m_textureStatus;
 	
 	SLIB_PROPERTY_SIMPLE(Ref<FreeType>, StatusFont);
