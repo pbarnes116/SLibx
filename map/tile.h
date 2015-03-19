@@ -75,6 +75,8 @@ protected:
 	sl_uint32 m_nYTop;
 	sl_uint32 m_nXTop;
 
+	Ref<RenderEngine> m_engineResourceLoader;
+
 	Ref<MapEnvironment> m_environment;
 	Ref<Thread> m_threadManage;
 

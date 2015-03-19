@@ -187,6 +187,9 @@ void MapTileManager::_freeTile(MapTile* tile)
 
 void MapTileManager::renderTiles(RenderEngine* engine, MapEnvironment* environment)
 {
+	if (m_engineResourceLoader.isNull()) {
+		m_engineResourceLoader = engine->createSharedEngine();
+	}
 	_updateRenderState(environment);
 	ArrayInfo2D< Ref<MapTile> > tiles;
 	if (m_tilesTop.getInfo(tiles)) {
