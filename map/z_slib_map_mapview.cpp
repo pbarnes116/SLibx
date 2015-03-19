@@ -20,7 +20,7 @@ MapView::MapView()
 	m_tileManagerDEM = new MapTileManager_DEM;
 	m_tileManagerVWBuilding = new MapTileManager_VWBuilding;
 
-	m_tileManagerGISLine = new MapTileManager_GIS_Line;
+	m_tileManagerGISLine = new MapTileManager_GIS_Shape;
 	m_tileManagerGISPoi = new MapTileManager_GIS_Poi;
 	initializeDataLoader(new MapDataLoaderPack);
 

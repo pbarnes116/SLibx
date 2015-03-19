@@ -12,7 +12,7 @@
 
 SLIB_MAP_NAMESPACE_START
 class MapTileManager_VWBuilding;
-class MapTileManager_GIS_Line;
+class MapTileManager_GIS_Shape;
 class MapTileManager_GIS_Poi;
 class MapView : public RenderView
 {
@@ -44,7 +44,7 @@ protected:
 	Ref<MapTileManager_VWBuilding> m_tileManagerVWBuilding;
 	
 	Ref<MapTileManager_GIS_Poi> m_tileManagerGISPoi;
-	Ref<MapTileManager_GIS_Line> m_tileManagerGISLine;
+	Ref<MapTileManager_GIS_Shape> m_tileManagerGISLine;
 
 	Ref<Texture> m_textureStatus;
 	

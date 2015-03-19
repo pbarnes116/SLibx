@@ -15,12 +15,12 @@ public:
 	}
 };
 
-class _MapTile_GIS_Line : public MapTile
+class _MapTile_GIS_Shape : public MapTile
 {
 public:
-	List<GIS_Line> lines;
+	Map<GIS_SHAPE_TYPE, Ref<GIS_Shape>> shapes;
 
-	_MapTile_GIS_Line()
+	_MapTile_GIS_Shape()
 	{
 	}
 };
@@ -57,7 +57,7 @@ sl_bool MapTileManager_GIS_Poi::initializeTile(MapTile* _tile, MapTile* _parent)
 	loc.y = tile->y;
 
 	GIS_Poi_Tile t;
-	if (t.load(loader->building.getObject(), _SLT("gis/pois"), loc)) {
+	if (t.load(loader->gis.getObject(), _SLT("gis/poi"), loc)) {
 		tile->pois = t.pois;
 	}
 	return sl_true;
@@ -89,26 +89,26 @@ void MapTileManager_GIS_Poi::renderTiles(RenderEngine* engine, MapEnvironment* e
 }
 
 
-MapTileManager_GIS_Line::MapTileManager_GIS_Line()
+MapTileManager_GIS_Shape::MapTileManager_GIS_Shape()
 {
-	m_programTile = new RenderProgram3D_PositionNormalTexture_Diffuse;
+	m_programTile = new RenderProgram3D_Position;
 }
 
-void MapTileManager_GIS_Line::initialize()
+void MapTileManager_GIS_Shape::initialize()
 {
 	MapTileManager::initialize();
 	_initializeTopTiles(0, 5, 10);
 	setMaximumLevel(15);
 }
 
-Ref<MapTile> MapTileManager_GIS_Line::createTile()
+Ref<MapTile> MapTileManager_GIS_Shape::createTile()
 {
-	return new _MapTile_GIS_Line;
+	return new _MapTile_GIS_Shape;
 }
 
-sl_bool MapTileManager_GIS_Line::initializeTile(MapTile* _tile, MapTile* _parent)
+sl_bool MapTileManager_GIS_Shape::initializeTile(MapTile* _tile, MapTile* _parent)
 {
-	_MapTile_GIS_Line* tile = (_MapTile_GIS_Line*)_tile;
+	_MapTile_GIS_Shape* tile = (_MapTile_GIS_Shape*)_tile;
 
 	Ref<MapDataLoaderPack> loader = getDataLoader();
 	if (loader.isNull()) {
@@ -121,31 +121,41 @@ sl_bool MapTileManager_GIS_Line::initializeTile(MapTile* _tile, MapTile* _parent
 	loc.y = tile->y;
 
 	GIS_Line_Tile t;
-	if (t.load(loader->building.getObject(), _SLT("gis/lines"), loc)) {
-		tile->lines = t.lines;
+	if (t.load(loader->gis.getObject(), _SLT("gis/line"), loc)) {
+		tile->shapes = t.shapes;
 	}
 	return sl_true;
 }
 
-void MapTileManager_GIS_Line::freeTile(MapTile* _tile)
+void MapTileManager_GIS_Shape::freeTile(MapTile* _tile)
 {
-	_MapTile_GIS_Line* tile = (_MapTile_GIS_Line*)_tile;
-	tile->lines.clear();
+	_MapTile_GIS_Shape* tile = (_MapTile_GIS_Shape*)_tile;
+	tile->shapes.clear();
 }
 
-void MapTileManager_GIS_Line::renderTile(MapTile* _tile, RenderEngine* engine, MapEnvironment* environment)
+void MapTileManager_GIS_Shape::renderTile(MapTile* _tile, RenderEngine* engine, MapEnvironment* environment)
 {
-	_MapTile_GIS_Line* tile = (_MapTile_GIS_Line*)_tile;
-	ListLocker<GIS_Line> lines(tile->lines);
-	for (sl_size lineIndex = 0; lineIndex < lines.count(); lineIndex++) {
-		GIS_Line& line = lines[lineIndex];
+	_MapTile_GIS_Shape* tile = (_MapTile_GIS_Shape*)_tile;
 
-		//draw line
+	Iterator<Pair<GIS_SHAPE_TYPE, Ref<GIS_Shape>>> itemIter = tile->shapes.iterator();
+	Pair<GIS_SHAPE_TYPE, Ref<GIS_Shape>> pairValue;
+	while (itemIter.next(&pairValue)) {
+		ListLocker<GIS_Line> lines(pairValue.value->lines);
+		SLIB_SCOPED_ARRAY(Vector3, pos, lines.count() * 2);
+		for (sl_size lineIndex = 0; lineIndex < lines.count(); lineIndex++) {
+			GIS_Line& line = lines[lineIndex];
+			pos[lineIndex * 2] = Earth::getCartesianPosition(line.start);
+			pos[lineIndex * 2 + 1] = Earth::getCartesianPosition(line.end);
+		}
+		m_programTile->setDiffuseColor(pairValue.value->clr);
+		Ref<VertexBuffer> vb = VertexBuffer::create(pos, sizeof(Vector3)*lines.count() * 2);
+		engine->draw(m_programTile, lines.count() * 2, vb, Primitive::typeLines);
 	}
 }
 
-void MapTileManager_GIS_Line::renderTiles(RenderEngine* engine, MapEnvironment* environment)
+void MapTileManager_GIS_Shape::renderTiles(RenderEngine* engine, MapEnvironment* environment)
 {
+	engine->setDepthTest(sl_false);
 	m_programTile->setAmbientColor(Color(100, 100, 100));
 	m_programTile->setViewMatrix(environment->transformView);
 	m_programTile->setProjectionMatrix(environment->transformProjection);

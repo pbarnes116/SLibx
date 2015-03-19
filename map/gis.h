@@ -35,8 +35,24 @@ typedef enum GIS_SHAPE_TYPE {
 	, HighwayTeritary = 104
 	, HighwayResidental = 105
 	, HighwayExtra = 106
+
 	, Railway = 200
-	, Boundary = 300
+	, OneWay = 201
+	, AeroWay = 202
+	, WaterWay = 203
+	, FootWay = 204
+	, AerialWay = 205
+	, CycleWay = 206
+	
+	, Tunnel = 220
+	, Route = 221
+
+	, BoundaryStart = 300
+	, BoundaryAdmin = 301
+	, BoundaryMapBox = 302
+	, BoundaryProtectedArea = 303
+	, BoundaryExtra = 304
+	, BoundaryEnd = 350
 }GIS_SHAPE_TYPE;
 
 struct GIS_Poi
@@ -49,11 +65,30 @@ struct GIS_Poi
 struct GIS_Line
 {
 	sl_int64 id;
-	GIS_SHAPE_TYPE type;
 	LatLon start;
 	LatLon end;
 };
 
+class GIS_Shape : public Referable
+{
+public:
+	SLIB_INLINE GIS_Shape()
+	{
+		lines.clear();
+		type = ShapeTypeNone;
+		width = 0.f;
+		initShape();
+	}
+	~GIS_Shape()
+	{
+
+	}
+	void initShape();
+	GIS_SHAPE_TYPE type;
+	List<GIS_Line> lines;
+	Color clr;
+	sl_real width;
+};
 
 class GIS_Poi_Tile
 {
@@ -65,7 +100,7 @@ public:
 class GIS_Line_Tile
 {
 public:
-	List<GIS_Line> lines;
+	Map<GIS_SHAPE_TYPE, Ref<GIS_Shape>> shapes;
 	sl_bool load(Ref<MapDataLoader> loader, String type, const MapTileLocation& location);
 };
 

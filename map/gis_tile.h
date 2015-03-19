@@ -26,10 +26,10 @@ protected:
 	SLIB_PROPERTY_SIMPLE(Ref<MapDataLoaderPack>, DataLoader);
 };
 
-class MapTileManager_GIS_Line : public MapTileManager
+class MapTileManager_GIS_Shape : public MapTileManager
 {
 public:
-	MapTileManager_GIS_Line();
+	MapTileManager_GIS_Shape();
 
 	void initialize();
 
