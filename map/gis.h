@@ -26,35 +26,6 @@ typedef enum GISPOI_TYPE {
 	, PlaceEnd = 1100
 }GISPOI_TYPE;
 
-typedef enum GIS_SHAPE_TYPE {
-	ShapeTypeNone = 0
-	, HighwayMotor = 100
-	, HighwayTrunk = 101
-	, HighwayPrimary = 102
-	, HighwaySecondary = 103
-	, HighwayTeritary = 104
-	, HighwayResidental = 105
-	, HighwayExtra = 106
-
-	, Railway = 200
-	, OneWay = 201
-	, AeroWay = 202
-	, WaterWay = 203
-	, FootWay = 204
-	, AerialWay = 205
-	, CycleWay = 206
-	
-	, Tunnel = 220
-	, Route = 221
-
-	, BoundaryStart = 300
-	, BoundaryAdmin = 301
-	, BoundaryMapBox = 302
-	, BoundaryProtectedArea = 303
-	, BoundaryExtra = 304
-	, BoundaryEnd = 350
-}GIS_SHAPE_TYPE;
-
 struct GIS_Poi
 {
 	sl_int64 id;
@@ -75,8 +46,8 @@ public:
 	SLIB_INLINE GIS_Shape()
 	{
 		lines.clear();
-		type = ShapeTypeNone;
 		width = 0.f;
+		showMinLevel = 5;
 		initShape();
 	}
 	~GIS_Shape()
@@ -84,10 +55,16 @@ public:
 
 	}
 	void initShape();
-	GIS_SHAPE_TYPE type;
+
+	sl_int32 boundType;
+	sl_int32 highWayType;
+	sl_int32 extraType;
+	sl_int32 naturalType;
+
 	List<GIS_Line> lines;
 	Color clr;
 	sl_real width;
+	sl_int32 showMinLevel;
 };
 
 class GIS_Poi_Tile
@@ -100,7 +77,7 @@ public:
 class GIS_Line_Tile
 {
 public:
-	Map<GIS_SHAPE_TYPE, Ref<GIS_Shape>> shapes;
+	Map<sl_int32, Ref<GIS_Shape>> shapes;
 	sl_bool load(Ref<MapDataLoader> loader, String type, const MapTileLocation& location);
 };
 

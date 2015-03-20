@@ -18,7 +18,7 @@ public:
 class _MapTile_GIS_Shape : public MapTile
 {
 public:
-	Map<GIS_SHAPE_TYPE, Ref<GIS_Shape>> shapes;
+	Map<sl_int32, Ref<GIS_Shape>> shapes;
 
 	_MapTile_GIS_Shape()
 	{
@@ -124,6 +124,9 @@ sl_bool MapTileManager_GIS_Shape::initializeTile(MapTile* _tile, MapTile* _paren
 	if (t.load(loader->gis.getObject(), _SLT("gis/line"), loc)) {
 		tile->shapes = t.shapes;
 	}
+// 	else if (t.load(loader->gis.getObject(), _SLT("gis/line1"), loc)) {
+// 		tile->shapes = t.shapes;
+// 	}
 	return sl_true;
 }
 
@@ -137,19 +140,23 @@ void MapTileManager_GIS_Shape::renderTile(MapTile* _tile, RenderEngine* engine, 
 {
 	_MapTile_GIS_Shape* tile = (_MapTile_GIS_Shape*)_tile;
 
-	Iterator<Pair<GIS_SHAPE_TYPE, Ref<GIS_Shape>>> itemIter = tile->shapes.iterator();
-	Pair<GIS_SHAPE_TYPE, Ref<GIS_Shape>> pairValue;
+	Iterator<Pair<sl_int32, Ref<GIS_Shape>>> itemIter = tile->shapes.iterator();
+	Pair<sl_int32, Ref<GIS_Shape>> pairValue;
 	while (itemIter.next(&pairValue)) {
-		ListLocker<GIS_Line> lines(pairValue.value->lines);
+		Ref<GIS_Shape> shape = pairValue.value;
+		ListLocker<GIS_Line> lines(shape->lines);
 		SLIB_SCOPED_ARRAY(Vector3, pos, lines.count() * 2);
 		for (sl_size lineIndex = 0; lineIndex < lines.count(); lineIndex++) {
 			GIS_Line& line = lines[lineIndex];
 			pos[lineIndex * 2] = Earth::getCartesianPosition(line.start);
 			pos[lineIndex * 2 + 1] = Earth::getCartesianPosition(line.end);
 		}
-		m_programTile->setDiffuseColor(pairValue.value->clr);
-		Ref<VertexBuffer> vb = VertexBuffer::create(pos, sizeof(Vector3)*lines.count() * 2);
-		engine->draw(m_programTile, lines.count() * 2, vb, Primitive::typeLines);
+		m_programTile->setDiffuseColor(shape->clr);
+		sl_bool flagShow = sl_true;
+		if (flagShow && _tile->level > shape->showMinLevel - 1) {
+			Ref<VertexBuffer> vb = VertexBuffer::create(pos, sizeof(Vector3)*lines.count() * 2);
+			engine->draw(m_programTile, lines.count() * 2, vb, Primitive::typeLines);
+		}
 	}
 }
 
