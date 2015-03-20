@@ -109,6 +109,9 @@ void MapTileManager::_runThreadManageTileStep()
 {
 	m_timeCurrent = Time::now();
 	if (m_environment.isNotNull()) {
+		if (m_engineResourceLoader.isNotNull()) {
+			m_engineResourceLoader->beginScene();
+		}
 		ArrayInfo2D< Ref<MapTile> > tiles;
 		if (m_tilesTop.getInfo(tiles)) {
 			for (sl_size y = 0; y < tiles.height; y++) {
@@ -123,6 +126,9 @@ void MapTileManager::_runThreadManageTileStep()
 		if ((m_timeCurrent - m_timeLastRenderRequest).getMillisecondsCount() > 1000) {
 			m_environment->requestRender();
 			m_timeLastRenderRequest = m_timeCurrent;
+		}
+		if (m_engineResourceLoader.isNotNull()) {
+			m_engineResourceLoader->endScene();
 		}
 	}
 }

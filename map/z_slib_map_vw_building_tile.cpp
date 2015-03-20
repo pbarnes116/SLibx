@@ -48,6 +48,17 @@ sl_bool MapTileManager_VWBuilding::initializeTile(MapTile* _tile, MapTile* _pare
 
 	VW_Building_Tile t;
 	if (t.load(loader->building.getObject(), _SLT("real3d/facility_build"), loc)) {
+		ListLocker<VW_Building> buildings(t.buildings);
+		for (sl_size iBuilding = 0; iBuilding < buildings.count(); iBuilding++) {
+			VW_Building& building = buildings[iBuilding];
+			ListLocker<VW_Building_Mesh> meshes(building.meshes);
+			for (sl_size iMesh = 0; iMesh < meshes.count(); iMesh++) {
+				VW_Building_Mesh& mesh = meshes[iMesh];
+				m_engineResourceLoader->linkTexture(mesh.texture);
+				m_engineResourceLoader->linkVertexBuffer(mesh.vb);
+				m_engineResourceLoader->linkIndexBuffer(mesh.ib);
+			}
+		}
 		tile->buildings = t.buildings;
 	}
 	return sl_true;

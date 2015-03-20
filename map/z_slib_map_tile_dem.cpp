@@ -208,6 +208,9 @@ sl_bool MapTileManager_DEM::initializeTile(MapTile* _tile, MapTile* _parent)
 			tile->texture->setFreeSourceOnUpdate(sl_true);
 			tile->rectPicture = Rectangle(0, 0, 1, 1);
 		}
+		if (m_engineResourceLoader.isNotNull()) {
+			m_engineResourceLoader->linkTexture(tile->texture);
+		}
 	}
 	// dem - dem
 	{
