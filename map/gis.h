@@ -10,20 +10,30 @@ SLIB_MAP_NAMESPACE_START
 
 
 typedef enum GISPOI_TYPE {
-	NodeTypeNone = 0
-	, Amenity = 100
-	, Historic = 200
-	, Military = 300
-	, Natural = 400
-	, Tourism = 500
-	, RailStation = 600
-	, PlaceStart = 1000
-	, PlaceCountry = 1000
-	, PlaceState = 1001
-	, PlaceCity = 1002
-	, PlaceVilliage = 1003			
-	, PlaceExtra = 1004
-	, PlaceEnd = 1100
+	POITypeNone = 0
+	, AmenityStart = 1
+	, Transport = 10
+	, ServiceBuilding = 20
+	, Tourism = 30
+	, Healthcare = 40
+	, SocialBuilding = 50
+	, Education = 60
+	, LiteratureBuilding = 70
+	, OtherBuilding = 80
+	, AmenityEnd = 99
+
+	, PlaceStart = 100
+	, PlaceCountry = 110
+	, PlaceState = 109
+	, PlaceCity = 108
+	, PlaceVilliage = 107			
+	, PlaceExtra = 101
+	, PlaceEnd = 110
+
+	, Historic =  120
+	, Military = 130
+	, Natural = 140
+	, RailStation = 160
 }GISPOI_TYPE;
 
 struct GIS_Poi
@@ -56,15 +66,15 @@ public:
 	}
 	void initShape();
 
-	sl_int32 boundType;
-	sl_int32 highWayType;
-	sl_int32 extraType;
-	sl_int32 naturalType;
+	sl_uint32 boundType;
+	sl_uint32 highWayType;
+	sl_uint32 extraType;
+	sl_uint32 naturalType;
 
 	List<GIS_Line> lines;
 	Color clr;
 	sl_real width;
-	sl_int32 showMinLevel;
+	sl_uint32 showMinLevel;
 };
 
 class GIS_Poi_Tile
