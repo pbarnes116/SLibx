@@ -1,8 +1,19 @@
 #include "util.h"
+#include "../../slib/core/hashtable.h"
 
 SLIB_MAP_NAMESPACE_START
 
-String MapTilePath::makeGenericStylePath(const MapTileLocation& location, String* _packagePath, String* _filePath)
+sl_uint32 hashCode(const MapTileLocationi& location)
+{
+	sl_uint64 c = location.level;
+	c <<= 30;
+	c ^= location.y;
+	c <<= 30;
+	c ^= location.x;
+	return hashCode(c);
+}
+
+String MapTilePath::makeGenericStylePath(const MapTileLocationi& location, String* _packagePath, String* _filePath)
 {
 	String packagePath;
 	packagePath += location.level;
@@ -19,7 +30,7 @@ String MapTilePath::makeGenericStylePath(const MapTileLocation& location, String
 	return packagePath + _SLT("/") + filePath;
 }
 
-String MapTilePath::makeVWStylePath(const MapTileLocation& location, String* _packagePath, String* _filePath)
+String MapTilePath::makeVWStylePath(const MapTileLocationi& location, String* _packagePath, String* _filePath)
 {
 	String packagePath;
 	packagePath += location.level;

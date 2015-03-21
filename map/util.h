@@ -9,19 +9,44 @@
 
 SLIB_MAP_NAMESPACE_START
 
-class MapTileLocation
+template <class T>
+class MapTileLocationT
 {
 public:
 	sl_uint32 level;
-	double y; // latitude
-	double x; // longitude
+	T y; // latitude
+	T x; // longitude
+
+	SLIB_INLINE MapTileLocationT() {}
+
+	template <class O>
+	SLIB_INLINE MapTileLocationT(const MapTileLocationT<O>& other)
+	{
+		level = (T)(other.level);
+		y = (T)(other.y);
+		x = (T)(other.x);
+	}
+
+	template <class O>
+	SLIB_INLINE MapTileLocationT<T>& operator=(const MapTileLocationT<O>& other)
+	{
+		level = (T)(other.level);
+		y = (T)(other.y);
+		x = (T)(other.x);
+		return *this;
+	}
 };
+
+typedef MapTileLocationT<double> MapTileLocation;
+typedef MapTileLocationT<sl_int32> MapTileLocationi;
+
+sl_uint32 hashCode(const MapTileLocationi& location);
 
 class MapTilePath
 {
 public:
-	static String makeGenericStylePath(const MapTileLocation& location, String* packagePath = sl_null, String* filePath = sl_null);
-	static String makeVWStylePath(const MapTileLocation& location, String* packagePath = sl_null, String* filePath = sl_null);
+	static String makeGenericStylePath(const MapTileLocationi& location, String* packagePath = sl_null, String* filePath = sl_null);
+	static String makeVWStylePath(const MapTileLocationi& location, String* packagePath = sl_null, String* filePath = sl_null);
 };
 
 SLIB_MAP_NAMESPACE_END

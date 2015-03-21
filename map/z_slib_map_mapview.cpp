@@ -245,7 +245,7 @@ void MapView::onAccelerometerChanged(Sensor* sensor, sl_real _xAccel, sl_real _y
 	sl_real diff = yAccel - m_sensorBeforeAccelY;
 	if (loc.altitude < 10000 && Math::abs(diff) > 0.2) {
 		sl_real oldTilt = m_environment->cameraViewEarth->getTilt();
-		sl_real newTilt = oldTilt + diff / 0.08;
+		sl_real newTilt = (sl_real)(oldTilt + diff / 0.08);
 		if (newTilt < 0) {
 			newTilt = 0;
 		} 

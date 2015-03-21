@@ -1,6 +1,0 @@
-#include "image.h"
-
-SLIB_MAP_NAMESPACE_START
-
-
-SLIB_MAP_NAMESPACE_END

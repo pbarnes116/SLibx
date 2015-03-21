@@ -110,56 +110,46 @@ void GIS_Shape::initShape()
 		clr = Color::Yellow;
 		if (boundType < 5) {
 			showMinLevel = 5;
-		}
-		else if (boundType < 8) {
+		} else if (boundType < 8) {
 			showMinLevel = 10;
-		}
-		else {
+		} else {
 			showMinLevel = 13;
 		}
 		if (highWayType > 0) {
-			if (highWayType < 2) { //고속도로 - 1
+			if (highWayType < 2) {
 				clr = Color::LightSalmon;
 				showMinLevel = 7;
-			}
-			else if (highWayType < 3) { //고속도로 - 2
+			} else if (highWayType < 3) {
 				clr = Color::LightSalmon;
 				showMinLevel = 9;
 			}
 		}
 		
 	} else if (highWayType > 0) {
-		if (highWayType < 2) { //고속도로 - 1
+		if (highWayType < 2) {
 			clr = Color::LightSalmon;
 			showMinLevel = 7;
-		}
-		else if (highWayType < 4) { //고속도로 - 2
+		} else if (highWayType < 4) {
 			clr = Color::LightSalmon;
 			showMinLevel = 9;
-		}
-		else if (highWayType == 4) {//도시도로 - 3
+		} else if (highWayType == 4) {
 			clr = Color::LightSalmon;
 			showMinLevel = 11;
-		}
-		else if (highWayType < 7) { // 간선도로 - 4
+		} else if (highWayType < 7) {
 			clr = Color::LightSalmon;
 			showMinLevel = 13;
-		}
-		else{
-			clr = Color::White; // 일반 도로
+		} else {
+			clr = Color::White;
 			showMinLevel = 14;
 		}
 	} else if (extraType > 0) {
 		if (extraType == 1 || extraType == 4) {
-			clr = Color::LightCyan; //항공항로
-		}
-		else if (extraType == 2) {
-			clr = Color::LightBlue; // 해협, 강, 해상통로
-		}
-		else if (extraType == 3) { //철도선
+			clr = Color::LightCyan; 
+		} else if (extraType == 2) {
+			clr = Color::LightBlue; 
+		} else if (extraType == 3) {
 			clr = Color::Brown;
-		}
-		else if (extraType == 5 || extraType == 6) { //자전거, 인도로
+		} else if (extraType == 5 || extraType == 6) {
 			clr = Color::LightGreen;
 		}
 	}
