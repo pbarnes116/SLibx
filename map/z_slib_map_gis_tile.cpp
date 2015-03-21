@@ -153,7 +153,7 @@ void MapTileManager_GIS_Shape::renderTile(MapTile* _tile, RenderEngine* engine, 
 		}
 		m_programTile->setDiffuseColor(shape->clr);
 		sl_bool flagShow = sl_true;
-		if (flagShow && _tile->level > shape->showMinLevel - 1) {
+		if (flagShow && (sl_int32)(_tile->level) > shape->showMinLevel - 1) {
 			Ref<VertexBuffer> vb = VertexBuffer::create(pos, sizeof(Vector3)*lines.count() * 2);
 			engine->draw(m_programTile, lines.count() * 2, vb, Primitive::typeLines);
 		}

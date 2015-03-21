@@ -109,26 +109,26 @@ void MapTileManager::_runThreadManageTileStep()
 {
 	m_timeCurrent = Time::now();
 	if (m_environment.isNotNull()) {
-		if (m_engineResourceLoader.isNotNull()) {
-			m_engineResourceLoader->beginScene();
-		}
-		ArrayInfo2D< Ref<MapTile> > tiles;
-		if (m_tilesTop.getInfo(tiles)) {
-			for (sl_size y = 0; y < tiles.height; y++) {
-				for (sl_size x = 0; x < tiles.width; x++) {
-					Ref<MapTile> tile = tiles.item(x, y);
-					if (tile.isNotNull()) {
-						_initializeTile(tile, sl_null);
+		Ref<RenderEngine> engine = m_engineResourceLoader;
+		if (engine.isNotNull() && engine->isValid()) {
+			if (engine->beginScene()) {
+				ArrayInfo2D< Ref<MapTile> > tiles;
+				if (m_tilesTop.getInfo(tiles)) {
+					for (sl_size y = 0; y < tiles.height; y++) {
+						for (sl_size x = 0; x < tiles.width; x++) {
+							Ref<MapTile> tile = tiles.item(x, y);
+							if (tile.isNotNull()) {
+								_initializeTile(tile, sl_null);
+							}
+						}
 					}
 				}
+				if ((m_timeCurrent - m_timeLastRenderRequest).getMillisecondsCount() > 1000) {
+					m_environment->requestRender();
+					m_timeLastRenderRequest = m_timeCurrent;
+				}
+				engine->endScene();
 			}
-		}
-		if ((m_timeCurrent - m_timeLastRenderRequest).getMillisecondsCount() > 1000) {
-			m_environment->requestRender();
-			m_timeLastRenderRequest = m_timeCurrent;
-		}
-		if (m_engineResourceLoader.isNotNull()) {
-			m_engineResourceLoader->endScene();
 		}
 	}
 }
@@ -193,8 +193,9 @@ void MapTileManager::_freeTile(MapTile* tile)
 
 void MapTileManager::renderTiles(RenderEngine* engine, MapEnvironment* environment)
 {
-	if (m_engineResourceLoader.isNull()) {
+	if (m_engineResourceLoader.isNull() || !(m_engineResourceLoader->isValid())) {
 		m_engineResourceLoader = engine->createSharedEngine();
+		_initializeTopTiles(m_levelTop, m_nYTop, m_nXTop);
 	}
 	_updateRenderState(environment);
 	ArrayInfo2D< Ref<MapTile> > tiles;

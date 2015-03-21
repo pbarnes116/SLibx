@@ -79,7 +79,7 @@ public:
 		String source;
 #ifdef SLIB_RENDER_SUPPORT_OPENGL_ES2
 		source = SLIB_STRINGIFY(
-			precision mediump float;
+			precision highp float;
 			uniform mat4 u_Transform;
 			attribute vec3 a_Position;
 			attribute vec2 a_TexCoord;
@@ -102,7 +102,7 @@ public:
 		String source;
 #ifdef SLIB_RENDER_SUPPORT_OPENGL_ES2
 		source = SLIB_STRINGIFY(
-			precision mediump float;
+			precision highp float;
 			uniform sampler2D u_Texture;
 			varying vec2 v_TexCoord;
 			void main() {
@@ -126,7 +126,7 @@ public:
 		String source;
 #ifdef SLIB_RENDER_SUPPORT_OPENGL_ES2
 		source = SLIB_STRINGIFY(
-			precision mediump float;
+			precision highp float;
 			varying vec2 v_TexCoord;
 			void main() {
 				gl_FragColor = vec4(v_TexCoord.x, v_TexCoord.y, 0.0, 1.0);
