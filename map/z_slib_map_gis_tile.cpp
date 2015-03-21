@@ -1,6 +1,6 @@
 #include "data_gis.h"
 #include "gis_tile.h"
-
+#include "../../slib/core/log.h"
 #include "../../slib/render/opengl.h"
 
 SLIB_MAP_NAMESPACE_START
@@ -155,6 +155,7 @@ void MapTileManager_GIS_Shape::renderTile(MapTile* _tile, RenderEngine* engine, 
 		sl_bool flagShow = sl_true;
 		if (flagShow && (sl_int32)(_tile->level) > shape->showMinLevel - 1) {
 			Ref<VertexBuffer> vb = VertexBuffer::create(pos, sizeof(Vector3)*lines.count() * 2);
+			SLIB_LOG("TEST", "Draw Lines");
 			engine->draw(m_programTile, lines.count() * 2, vb, Primitive::typeLines);
 		}
 	}
