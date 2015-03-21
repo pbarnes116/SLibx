@@ -1,4 +1,4 @@
-#include "vw_building.h"
+#include "data_vwbuilding.h"
 #include "vw_building_tile.h"
 
 #include "../../slib/render/opengl.h"

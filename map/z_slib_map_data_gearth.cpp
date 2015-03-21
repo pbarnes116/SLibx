@@ -1,4 +1,4 @@
-#include "gearth_tile.h"
+#include "data_gearth.h"
 
 #include "../../slib/core/io.h"
 

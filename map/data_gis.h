@@ -1,5 +1,5 @@
-﻿#ifndef CHECKHEADER_SLIB_MAP_GIS
-#define CHECKHEADER_SLIB_MAP_GIS
+﻿#ifndef CHECKHEADER_SLIB_MAP_DATA_GIS
+#define CHECKHEADER_SLIB_MAP_DATA_GIS
 
 #include "definition.h"
 
