@@ -1,4 +1,4 @@
-#include "vw_building.h"
+#include "data_vwbuilding.h"
 
 #include "../../slib/core/io.h"
 
