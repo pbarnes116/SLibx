@@ -34,6 +34,13 @@ typedef enum GISPOI_TYPE {
 	, Military = 130
 	, Natural = 140
 	, RailStation = 160
+
+	, Hospital = 200
+	, Restraunt = 201
+	, Hotel = 202
+	, Parking = 203
+	, FillingStation = 204
+
 }GISPOI_TYPE;
 
 struct GIS_Poi
