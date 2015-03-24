@@ -251,7 +251,7 @@ Memory MapPackage::read(sl_int32 offsetX, sl_int32 offsetY, const String& subNam
 	return ret;
 }
 
-Memory MapPackage::read(const String& dirPath, const MapTileLocation& loc, const String& subName)
+Memory MapPackage::read(const String& dirPath, const MapTileLocationi& loc, const String& subName)
 {	
 	sl_int32 offsetX, offsetY;
 	String path = dirPath + _SLT("/") + getPackageFilePathAndOffset(loc, offsetX, offsetY);
@@ -263,7 +263,7 @@ Memory MapPackage::read(const String& dirPath, const MapTileLocation& loc, const
 	return ret;
 }
 
-sl_bool MapPackage::write(const String& dirPath, const MapTileLocation& loc, const Map<String, Memory>& itemData)
+sl_bool MapPackage::write(const String& dirPath, const MapTileLocationi& loc, const Map<String, Memory>& itemData)
 {
 	sl_int32 offsetX, offsetY;
 	String path = dirPath + _SLT("/") +getPackageFilePathAndOffset(loc, offsetX, offsetY);
@@ -275,15 +275,15 @@ sl_bool MapPackage::write(const String& dirPath, const MapTileLocation& loc, con
 	return ret;
 }
 
-String MapPackage::getPackageFilePathAndOffset(const MapTileLocation& location, sl_int32& outX, sl_int32& outY)
+String MapPackage::getPackageFilePathAndOffset(const MapTileLocationi& location, sl_int32& outX, sl_int32& outY)
 {
 	String zoomFolderPath = "";
 	sl_int32 tilesNum = 1;
 
-	sl_int32 packageX = (sl_int32)(location.x / m_nTilesXNum);
-	sl_int32 packageY = (sl_int32)(location.y / m_nTilesYNum);
-	outX = (sl_int32)location.x % m_nTilesXNum;
-	outY = (sl_int32)location.y % m_nTilesYNum;
+	sl_int32 packageX = location.x / m_nTilesXNum;
+	sl_int32 packageY = location.y / m_nTilesYNum;
+	outX = location.x % m_nTilesXNum;
+	outY = location.y % m_nTilesYNum;
 
 	String filePath = String::fromInt32(packageX) + _SLT(".pkg");
 	String pkgPath = String::fromInt32(location.level) + _SLT("/") + String::fromInt32(packageY);

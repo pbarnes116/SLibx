@@ -17,8 +17,8 @@ protected:
 	SLIB_INLINE MapDataLoader() {}
 
 public:
-	virtual Memory loadData(const String& type, const MapTileLocation& location, const String& subPath) = 0;
-	SLIB_INLINE Memory loadData(const String& type, const MapTileLocation& location)
+	virtual Memory loadData(const String& type, const MapTileLocationi& location, const String& subPath) = 0;
+	SLIB_INLINE Memory loadData(const String& type, const MapTileLocationi& location)
 	{
 		return loadData(type, location, String::null());
 	}
@@ -29,8 +29,8 @@ class MapDataLoaderList : public MapDataLoader
 public:
 	SLIB_INLINE MapDataLoaderList() {}
 
-	Memory loadData(const String& type, const MapTileLocation& location, const String& subPath);
-	SLIB_INLINE Memory loadData(const String& type, const MapTileLocation& location)
+	Memory loadData(const String& type, const MapTileLocationi& location, const String& subPath);
+	SLIB_INLINE Memory loadData(const String& type, const MapTileLocationi& location)
 	{
 		return loadData(type, location, String::null());
 	}
@@ -43,35 +43,17 @@ class MapData_GenericFileLoader : public MapDataLoader
 {
 public:
 	MapData_GenericFileLoader();
-	MapData_GenericFileLoader(String basePath, String ext, String password, sl_uint32 packageDimension);
+	MapData_GenericFileLoader(String basePath, String password, sl_uint32 packageDimension);
 
 public:
-	Memory loadData(const String& type, const MapTileLocation& location, const String& subPath);
+	Memory loadData(const String& type, const MapTileLocationi& location, const String& subPath);
 
 	SLIB_PROPERTY_SIMPLE(String, BasePath);
-	SLIB_PROPERTY_SIMPLE(String, Ext);
 	SLIB_PROPERTY_SIMPLE(String, SecureFilePackagePassword);
 	SLIB_PROPERTY_SIMPLE(sl_uint32, PackageDimension);
 
 protected:
 	Memory _readData(const String& packagePath, const String& filePath);
-};
-
-class MapDataLoaderPack : public Referable
-{
-public:
-	Ref<MapDataLoaderList> picture;
-	Ref<MapDataLoaderList> dem;
-	Ref<MapDataLoaderList> building;
-	Ref<MapDataLoaderList> gis;
-
-	SLIB_INLINE MapDataLoaderPack()
-	{
-		picture = new MapDataLoaderList;
-		dem = new MapDataLoaderList;
-		building = new MapDataLoaderList;
-		gis = new MapDataLoaderList;
-	}
 };
 
 SLIB_MAP_NAMESPACE_END

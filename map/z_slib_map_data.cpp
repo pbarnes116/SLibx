@@ -6,7 +6,7 @@
 
 SLIB_MAP_NAMESPACE_START
 
-Memory MapDataLoaderList::loadData(const String& type, const MapTileLocation& location, const String& subPath)
+Memory MapDataLoaderList::loadData(const String& type, const MapTileLocationi& location, const String& subPath)
 {
 	ListLocker< Ref<MapDataLoader> > loaders(list);
 	for (sl_size i = 0; i < loaders.count(); i++) {
@@ -25,20 +25,23 @@ MapData_GenericFileLoader::MapData_GenericFileLoader()
 {
 }
 
-MapData_GenericFileLoader::MapData_GenericFileLoader(String basePath, String ext, String password, sl_uint32 packageDimension)
+MapData_GenericFileLoader::MapData_GenericFileLoader(String basePath, String password, sl_uint32 packageDimension)
 {
 	setBasePath(basePath);
-	setExt(ext);
 	setSecureFilePackagePassword(password);
 	setPackageDimension(packageDimension);
 }
 
-Memory MapData_GenericFileLoader::loadData(const String& type, const MapTileLocation& location, const String& _subPath)
+Memory MapData_GenericFileLoader::loadData(const String& type, const MapTileLocationi& location, const String& _subPath)
 {
 	// map-standard-package
  	{
 		MapPackage pkgReader(getSecureFilePackagePassword(), getPackageDimension(), getPackageDimension());
-		Memory mem = pkgReader.read(getBasePath() + _SLT("/") + type, location, _subPath);
+		String subPath = _subPath;
+		if (!subPath.startsWith('/')) {
+			subPath = String::null();
+		}
+		Memory mem = pkgReader.read(getBasePath() + _SLT("/") + type, location, subPath);
 		if (mem.isNotEmpty()) {
 			return mem;
 		}
@@ -50,14 +53,7 @@ Memory MapData_GenericFileLoader::loadData(const String& type, const MapTileLoca
 	// generic style path
 	{
 		MapTilePath::makeGenericStylePath(location, &packagePath, &filePath);
-		String subPath = _subPath;
-		if (subPath.isNotEmpty()) {
-			filePath += _SLT("/");
-			filePath += subPath;
-		} else {
-			filePath += _SLT(".");
-			filePath += getExt();
-		}
+		filePath += _subPath;
 		Memory ret = _readData(prefix + packagePath, filePath);
 		if (ret.isNotEmpty()) {
 			return ret;
@@ -66,14 +62,7 @@ Memory MapData_GenericFileLoader::loadData(const String& type, const MapTileLoca
 	// vw-style path
 	{
 		MapTilePath::makeVWStylePath(location, &packagePath, &filePath);
-		String subPath = _subPath;
-		if (subPath.isNotEmpty()) {
-			filePath += _SLT("/");
-			filePath += subPath;
-		} else {
-			filePath += _SLT(".");
-			filePath += getExt();
-		}
+		filePath += _subPath;
 		Memory ret = _readData(prefix + packagePath, filePath);
 		if (ret.isNotEmpty()) {
 			return ret;

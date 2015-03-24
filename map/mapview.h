@@ -4,16 +4,14 @@
 #include "definition.h"
 
 #include "environment.h"
-#include "tile.h"
+#include "earth.h"
 #include "data.h"
 
 #include "../../slib/ui/view.h"
 #include "../../slib/image/freetype.h"
 #include "../../slib/sensor.h"
+
 SLIB_MAP_NAMESPACE_START
-class MapTileManager_VWBuilding;
-class MapTileManager_GIS_Shape;
-class MapTileManager_GIS_Poi;
 
 class SensorCallback
 {
@@ -107,19 +105,15 @@ protected:
 
 	Ref<MapEnvironment> m_environment;
 
-	Ref<MapTileManager_DEM> m_tileManagerDEM;
-	Ref<MapTileManager_VWBuilding> m_tileManagerVWBuilding;
-	
-	Ref<MapTileManager_GIS_Poi> m_tileManagerGISPoi;
-	Ref<MapTileManager_GIS_Shape> m_tileManagerGISLine;
+	Ref<MapEarthRenderer> m_earthRenderer;
 
 	Ref<Texture> m_textureStatus;
 
 	Ref<Sensor> m_sensor;
-	Ref<SensorListener> m_sensorListner;
+	Ref<SensorListener> m_sensorListener;
 	
 	SLIB_PROPERTY_SIMPLE(Ref<FreeType>, StatusFont);
-	SLIB_PROPERTY_SIMPLE(Ref<MapDataLoaderPack>, DataLoader);
+	SLIB_PROPERTY_SIMPLE(Ref<MapDataLoader>, DataLoader);
 
 protected:
 	sl_real m_mouseBeforeX;

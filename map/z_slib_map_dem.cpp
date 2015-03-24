@@ -6,9 +6,9 @@
 SLIB_MAP_NAMESPACE_START
 sl_bool DEM::initialize(sl_uint32 _N)
 {
-	Array<double> _array = Array<double>::create(_N * _N);
+	Array<float> _array = Array<float>::create(_N * _N);
 	if (_array.isNotEmpty()) {
-		double* _dem = _array.getBuf();
+		float* _dem = _array.getBuf();
 		for (sl_size i = 0; i < _array.count(); i++) {
 			_dem[i] = 0;
 		}
@@ -28,7 +28,7 @@ sl_bool DEM::initializeFromFloatData(sl_uint32 _N, const void* _data, sl_size si
 	if (!initialize(_N)) {
 		return sl_false;
 	}
-	double* _dem = dem;
+	float* _dem = dem;
 	sl_uint8* data = (sl_uint8*)_data;
 	for (sl_uint32 y = 0; y < _N; y++) {
 		for (sl_uint32 x = 0; x < _N; x++) {
@@ -40,11 +40,73 @@ sl_bool DEM::initializeFromFloatData(sl_uint32 _N, const void* _data, sl_size si
 	return sl_true;
 }
 
-void DEM::makeMesh(Primitive& out, sl_uint32 M, const GeoRectangle& region, const Rectangle& rectDEM, const Rectangle& rectTexture)
+void DEM::scaleDEM(float* o, sl_uint32 M, const Rectangle& rectDEM) const
 {
 	if (M <= 1) {
 		return;
 	}
+	sl_real mx0 = rectDEM.left * (N - 1);
+	sl_real my0 = rectDEM.top * (N - 1);
+	sl_real mx1 = rectDEM.right * (N - 1);
+	sl_real my1 = rectDEM.bottom * (N - 1);
+	sl_real dmx = mx1 - mx0;
+	sl_real dmy = my1 - my0;
+	
+	float* po = o;
+	for (sl_uint32 y = 0; y < M; y++) {
+		for (sl_uint32 x = 0; x < M; x++) {
+			float altitude;
+			if (N >= 2) {
+				sl_real mx = mx0 + dmx * x / (M - 1);
+				sl_real my = my0 + dmy * y / (M - 1);
+				sl_int32 mxi = (sl_int32)(mx);
+				sl_int32 myi = (sl_int32)(my);
+				sl_real mxf;
+				sl_real myf;
+				if (mxi < 0) {
+					mxi = 0;
+					mxf = 0;
+				} else if (mxi >= (sl_int32)N - 1) {
+					mxi = N - 2;
+					mxf = 1;
+				} else {
+					mxf = mx - mxi;
+				}
+				if (myi < 0) {
+					myi = 0;
+					myf = 0;
+				} else if (myi >= (sl_int32)N - 1) {
+					myi = N - 2;
+					myf = 1;
+				} else {
+					myf = my - myi;
+				}
+				sl_int32 p = mxi + myi * N;
+				altitude =
+					(1 - mxf) * (1 - myf) * dem[p]
+					+ (1 - mxf) * myf * dem[p + N]
+					+ mxf * (1 - myf) * dem[p + 1]
+					+ mxf * myf * dem[p + 1 + N];
+			} else {
+				altitude = 0;
+			}
+			*po = altitude;
+			po++;
+		}
+	}
+}
+
+template <class GLOBE>
+void _DEM_makeMesh(const DEM* _dem, const GLOBE& globe, Primitive& out, sl_uint32 M
+	, const GeoRectangle& region, const Rectangle& rectDEM, const Rectangle& rectTexture)
+{
+	if (M <= 1) {
+		return;
+	}
+
+	float* dem = _dem->dem;
+	sl_uint32 N = _dem->N;
+
 	double lat0 = region.bottomLeft.latitude;
 	double lon0 = region.bottomLeft.longitude;
 	double lat1 = region.topRight.latitude;
@@ -110,13 +172,14 @@ void DEM::makeMesh(Primitive& out, sl_uint32 M, const GeoRectangle& region, cons
 			} else {
 				loc.altitude = 0;
 			}
-			pv->position = Earth::getCartesianPosition(loc);
+			pv->position = globe.getCartesianPosition(loc);
 			pv->altitude = (sl_real)(loc.altitude);
 			pv->texCoord.x = tx0 + dtx * x / (M - 1);
 			pv->texCoord.y = ty0 + dty * y / (M - 1);
 			pv++;
 		}
 	}
+
 	out.vertexBuffer = VertexBuffer::create(vb, sizeof(DEM_Vertex) * M * M);
 	SLIB_SCOPED_ARRAY(sl_uint16, ib, out.countElements);
 	sl_uint16* pi = ib;
@@ -133,4 +196,56 @@ void DEM::makeMesh(Primitive& out, sl_uint32 M, const GeoRectangle& region, cons
 	out.indexBuffer = IndexBuffer::create(ib, out.countElements * sizeof(sl_uint16));
 }
 
+void DEM::makeMeshFromGlobe(const Globe& globe, Primitive& out, sl_uint32 M
+	, const GeoRectangle& region, const Rectangle& rectDEM, const Rectangle& rectTexture) const
+{
+	_DEM_makeMesh(this, globe, out, M, region, rectDEM, rectTexture);
+}
+
+void DEM::makeMeshFromSphericalGlobe(const SphericalGlobe& globe, Primitive& out, sl_uint32 M
+	, const GeoRectangle& region, const Rectangle& rectDEM, const Rectangle& rectTexture) const
+{
+	_DEM_makeMesh(this, globe, out, M, region, rectDEM, rectTexture);
+}
+
+float DEM::getAltitudeAt(float x, float y)
+{
+	if (N == 0) {
+		return 0;
+	} else if (N == 1) {
+		return dem[0];
+	} else {
+		sl_real mx = x / (N - 1);
+		sl_real my = y / (N - 1);
+		sl_int32 mxi = (sl_int32)(mx);
+		sl_int32 myi = (sl_int32)(my);
+		sl_real mxf;
+		sl_real myf;
+		if (mxi < 0) {
+			mxi = 0;
+			mxf = 0;
+		} else if (mxi >= (sl_int32)N - 1) {
+			mxi = N - 2;
+			mxf = 1;
+		} else {
+			mxf = mx - mxi;
+		}
+		if (myi < 0) {
+			myi = 0;
+			myf = 0;
+		} else if (myi >= (sl_int32)N - 1) {
+			myi = N - 2;
+			myf = 1;
+		} else {
+			myf = my - myi;
+		}
+		sl_int32 p = mxi + myi * N;
+		float altitude =
+			(1 - mxf) * (1 - myf) * dem[p]
+			+ (1 - mxf) * myf * dem[p + N]
+			+ mxf * (1 - myf) * dem[p + 1]
+			+ mxf * myf * dem[p + 1 + N];
+		return altitude;
+	}
+}
 SLIB_MAP_NAMESPACE_END

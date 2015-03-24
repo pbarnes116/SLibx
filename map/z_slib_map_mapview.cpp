@@ -1,6 +1,4 @@
 ﻿#include "mapview.h"
-#include "vw_building_tile.h"
-#include "gis_tile.h"
 
 #define STATUS_WIDTH 2048
 #define STATUS_HEIGHT 40
@@ -17,12 +15,9 @@ MapView::MapView()
 	m_environment = new MapEnvironment;
 	m_environment->view = this;
 
-	m_tileManagerDEM = new MapTileManager_DEM;
-	m_tileManagerVWBuilding = new MapTileManager_VWBuilding;
-
-	m_tileManagerGISLine = new MapTileManager_GIS_Shape;
-	m_tileManagerGISPoi = new MapTileManager_GIS_Poi;
-	initializeDataLoader(new MapDataLoaderPack);
+	m_earthRenderer = new MapEarthRenderer();
+	
+	initializeDataLoader(new MapDataLoaderList);
 
 }
 
@@ -33,13 +28,10 @@ MapView::~MapView()
 
 void MapView::release()
 {
-	m_tileManagerDEM->release();
-	m_tileManagerVWBuilding->release();
-	m_tileManagerGISLine->release();
-	m_tileManagerGISPoi->release();
+	m_earthRenderer->release();
 
-	if (m_sensorListner.isNotNull()) {
-		m_sensorListner.setNull();
+	if (m_sensorListener.isNotNull()) {
+		m_sensorListener.setNull();
 	}
 	if (m_sensor.isNotNull()) {
 		m_sensor->stop();
@@ -50,26 +42,18 @@ void MapView::initialize()
 {
 	m_flagInit = sl_true;
 
-	m_tileManagerDEM->setDataLoader(getDataLoader());
-	m_tileManagerDEM->initialize();
-
-	m_tileManagerVWBuilding->setDataLoader(getDataLoader());
-	m_tileManagerVWBuilding->initialize();
-
-	m_tileManagerGISLine->setDataLoader(getDataLoader());
-	m_tileManagerGISLine->initialize();
-	m_tileManagerGISPoi->setDataLoader(getDataLoader());
-	m_tileManagerGISPoi->initialize();
+	m_earthRenderer->setDataLoader(getDataLoader());
+	m_earthRenderer->initialize();
 
 	m_textureStatus = Texture::create(Image::create(STATUS_WIDTH, STATUS_HEIGHT));
 
-	m_sensorListner = new MapViewSensorListener(this);
+	m_sensorListener = new MapViewSensorListener(this);
 
 	m_sensor = Sensor::create();
 	if (m_sensor.isNotNull()) {
 		m_sensorBeforeAccelY = 0;
 		m_compassBare = 0;
-		m_sensor->setListener(m_sensorListner);
+		m_sensor->setListener(m_sensorListener);
 		Sensor::Param param;
 		param.flagUseAccelerometor = sl_true;
 		param.flagUseCompass = param.flagUseLocation = sl_true;
@@ -91,13 +75,10 @@ void MapView::onFrame(RenderEngine* engine)
 	engine->setBlending(sl_false);
 	engine->setDepthWriteEnabled(sl_true);
 
-	m_tileManagerDEM->renderTiles(engine, m_environment);
-	m_tileManagerVWBuilding->renderTiles(engine, m_environment);
+	m_earthRenderer->render(engine, m_environment);
 
-	m_tileManagerGISLine->renderTiles(engine, m_environment);
-	m_tileManagerGISPoi->renderTiles(engine, m_environment);
 	// render status
-	if (1) {
+	if (0) {
 		Ref<FreeType> fontStatus = getStatusFont();
 		if (fontStatus.isNotNull()) {
 			engine->setDepthTest(sl_false);
@@ -152,14 +133,14 @@ sl_bool MapView::onMouseEvent(MouseEvent& event)
 		if (!m_flagTouch2) {
 			sl_real dx = event.x - m_mouseBeforeX;
 			sl_real dy = event.y - m_mouseBeforeY;
-			Sphere earth(Transform3::getTransformedOrigin(m_environment->transformView), (sl_real)(Earth::getAverageRadius()));
+			Sphere earth(Transform3::getTransformedOrigin(m_environment->transformView), (sl_real)(MapEarth::getRadius()));
 			Line3 dirScreenO = Transform3::unprojectScreenPoint(m_environment->transformProjection, 0, 0, this->getClientRectangle());
 			Line3 dirScreenX = Transform3::unprojectScreenPoint(m_environment->transformProjection, 1, 0, this->getClientRectangle());
 			Line3 dirScreenY = Transform3::unprojectScreenPoint(m_environment->transformProjection, 0, 1, this->getClientRectangle());
 			sl_real lx = (dirScreenO.getDirection().getNormalized() - dirScreenX.getDirection().getNormalized()).getLength();
 			sl_real ly = (dirScreenO.getDirection().getNormalized() - dirScreenY.getDirection().getNormalized()).getLength();
 			sl_real h = (sl_real)(m_environment->cameraViewEarth->getEyeLocation().altitude);
-			sl_real f = (sl_real)(Math::getDegreeFromRadian(h * 1.5f) / Earth::getAverageRadius());
+			sl_real f = (sl_real)(Math::getDegreeFromRadian(h * 1.5f) / MapEarth::getRadius());
 			m_environment->cameraViewEarth->move(
 				dy * ly * f
 				, -dx * lx * f

@@ -1,4 +1,5 @@
 #include "camera.h"
+#include "earth.h"
 
 SLIB_MAP_NAMESPACE_START
 MapCamera::MapCamera() : m_location(0, 0, 0)
@@ -79,8 +80,8 @@ void MapCamera::updateViewMatrix()
 		locAt.altitude = 0;
 		locAt.latitude = m_location.latitude;
 		locAt.longitude = m_location.longitude;
-		Vector3 at = Earth::getCartesianPosition(locAt);
-		Vector3 eye = Earth::getCartesianPosition(m_location);
+		Vector3 at = MapEarth::getCartesianPosition(locAt);
+		Vector3 eye = MapEarth::getCartesianPosition(m_location);
 		Matrix4 t = Transform3::getLookAtMatrix(eye, at, Vector3::axisY());
 		if (m_tilt > 0) {
 			Vector3 raxis = (eye - at).cross(Vector3::axisY());

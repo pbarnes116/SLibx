@@ -17,6 +17,7 @@ public:
 	Matrix4 transformViewInverse;
 	Matrix4 transformProjection;
 	Matrix4 transformViewProjection;
+	ViewFrustum viewFrustum;
 
 	WeakRef<RenderView> view;
 
