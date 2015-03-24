@@ -132,6 +132,7 @@ protected:
 
 	sl_real m_sensorBeforeAccelY;
 	sl_real m_compassBare;
+	GeoLocation lastGeoLocation;
 };
 SLIB_MAP_NAMESPACE_END
 

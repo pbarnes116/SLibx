@@ -1,7 +1,7 @@
 ﻿#include "mapview.h"
 #include "vw_building_tile.h"
 #include "gis_tile.h"
-
+#include "../../slib/core/log.h"
 #define STATUS_WIDTH 2048
 #define STATUS_HEIGHT 40
 
@@ -67,6 +67,7 @@ void MapView::initialize()
 
 	m_sensor = Sensor::create();
 	if (m_sensor.isNotNull()) {
+		lastGeoLocation.latitude = lastGeoLocation.longitude = lastGeoLocation.altitude = 0;
 		m_sensorBeforeAccelY = 0;
 		m_compassBare = 0;
 		m_sensor->setListener(m_sensorListner);
@@ -267,7 +268,7 @@ void MapView::onCompassChanged(Sensor* sensor, sl_real declination)
 
 void MapView::onLocationChanged(Sensor* sensor, const GeoLocation& location)
 {
-
+	lastGeoLocation = location;
 }
 
 String MapView::formatLatitude(double f)
@@ -326,7 +327,7 @@ String MapView::formatCompass(sl_real f)
 String MapView::getStatusText()
 {
 	GeoLocation loc = m_environment->cameraViewEarth->getEyeLocation();
-	String status = formatLatitude(loc.latitude) + _SLT(", ") + formatLongitude(loc.longitude) + _SLT(", ") + formatAltitude(loc.altitude) + _SLT(", ") + formatCompass(m_compassBare);
+	String status = formatLatitude(lastGeoLocation.latitude) + _SLT(", ") + formatLongitude(lastGeoLocation.longitude) + _SLT(", ") + formatAltitude(lastGeoLocation.altitude) + _SLT(", ") + formatCompass(m_compassBare);
 	return status;
 }
 
