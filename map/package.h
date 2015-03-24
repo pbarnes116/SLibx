@@ -36,13 +36,13 @@ public:
 public:
 	sl_bool open(const String& fileName, sl_bool flagReadOnly);
 
-	sl_bool write(const String& dirPath, const MapTileLocation& loc, const Map<String, Memory>& itemData);
-	Memory read(const String& dirPath, const MapTileLocation& loc, const String& subName = _SLT(""));
+	sl_bool write(const String& dirPath, const MapTileLocationi& loc, const Map<String, Memory>& itemData);
+	Memory read(const String& dirPath, const MapTileLocationi& loc, const String& subName = _SLT(""));
 
 	sl_bool write(sl_int32 offsetX, sl_int32 offsetY, const Map<String, Memory>& itemData);
 	Memory	read(sl_int32 offsetX, sl_int32 offsetY, const String& subName);
 
-	String getPackageFilePathAndOffset(const MapTileLocation& location, sl_int32& outX, sl_int32& outY);
+	String getPackageFilePathAndOffset(const MapTileLocationi& location, sl_int32& outX, sl_int32& outY);
 
 	SLIB_INLINE void close()
 	{

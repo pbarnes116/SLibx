@@ -1,16 +1,14 @@
-
-#include "globe.h"
-#include "dem.h"
+#include "earth.h"
 
 #include "../../slib/render/opengl.h"
 
 SLIB_MAP_NAMESPACE_START
 
-class _MapGlobe_RenderProgram_Tile : public RenderProgram3D
+class _MapEarth_RenderProgram_SurfaceTile : public RenderProgram3D
 {
 public:
-	_MapGlobe_RenderProgram_Tile() {}
-	~_MapGlobe_RenderProgram_Tile() {}
+	_MapEarth_RenderProgram_SurfaceTile() {}
+	~_MapEarth_RenderProgram_SurfaceTile() {}
 
 	class MapInfo_GLES2 : public Info_GLES2
 	{
@@ -74,25 +72,25 @@ public:
 		}
 #endif
 	}
-	
+
 	String getVertexShader_GLES2(RenderEngine* engine)
 	{
 		String source;
 #ifdef SLIB_RENDER_SUPPORT_OPENGL_ES2
 		source = SLIB_STRINGIFY(
 			precision highp float;
-			uniform mat4 u_Transform;
-			attribute vec3 a_Position;
-			attribute vec2 a_TexCoord;
-			attribute float a_Altitude;
-			varying vec2 v_TexCoord;
-			varying float v_Altitude;
-			void main() {
-				vec4 P = vec4(a_Position, 1.0) * u_Transform;
-				gl_Position = P;
-				v_TexCoord = a_TexCoord;
-				v_Altitude = a_Altitude;
-			}
+		uniform mat4 u_Transform;
+		attribute vec3 a_Position;
+		attribute vec2 a_TexCoord;
+		attribute float a_Altitude;
+		varying vec2 v_TexCoord;
+		varying float v_Altitude;
+		void main() {
+			vec4 P = vec4(a_Position, 1.0) * u_Transform;
+			gl_Position = P;
+			v_TexCoord = a_TexCoord;
+			v_Altitude = a_Altitude;
+		}
 		);
 #endif
 		return source;
@@ -104,23 +102,23 @@ public:
 #ifdef SLIB_RENDER_SUPPORT_OPENGL_ES2
 		source = SLIB_STRINGIFY(
 			precision highp float;
-			uniform sampler2D u_Texture;
-			varying vec2 v_TexCoord;
-			void main() {
-				vec4 colorTexture = texture2D(u_Texture, v_TexCoord);
-				gl_FragColor = colorTexture;
-			}
+		uniform sampler2D u_Texture;
+		varying vec2 v_TexCoord;
+		void main() {
+			vec4 colorTexture = texture2D(u_Texture, v_TexCoord);
+			gl_FragColor = colorTexture;
+		}
 		);
 #endif
 		return source;
 	}
 };
 
-class _MapGlobe_RenderProgram_Tile_TestTextureColor : public _MapGlobe_RenderProgram_Tile
+class _MapEarth_RenderProgram_SurfaceTile_TestTextureColor : public _MapEarth_RenderProgram_SurfaceTile
 {
 public:
-	_MapGlobe_RenderProgram_Tile_TestTextureColor() {}
-	~_MapGlobe_RenderProgram_Tile_TestTextureColor() {}
+	_MapEarth_RenderProgram_SurfaceTile_TestTextureColor() {}
+	~_MapEarth_RenderProgram_SurfaceTile_TestTextureColor() {}
 
 	String getFragmentShader_GLES2(RenderEngine* engine)
 	{
@@ -128,79 +126,81 @@ public:
 #ifdef SLIB_RENDER_SUPPORT_OPENGL_ES2
 		source = SLIB_STRINGIFY(
 			precision highp float;
-			varying vec2 v_TexCoord;
-			void main() {
-				gl_FragColor = vec4(v_TexCoord.x, v_TexCoord.y, 0.0, 1.0);
-			}
+		varying vec2 v_TexCoord;
+		void main() {
+			gl_FragColor = vec4(v_TexCoord.x, v_TexCoord.y, 0.0, 1.0);
+		}
 		);
 #endif
 		return source;
 	}
 };
 
-GlobeRenderer::GlobeRenderer()
+const SphericalGlobe& MapEarth::getGlobe()
 {
+	static SphericalGlobe globe(getRadius());
+	return globe;
+}
+
+MapEarthRenderer::MapEarthRenderer()
+{
+	m_flagInitialized = sl_false;
+
 	m_nMaxLevel = 15;
 	m_nY = 5;
 	m_nX = 10;
+
+	initializeTileLifeMillseconds(10000);
+
+	initializeMaxPictureTilesCount(500);
+	initializeMaxDEMTilesCount(1000);
+	initializeMaxRenderTilesCount(300);
+
+	m_nMaxRenderTileLevel = 0;
 }
 
-GlobeRenderer::~GlobeRenderer()
+MapEarthRenderer::~MapEarthRenderer()
 {
 	release();
 }
 
-void GlobeRenderer::setLevelParamter(sl_uint32 nY, sl_uint32 nX, sl_uint32 nMaxLevel)
+void MapEarthRenderer::setLevelParamter(sl_uint32 nY, sl_uint32 nX, sl_uint32 nMaxLevel)
 {
 	m_nY = nY;
 	m_nX = nX;
 	m_nMaxLevel = nMaxLevel;
-
-	m_globe.setRadius(Earth::getEquatorialRadius());
 }
 
-void GlobeRenderer::release()
+void MapEarthRenderer::initialize()
 {
-	if (m_threadResource.isNotNull()) {
-		m_threadResource->finish();
-	}
+	m_flagInitialized = sl_true;
+
+	m_programSurfaceTile = new _MapEarth_RenderProgram_SurfaceTile;
+	m_programLine = new RenderProgram3D_Position;
+
+	_loadZeroLevelPictureTiles();
+	_loadZeroLevelDEMTiles();
+
+	m_threadControl = Thread::start(SLIB_CALLBACK_CLASS(MapEarthRenderer, _runThreadControl, this));
+}
+
+void MapEarthRenderer::release()
+{
+	MutexLocker lock(getLocker());
+	m_flagInitialized = sl_false;
 	if (m_threadControl.isNotNull()) {
 		m_threadControl->finishAndWait();
+		m_threadControl.setNull();
 	}
-	if (m_threadResource.isNotNull()) {
-		m_threadResource->finishAndWait();
-	}
-
 }
 
-void GlobeRenderer::render(RenderEngine* engine, MapEnvironment* environment)
+LatLon MapEarthRenderer::getLatLonFromTileLocation(const MapTileLocationi& location)
 {
-	_prepareRendering(engine, environment);
-
-}
-
-void GlobeRenderer::_runThreadControl()
-{
-
-}
-
-void GlobeRenderer::_runThreadResource()
-{
-
-}
-
-void GlobeRenderer::_prepareRendering(RenderEngine* engine, MapEnvironment* environment)
-{
-	if (m_engineResource.isNull() || !(m_engineResource->isValid())) {
-		m_engineResource = engine->createSharedEngine();
-		if (m_engineResource.isNotNull()) {
-
-		} else {
-			m_threadResource = Thread::start(SLIB_CALLBACK_CLASS(GlobeRenderer, _runThreadResource, this));
-			m_threadControl = Thread::start(SLIB_CALLBACK_CLASS(GlobeRenderer, _runThreadControl, this));
-		}
-	}
-	m_environment = environment;
+	LatLon ret;
+	sl_uint32 n = 1 << (location.level);
+	ret.latitude = location.y * 180.0 / m_nY / n - 90.0;
+	ret.longitude = location.x * 360.0 / m_nX / n - 180.0;
+	return ret;
 }
 
 SLIB_MAP_NAMESPACE_END

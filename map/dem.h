@@ -20,9 +20,9 @@ struct DEM_Vertex
 class DEM : public Referable
 {
 public:
-	double* dem;
+	float* dem;
 	sl_uint32 N;
-	Array<double> array;
+	Array<float> array;
 
 public:
 	SLIB_INLINE DEM()
@@ -33,7 +33,17 @@ public:
 	
 	sl_bool initialize(sl_uint32 N);
 	sl_bool initializeFromFloatData(sl_uint32 N, const void* data, sl_size size);
-	void makeMesh(Primitive& out, sl_uint32 M, const GeoRectangle& region, const Rectangle& rectDEM, const Rectangle& rectTexture);
+
+	void scaleDEM(float* output, sl_uint32 M, const Rectangle& rectDEM) const;
+
+	void makeMeshFromGlobe(const Globe& globe, Primitive& out, sl_uint32 M
+		, const GeoRectangle& region, const Rectangle& rectDEM, const Rectangle& rectTexture) const;
+
+	void makeMeshFromSphericalGlobe(const SphericalGlobe& globe, Primitive& out, sl_uint32 M
+		, const GeoRectangle& region, const Rectangle& rectDEM, const Rectangle& rectTexture) const;
+
+	float getAltitudeAt(float x, float y);
+
 };
 
 SLIB_MAP_NAMESPACE_END

@@ -18,9 +18,9 @@ String MapTilePath::makeGenericStylePath(const MapTileLocationi& location, Strin
 	String packagePath;
 	packagePath += location.level;
 	packagePath += _SLT("/");
-	packagePath += (sl_uint32)(location.y);
+	packagePath += location.y;
 	String filePath;
-	filePath += (sl_uint32)(location.x);
+	filePath += location.x;
 	if (_packagePath) {
 		*_packagePath = packagePath;
 	}
@@ -37,17 +37,17 @@ String MapTilePath::makeVWStylePath(const MapTileLocationi& location, String* _p
 	packagePath += _SLT("/");
 	String y;
 	if (location.level <= 11) {
-		y = String::fromUint32((sl_uint32)(location.y), 10, 4);
+		y = String::fromUint32(location.y, 10, 4);
 	} else {
-		y = String::fromUint32((sl_uint32)(location.y), 10, 8);
+		y = String::fromUint32(location.y, 10, 8);
 	}
 	packagePath += y;
 	String filePath = y;
 	filePath += _SLT("_");
 	if (location.level <= 10) {
-		filePath += String::fromUint32((sl_uint32)(location.x), 10, 4);
+		filePath += String::fromUint32(location.x, 10, 4);
 	} else {
-		filePath += String::fromUint32((sl_uint32)(location.x), 10, 8);
+		filePath += String::fromUint32(location.x, 10, 8);
 	}
 	if (_packagePath) {
 		*_packagePath = packagePath;

@@ -19,10 +19,17 @@ public:
 
 	SLIB_INLINE MapTileLocationT() {}
 
+	SLIB_INLINE MapTileLocationT(sl_uint32 _level, T _y, T _x)
+	{
+		level = _level;
+		y = _y;
+		x = _x;
+	}
+
 	template <class O>
 	SLIB_INLINE MapTileLocationT(const MapTileLocationT<O>& other)
 	{
-		level = (T)(other.level);
+		level = other.level;
 		y = (T)(other.y);
 		x = (T)(other.x);
 	}
@@ -30,10 +37,15 @@ public:
 	template <class O>
 	SLIB_INLINE MapTileLocationT<T>& operator=(const MapTileLocationT<O>& other)
 	{
-		level = (T)(other.level);
+		level = other.level;
 		y = (T)(other.y);
 		x = (T)(other.x);
 		return *this;
+	}
+
+	SLIB_INLINE sl_bool operator==(const MapTileLocationT<T>& other)
+	{
+		return level == other.level && y == other.y && x == other.x;
 	}
 };
 
