@@ -103,6 +103,16 @@ void MapEarthRenderer::_renderGISPoi(RenderEngine* engine, _GISPoiTile* tile)
 	}
 }
 
+void MapEarthRenderer::_renderMarker(RenderEngine* engine, MapMarker* marker)
+{
+	
+}
+
+void MapEarthRenderer::_renderPolygon(RenderEngine* engine, MapPolygon* polygon)
+{
+	
+}
+
 void MapEarthRenderer::_prepareRendering(RenderEngine* engine, MapEnvironment* environment)
 {
 	m_environment = environment;
@@ -430,6 +440,28 @@ void MapEarthRenderer::_renderGISPois(RenderEngine* engine)
 		Ref<_GISPoiTile> tile = _getGISPoiTile(list[i]);
 		if (tile.isNotNull()) {
 			_renderGISPoi(engine, tile);
+		}
+	}
+}
+
+void MapEarthRenderer::_renderMarkers(RenderEngine* engine)
+{
+	ListLocker< Ref<MapMarker> > list(markers.values());
+	for (sl_size i = 0; i < list.count(); i++) {
+		Ref<MapMarker> marker = list[i];
+		if (marker.isNotNull()) {
+			_renderMarker(engine, marker);
+		}
+	}
+}
+
+void MapEarthRenderer::_renderPolygons(RenderEngine* engine)
+{
+	ListLocker< Ref<MapPolygon> > list(polygons.values());
+	for (sl_size i = 0; i < list.count(); i++) {
+		Ref<MapPolygon> polygon = list[i];
+		if (polygon.isNotNull()) {
+			_renderPolygon(engine, polygon);
 		}
 	}
 }

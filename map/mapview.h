@@ -13,11 +13,11 @@
 
 SLIB_MAP_NAMESPACE_START
 
-class SensorCallback
+class MapSensorCallback
 {
 public:
-	SensorCallback(){}
-	~SensorCallback(){}
+	MapSensorCallback(){}
+	~MapSensorCallback(){}
 
 	virtual void onLocationChanged(Sensor* sensor, const GeoLocation& location) {};
 
@@ -35,7 +35,7 @@ public:
 		m_cbSensor = sl_null;
 	}
 
-	SLIB_INLINE MapViewSensorListener(SensorCallback* _cbSensor)
+	SLIB_INLINE MapViewSensorListener(MapSensorCallback* _cbSensor)
 	{
 		m_cbSensor = _cbSensor;
 	}
@@ -66,15 +66,15 @@ public:
 		}
 	}
 
-	SLIB_INLINE void setCallback(SensorCallback* _cbSensor) 
+	SLIB_INLINE void setCallback(MapSensorCallback* _cbSensor)
 	{
 		m_cbSensor = _cbSensor;
 	}
 private:
-	SensorCallback* m_cbSensor;
+	MapSensorCallback* m_cbSensor;
 };
 
-class MapView : public RenderView, SensorCallback
+class MapView : public RenderView, MapSensorCallback
 {
 public:
 	MapView();
