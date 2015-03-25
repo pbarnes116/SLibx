@@ -43,6 +43,11 @@ void MapView::setFontForPOI(Ref<FreeType> font)
 	m_earthRenderer->setFontForPOI(font);
 }
 
+void MapView::setPoiDatabasePath(const String& dbPath)
+{
+	m_earthRenderer->setPoiDatabasePath(dbPath);
+}
+
 void MapView::initialize()
 {
 	m_flagInit = sl_true;

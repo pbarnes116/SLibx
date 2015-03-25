@@ -5,7 +5,7 @@
 
 #include "data.h"
 #include "../../slib/render/engine.h"
-
+#include "../../slib/db.h"
 SLIB_MAP_NAMESPACE_START
 
 enum MAP_GISPOI_TYPE {
@@ -25,7 +25,8 @@ enum MAP_GISPOI_TYPE {
 	, PlaceCountry = 110
 	, PlaceState = 109
 	, PlaceCity = 108
-	, PlaceVilliage = 107			
+	, PlaceTown = 107
+	, PlaceVilliage = 106		
 	, PlaceExtra = 101
 	, PlaceEnd = 110
 
@@ -47,6 +48,7 @@ struct Map_GIS_Poi
 	sl_int64 id;
 	MAP_GISPOI_TYPE type;
 	LatLon location;
+	String name;
 };
 
 struct Map_GIS_Line
@@ -83,11 +85,15 @@ public:
 	sl_uint32 showMinLevel;
 };
 
-class Map_GIS_Poi_Tile
+class Map_GIS_Poi_TileLoader : public Referable
 {
 public:
-	List<Map_GIS_Poi> pois;
-	sl_bool load(Ref<MapDataLoader> loader, String type, const MapTileLocation& location);
+	void openNameDatabase(const String& dbPath);
+	List<Map_GIS_Poi> loadTile(Ref<MapDataLoader> data, String type, const MapTileLocation& location);
+private:
+	String getPoiNameFromDatabase(sl_int64 id);
+private:
+	Ref<SqliteDatabase> dbPoiName;
 };
 
 class Map_GIS_Line_Tile

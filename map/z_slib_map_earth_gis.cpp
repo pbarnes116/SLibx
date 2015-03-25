@@ -163,22 +163,20 @@ Ref<MapEarthRenderer::_GISPoiTile> MapEarthRenderer::_loadGISPoiTile(const MapTi
 	}
 	Ref<MapDataLoader> loader = getDataLoader();
 	if (loader.isNotNull()) {
-		Map_GIS_Poi_Tile poiTile;
-		if (poiTile.load(loader, SLIB_MAP_GIS_POI_TILE_TYPE, location)) {
-			tile = new _GISPoiTile();
-			if (tile.isNotNull()) {
-				tile->location = location;
-				tile->timeLastAccess = m_timeCurrentThreadControl;
-				tile->flagLoaded = sl_true;
-				tile->data = poiTile;
-				// generate poi textures
-				{
-					ListLocker<Map_GIS_Poi> list(poiTile.pois);
-					for (sl_size i = 0; i < list.count(); i++) {
-						_GISPoi p;
-						p.location = list[i].location;
-						p.type = list[i].type;
-						String text = String::fromUint64(list[i].id);
+		List<Map_GIS_Poi> pois = m_gisPoiTileLoader.loadTile(loader, SLIB_MAP_GIS_POI_TILE_TYPE, location);
+		tile = new _GISPoiTile();
+		if (tile.isNotNull()) {
+			tile->location = location;
+			tile->timeLastAccess = m_timeCurrentThreadControl;
+			tile->flagLoaded = sl_true;
+			{
+				ListLocker<Map_GIS_Poi> list(pois);
+				for (sl_size i = 0; i < list.count(); i++) {
+					_GISPoi p;
+					p.location = list[i].location;
+					p.type = list[i].type;
+					if (p.type == PlaceState || p.type == PlaceCountry) {
+						String text = list[i].name;
 						if (text.length() > 20) {
 							text = text.substring(0, 20);
 						}
@@ -193,19 +191,11 @@ Ref<MapEarthRenderer::_GISPoiTile> MapEarthRenderer::_loadGISPoiTile(const MapTi
 							}
 						}
 					}
+					
 				}
-				m_mapGISPoiTiles.put(location, tile);
-				return Ref<_GISPoiTile>::null();
 			}
-		} else {
-			tile = new _GISPoiTile();
-			if (tile.isNotNull()) {
-				tile->location = location;
-				tile->timeLastAccess = m_timeCurrentThreadControl;
-				tile->flagLoaded = sl_false;
-				m_mapGISPoiTiles.put(location, tile);
-				return Ref<_GISPoiTile>::null();
-			}
+			m_mapGISPoiTiles.put(location, tile);
+			return Ref<_GISPoiTile>::null();
 		}
 	}
 	return Ref<_GISPoiTile>::null();

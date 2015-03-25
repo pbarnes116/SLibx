@@ -5,36 +5,6 @@
 #include "data_config.h"
 
 SLIB_MAP_NAMESPACE_START
-class _Map_GIS_Poi_Loader
-{
-public:
-
-	List<Map_GIS_Poi> pois;
-
-	sl_bool loadFromFile(Ref<MapDataLoader> data, String type, const MapTileLocation& location)
-	{
-		Memory mem = data->loadData(type, location, SLIB_MAP_TILE_PACKAGE_DIMENSION, SLIB_MAP_GIS_POI_TILE_EXT);
-		if (mem.isEmpty()) {
-			return sl_false;
-		}
-		MemoryReader reader(mem);
-		sl_int32 poiCount = reader.readInt32CVLI();
-		sl_int64 timeStamp = reader.readInt64CVLI();
-		for (sl_int32 poiIndex = 0; poiIndex < poiCount; poiIndex++) {
-			Map_GIS_Poi poi;
-			poi.id = reader.readInt64CVLI();
-			poi.type = (MAP_GISPOI_TYPE)reader.readInt32CVLI();
-			poi.location.latitude = reader.readDouble();
-			poi.location.longitude = reader.readDouble();
-
-			if (poi.type != MAP_GISPOI_TYPE::POITypeNone && poi.id > 0) {
-				pois.add(poi);
-			}
-		}
-		return sl_true;
-	}
-};
-
 
 class _Map_GIS_Shape_Loader
 {
@@ -85,14 +55,47 @@ public:
 	}
 };
 
-sl_bool Map_GIS_Poi_Tile::load(Ref<MapDataLoader> data, String type, const MapTileLocation& location)
+void Map_GIS_Poi_TileLoader::openNameDatabase(const String& dbPath)
 {
-	_Map_GIS_Poi_Loader loader;
-	if (loader.loadFromFile(data, type, location)) {
-		pois = loader.pois;
-		return sl_true;
+	dbPoiName = SqliteDatabase::createDatabase();
+	Database::Param param;
+	dbPoiName->connect(param, dbPath);
+}
+
+String Map_GIS_Poi_TileLoader::getPoiNameFromDatabase(sl_int64 id)
+{
+	String ret = _SLT("");
+	String sql = String(_SLT("select f_name from tbl_poi_name where f_id = ")) + String::fromInt64(id);
+	ListLocker< Map<String, Variant> > result(dbPoiName->executeSelectQuery(sql));
+	if (result.count() > 0) {
+		Variant item = result[0];
+		ret = item.getField("f_name").getString();
 	}
-	return sl_false;
+	return ret;
+}
+
+List<Map_GIS_Poi> Map_GIS_Poi_TileLoader::loadTile(Ref<MapDataLoader> data, String type, const MapTileLocation& location)
+{
+	List<Map_GIS_Poi> ret;
+	Memory mem = data->loadData(type, location, SLIB_MAP_TILE_PACKAGE_DIMENSION, SLIB_MAP_GIS_POI_TILE_EXT);
+	if (mem.isEmpty()) {
+		return ret;
+	}
+	MemoryReader reader(mem);
+	sl_int32 poiCount = reader.readInt32CVLI();
+	sl_int64 timeStamp = reader.readInt64CVLI();
+	for (sl_int32 poiIndex = 0; poiIndex < poiCount; poiIndex++) {
+		Map_GIS_Poi poi;
+		poi.id = reader.readInt64CVLI();
+		poi.type = (MAP_GISPOI_TYPE)reader.readInt32CVLI();
+		poi.location.latitude = reader.readDouble();
+		poi.location.longitude = reader.readDouble();
+		poi.name = getPoiNameFromDatabase(poi.id);
+		if (poi.type != MAP_GISPOI_TYPE::POITypeNone && poi.id > 0 && poi.name.length() > 0) {
+			ret.add(poi);
+		}
+	}
+	return ret;
 }
 
 sl_bool Map_GIS_Line_Tile::load(Ref<MapDataLoader> data, String type, const MapTileLocation& location)

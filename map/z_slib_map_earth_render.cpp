@@ -91,6 +91,7 @@ void MapEarthRenderer::_renderGISPoi(RenderEngine* engine, _GISPoiTile* tile)
 	for (sl_size i = 0; i < list.count(); i++) {
 		_GISPoi& s = list[i];
 		float altitude = _getAltitudeFromRenderingDEM(s.location);
+		altitude = 0;
 		Vector3 pos = MapEarth::getCartesianPosition(GeoLocation(s.location, altitude));
 		if (m_environment->viewFrustum.containsPoint(pos)) {
 			Vector3 posScreen = Transform3::projectToScreenPoint(m_environment->transformViewProjection, pos);

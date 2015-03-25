@@ -286,7 +286,14 @@ protected:
 	/******************************************
 		GIS Poi Data Management
 	******************************************/
+public:
+	SLIB_INLINE void setPoiDatabasePath(const String& dbPath)
+	{
+		m_gisPoiTileLoader.openNameDatabase(dbPath);
+	}
 protected:
+	Map_GIS_Poi_TileLoader m_gisPoiTileLoader;
+
 	struct _GISPoi
 	{
 		LatLon location;
@@ -298,7 +305,6 @@ protected:
 	public:
 		MapTileLocationi location;
 		sl_bool flagLoaded;
-		Map_GIS_Poi_Tile data;
 		List<_GISPoi> pois;
 		Time timeLastAccess;
 	};

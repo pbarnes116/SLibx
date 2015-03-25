@@ -98,7 +98,7 @@ public:
 	virtual String getStatusText();
 
 	void setFontForPOI(Ref<FreeType> font);
-
+	void setPoiDatabasePath(const String& dbPath);
 protected:
 	void initialize();
 	
