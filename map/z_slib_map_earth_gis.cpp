@@ -181,9 +181,9 @@ Ref<MapEarthRenderer::_GISPoiTile> MapEarthRenderer::_loadGISPoiTile(const MapTi
 							text = text.substring(0, 20);
 						}
 						Sizei size = font->getStringExtent(text);
-						Ref<Image> image = Image::create(size.width * 4, size.height * 4);
+						Ref<Image> image = Image::create(size.width, size.height);
 						if (image.isNotNull()) {
-							font->drawString(image, 30, size.height * 2, text, Color::red());
+							font->drawString(image, 0, size.height, text, Color::red());
 							Ref<Texture> texture = Texture::create(image);
 							if (texture.isNotNull()) {
 								p.texture = texture;

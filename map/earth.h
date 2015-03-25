@@ -43,6 +43,37 @@ public:
 	}
 };
 
+class MapMarker : public Referable
+{
+public:
+	String key;
+	LatLon location;
+	String text;
+	Color colorText;
+	Ref<FreeType> font;
+	float fontSize;
+	Ref<Texture> texture;
+	Rectangle rectangleTexture; // texture whole coordinate
+
+public:
+	Ref<Texture> _textureText;
+
+public:
+	void invalidate()
+	{
+		_textureText.setNull();
+	}
+};
+
+class MapPolygon : public Referable
+{
+public:
+	String key;
+	List<Vector3> points;
+	Color color;
+	float width;
+};
+
 class MapEarthRenderer : public Object
 {
 public:
@@ -85,6 +116,10 @@ public:
 public:
 	LatLon getLatLonFromTileLocation(const MapTileLocationi& location);
 	MapTileLocation getTileLocationFromLatLon(sl_uint32 level, const LatLon& latLon);
+
+public:
+	Map< String, Ref<MapMarker> > markers;
+	Map< String, Ref<MapPolygon> > polygons;
 
 protected:
 	sl_bool m_flagInitialized;
@@ -367,6 +402,11 @@ protected:
 
 	void _renderGISPois(RenderEngine* engine);
 	void _renderGISPoi(RenderEngine* engine, _GISPoiTile* poi);
+
+	void _renderMarkers(RenderEngine* engine);
+	void _renderMarker(RenderEngine* engine, MapMarker* marker);
+	void _renderPolygons(RenderEngine* engine);
+	void _renderPolygon(RenderEngine* engine, MapPolygon* polygon);
 
 protected:
 	class _RenderTileCache : public Referable

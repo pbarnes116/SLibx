@@ -110,7 +110,7 @@ void MapView::onFrame(RenderEngine* engine)
 		}
 	}
 
-	engine->drawDebugText();
+	//engine->drawDebugText();
 }
 
 sl_bool MapView::onMouseEvent(MouseEvent& event)
