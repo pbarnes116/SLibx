@@ -8,8 +8,7 @@
 
 SLIB_MAP_NAMESPACE_START
 
-
-typedef enum GISPOI_TYPE {
+enum MAP_GISPOI_TYPE {
 	POITypeNone = 0
 	, AmenityStart = 1
 	, Transport = 10
@@ -41,33 +40,33 @@ typedef enum GISPOI_TYPE {
 	, Parking = 203
 	, FillingStation = 204
 
-}GISPOI_TYPE;
+};
 
-struct GIS_Poi
+struct Map_GIS_Poi
 {
 	sl_int64 id;
-	GISPOI_TYPE type;
+	MAP_GISPOI_TYPE type;
 	LatLon location;
 };
 
-struct GIS_Line
+struct Map_GIS_Line
 {
 	sl_int64 id;
 	LatLon start;
 	LatLon end;
 };
 
-class GIS_Shape : public Referable
+class Map_GIS_Shape : public Referable
 {
 public:
-	SLIB_INLINE GIS_Shape()
+	SLIB_INLINE Map_GIS_Shape()
 	{
 		lines.clear();
 		width = 0.f;
 		showMinLevel = 5;
 		initShape();
 	}
-	~GIS_Shape()
+	~Map_GIS_Shape()
 	{
 
 	}
@@ -78,23 +77,23 @@ public:
 	sl_uint32 extraType;
 	sl_uint32 naturalType;
 
-	List<GIS_Line> lines;
+	List<Map_GIS_Line> lines;
 	Color clr;
 	sl_real width;
 	sl_uint32 showMinLevel;
 };
 
-class GIS_Poi_Tile
+class Map_GIS_Poi_Tile
 {
 public:
-	List<GIS_Poi> pois;
+	List<Map_GIS_Poi> pois;
 	sl_bool load(Ref<MapDataLoader> loader, String type, const MapTileLocation& location);
 };
 
-class GIS_Line_Tile
+class Map_GIS_Line_Tile
 {
 public:
-	Map<sl_int32, Ref<GIS_Shape>> shapes;
+	Map<sl_int32, Ref<Map_GIS_Shape>> shapes;
 	sl_bool load(Ref<MapDataLoader> loader, String type, const MapTileLocation& location);
 };
 

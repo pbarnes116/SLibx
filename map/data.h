@@ -17,11 +17,7 @@ protected:
 	SLIB_INLINE MapDataLoader() {}
 
 public:
-	virtual Memory loadData(const String& type, const MapTileLocationi& location, const String& subPath) = 0;
-	SLIB_INLINE Memory loadData(const String& type, const MapTileLocationi& location)
-	{
-		return loadData(type, location, String::null());
-	}
+	virtual Memory loadData(const String& type, const MapTileLocationi& location, sl_uint32 packageDimension, const String& subPath) = 0;
 };
 
 class MapDataLoaderList : public MapDataLoader
@@ -29,11 +25,8 @@ class MapDataLoaderList : public MapDataLoader
 public:
 	SLIB_INLINE MapDataLoaderList() {}
 
-	Memory loadData(const String& type, const MapTileLocationi& location, const String& subPath);
-	SLIB_INLINE Memory loadData(const String& type, const MapTileLocationi& location)
-	{
-		return loadData(type, location, String::null());
-	}
+	Memory loadData(const String& type, const MapTileLocationi& location, sl_uint32 packageDimension, const String& subPath);
+
 public:
 	List< Ref<MapDataLoader> > list;
 };
@@ -43,14 +36,13 @@ class MapData_GenericFileLoader : public MapDataLoader
 {
 public:
 	MapData_GenericFileLoader();
-	MapData_GenericFileLoader(String basePath, String password, sl_uint32 packageDimension);
+	MapData_GenericFileLoader(String basePath, String password);
 
 public:
-	Memory loadData(const String& type, const MapTileLocationi& location, const String& subPath);
+	Memory loadData(const String& type, const MapTileLocationi& location, sl_uint32 packageDimension, const String& subPath);
 
 	SLIB_PROPERTY_SIMPLE(String, BasePath);
 	SLIB_PROPERTY_SIMPLE(String, SecureFilePackagePassword);
-	SLIB_PROPERTY_SIMPLE(sl_uint32, PackageDimension);
 
 protected:
 	Memory _readData(const String& packagePath, const String& filePath);

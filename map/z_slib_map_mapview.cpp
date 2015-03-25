@@ -1,7 +1,7 @@
 ﻿#include "mapview.h"
 
-#define STATUS_WIDTH 2048
-#define STATUS_HEIGHT 40
+#define STATUS_WIDTH 1024
+#define STATUS_HEIGHT 30
 
 SLIB_MAP_NAMESPACE_START
 MapView::MapView()
@@ -36,6 +36,11 @@ void MapView::release()
 	if (m_sensor.isNotNull()) {
 		m_sensor->stop();
 	}
+}
+
+void MapView::setFontForPOI(Ref<FreeType> font)
+{
+	m_earthRenderer->setFontForPOI(font);
 }
 
 void MapView::initialize()
@@ -78,7 +83,7 @@ void MapView::onFrame(RenderEngine* engine)
 	m_earthRenderer->render(engine, m_environment);
 
 	// render status
-	if (0) {
+	if (1) {
 		Ref<FreeType> fontStatus = getStatusFont();
 		if (fontStatus.isNotNull()) {
 			engine->setDepthTest(sl_false);
@@ -88,14 +93,15 @@ void MapView::onFrame(RenderEngine* engine)
 			String textStatus = getStatusText();
 			Size size = fontStatus->getStringExtent(textStatus);
 			fontStatus->drawString(
-				m_textureStatus->getImage(), m_environment->viewportWidth / 2 - (sl_uint32)(size.x / 2)
+				m_textureStatus->getImage(), STATUS_WIDTH / 2 - (sl_uint32)(size.x / 2)
 				, STATUS_HEIGHT / 2 + (sl_uint32)(size.y / 2)
 				, textStatus, Color::white());
 			m_textureStatus->update();
-			engine->drawTexture2D(0, (sl_real)(m_environment->viewportHeight - STATUS_HEIGHT)
-				, (sl_real)(m_environment->viewportWidth), (sl_real)(STATUS_HEIGHT)
+			sl_real h = (sl_real)(STATUS_HEIGHT * m_environment->viewportWidth / STATUS_WIDTH);
+			engine->drawTexture2D(0, (sl_real)(m_environment->viewportHeight - h)
+				, (sl_real)(m_environment->viewportWidth), (sl_real)(h)
 				, m_textureStatus
-				, 0, 0, (sl_real)(m_environment->viewportWidth), (sl_real)(STATUS_HEIGHT));
+				, 0, 0, STATUS_WIDTH, STATUS_HEIGHT);
 		}
 	}
 

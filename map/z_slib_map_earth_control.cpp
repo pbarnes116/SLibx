@@ -24,13 +24,6 @@ void MapEarthRenderer::_runThreadControl()
 
 void MapEarthRenderer::_runThreadControlStep()
 {
-	_loadRequestedPictureTiles();
-	_freeOldPictureTiles();
-	
-	_loadRequestedDEMTiles();
-	_freeOldDEMTiles();
-
-	_freeOldRenderTileCaches();
 }
 
 SLIB_MAP_NAMESPACE_END

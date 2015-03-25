@@ -146,15 +146,26 @@ MapEarthRenderer::MapEarthRenderer()
 {
 	m_flagInitialized = sl_false;
 
-	m_nMaxLevel = 15;
-	m_nY = 5;
-	m_nX = 10;
+	initializeMaxLevel(15);
+	initializeCountX0(10);
+	initializeCountY0(5);
 
 	initializeTileLifeMillseconds(10000);
 
-	initializeMaxPictureTilesCount(500);
-	initializeMaxDEMTilesCount(1000);
-	initializeMaxRenderTilesCount(300);
+	initializeMaxPictureTilesCount(300);
+	initializeMaxDEMTilesCount(2000);
+	initializeMaxBuildingTilesCount(100);
+	initializeMinBuildingLevel(13);
+	initializeMaxBuildingsCount(1000);
+	initializeMaxDetailedBuildingsCount(50);
+	initializeMaxGISLineTilesCount(200);
+	initializeMaxGISPoiTilesCount(200);
+
+	initializeMaxRenderTilesCount(100);
+
+	initializeShowBuilding(sl_true);
+	initializeShowGISLine(sl_true);
+	initializeShowGISPoi(sl_true);
 
 	m_nMaxRenderTileLevel = 0;
 }
@@ -164,33 +175,46 @@ MapEarthRenderer::~MapEarthRenderer()
 	release();
 }
 
-void MapEarthRenderer::setLevelParamter(sl_uint32 nY, sl_uint32 nX, sl_uint32 nMaxLevel)
-{
-	m_nY = nY;
-	m_nX = nX;
-	m_nMaxLevel = nMaxLevel;
-}
-
 void MapEarthRenderer::initialize()
 {
 	m_flagInitialized = sl_true;
 
 	m_programSurfaceTile = new _MapEarth_RenderProgram_SurfaceTile;
+	m_programBuilding = new RenderProgram3D_PositionNormalTexture_Diffuse;
 	m_programLine = new RenderProgram3D_Position;
 
-	_loadZeroLevelPictureTiles();
-	_loadZeroLevelDEMTiles();
+	_loadZeroLevelTilesData();
 
 	m_threadControl = Thread::start(SLIB_CALLBACK_CLASS(MapEarthRenderer, _runThreadControl, this));
+	m_threadData = Thread::start(SLIB_CALLBACK_CLASS(MapEarthRenderer, _runThreadData, this));
+	m_threadDataEx = Thread::start(SLIB_CALLBACK_CLASS(MapEarthRenderer, _runThreadDataEx, this));
 }
 
 void MapEarthRenderer::release()
 {
 	MutexLocker lock(getLocker());
 	m_flagInitialized = sl_false;
+
+	if (m_threadControl.isNotNull()) {
+		m_threadControl->finish();
+	}
+	if (m_threadData.isNotNull()) {
+		m_threadData->finish();
+	}
+	if (m_threadDataEx.isNotNull()) {
+		m_threadDataEx->finish();
+	}
 	if (m_threadControl.isNotNull()) {
 		m_threadControl->finishAndWait();
 		m_threadControl.setNull();
+	}
+	if (m_threadData.isNotNull()) {
+		m_threadData->finishAndWait();
+		m_threadData.setNull();
+	}
+	if (m_threadDataEx.isNotNull()) {
+		m_threadDataEx->finishAndWait();
+		m_threadDataEx.setNull();
 	}
 }
 
@@ -198,8 +222,22 @@ LatLon MapEarthRenderer::getLatLonFromTileLocation(const MapTileLocationi& locat
 {
 	LatLon ret;
 	sl_uint32 n = 1 << (location.level);
-	ret.latitude = location.y * 180.0 / m_nY / n - 90.0;
-	ret.longitude = location.x * 360.0 / m_nX / n - 180.0;
+	sl_uint32 nx = n * _getCountX0();
+	sl_uint32 ny = n * _getCountY0();
+	ret.latitude = (location.y) * 180.0 / ny - 90.0;
+	ret.longitude = (location.x) * 360.0 / nx - 180.0;
+	return ret;
+}
+
+MapTileLocation MapEarthRenderer::getTileLocationFromLatLon(sl_uint32 level, const LatLon& latLon)
+{
+	MapTileLocation ret;
+	sl_uint32 n = 1 << level;
+	sl_uint32 nx = n * _getCountX0();
+	sl_uint32 ny = n * _getCountY0();
+	ret.level = level;
+	ret.y = (90.0 + latLon.latitude) * ny / 180.0;
+	ret.x = (180.0 + latLon.longitude) * nx / 360.0;
 	return ret;
 }
 

@@ -1,7 +1,171 @@
 #include "earth.h"
 #include "dem.h"
+#include "data_config.h"
 
 SLIB_MAP_NAMESPACE_START
+
+void MapEarthRenderer::_runThreadData()
+{
+	while (!Thread::isStoppingCurrent()) {
+		Time now = Time::now();
+		if (m_environment.isNotNull()) {
+			_runThreadDataStep();
+		}
+		Time now2 = Time::now();
+		sl_uint32 dt = (sl_uint32)(Math::clamp((now - m_timeLastThreadControl).getMillisecondsCount(), _SI64(0), _SI64(1000)));
+		if (dt < 20u) {
+			Thread::sleep(20u - dt);
+		}
+	}
+}
+
+void MapEarthRenderer::_runThreadDataEx()
+{
+	while (!Thread::isStoppingCurrent()) {
+		Time now = Time::now();
+		if (m_environment.isNotNull()) {
+			_runThreadDataBuildingStep();
+			_runThreadDataGISStep();
+		}
+		Time now2 = Time::now();
+		sl_uint32 dt = (sl_uint32)(Math::clamp((now - m_timeLastThreadControl).getMillisecondsCount(), _SI64(0), _SI64(1000)));
+		if (dt < 20u) {
+			Thread::sleep(20u - dt);
+		}
+	}
+}
+
+void MapEarthRenderer::_runThreadDataStep()
+{
+	_loadRenderingTilesData();
+
+	_freeOldPictureTiles();
+	_freeOldDEMTiles();
+
+	_freeOldRenderTileCaches();
+}
+
+void MapEarthRenderer::_loadRenderingTilesData()
+{
+	ListLocker<MapTileLocationi> list(m_listRenderedTiles.duplicate());
+	for (sl_size i = 0; i < list.count(); i++) {
+		// load picture
+		{
+			MapTileLocationi loc = list[i];
+			Ref<_PictureTileData> tile;
+			if (loc.level != 0) {
+				do {
+					tile = _loadPictureTile(loc);
+					loc.level--;
+					loc.x >>= 1;
+					loc.y >>= 1;
+				} while (tile.isNull() && loc.level > 0);
+			}
+		}
+		// load dem
+		{
+			MapTileLocationi loc = list[i];
+			Ref<_DEMTileData> tile;
+			if (loc.level != 0) {
+				do {
+					tile = _loadDEMTile(loc);
+					loc.level--;
+					loc.x >>= 1;
+					loc.y >>= 1;
+				} while (tile.isNull() && loc.level > 0);
+			}
+		}
+	}
+}
+
+void MapEarthRenderer::_loadZeroLevelTilesData()
+{
+	for (sl_uint32 iy = 0; iy < _getCountY0(); iy++) {
+		for (sl_uint32 ix = 0; ix < _getCountX0(); ix++) {
+			_loadPictureTile(MapTileLocationi(0, iy, ix));
+			_loadDEMTile(MapTileLocationi(0, iy, ix));
+		}
+	}
+}
+
+float MapEarthRenderer::_getAltitudeFromDEM(float x, float y, _DEMTileData* tile)
+{
+	if (tile) {
+		return tile->dem.getAltitudeAt(x, y);
+	} else {
+		return 0;
+	}
+}
+
+float MapEarthRenderer::_getAltitudeFromRenderingDEM(const LatLon& latLon)
+{
+	sl_int32 _level = _getMaxLevel() - 3;
+	sl_int32 level = _level;
+	do {
+		MapTileLocation loc = getTileLocationFromLatLon(level, latLon);
+		sl_int32 iy = (sl_int32)(loc.y);
+		sl_int32 ix = (sl_int32)(loc.x);
+		sl_real fy = (float)(loc.y - iy);
+		sl_real fx = (float)(loc.x - ix);
+		sl_real e = 0.1f;
+		sl_real d = 0.9f;
+		Ref<_DEMTileData> dem;
+		dem = _getDEMTile(MapTileLocationi(level, iy, ix));
+		if (dem.isNotNull()) {
+			return _getAltitudeFromDEM(fx, fy, dem);
+		}
+		if (fx < e) {
+			dem = _getDEMTile(MapTileLocationi(level, iy, ix - 1));
+			if (dem.isNotNull()) {
+				return _getAltitudeFromDEM(1, fy, dem);
+			}
+			if (fy < e) {
+				dem = _getDEMTile(MapTileLocationi(level, iy - 1, ix - 1));
+				if (dem.isNotNull()) {
+					return _getAltitudeFromDEM(1, 1, dem);
+				}
+			}
+			if (fy > d) {
+				dem = _getDEMTile(MapTileLocationi(level, iy + 1, ix - 1));
+				if (dem.isNotNull()) {
+					return _getAltitudeFromDEM(1, 0, dem);
+				}
+			}
+		}
+		if (fx > d) {
+			dem = _getDEMTile(MapTileLocationi(level, iy, ix + 1));
+			if (dem.isNotNull()) {
+				return _getAltitudeFromDEM(0, fy, dem);
+			}
+			if (fy < e) {
+				dem = _getDEMTile(MapTileLocationi(level, iy - 1, ix + 1));
+				if (dem.isNotNull()) {
+					return _getAltitudeFromDEM(0, 1, dem);
+				}
+			}
+			if (fy > d) {
+				dem = _getDEMTile(MapTileLocationi(level, iy + 1, ix + 1));
+				if (dem.isNotNull()) {
+					return _getAltitudeFromDEM(0, 0, dem);
+				}
+			}
+		}
+		if (fy < e) {
+			dem = _getDEMTile(MapTileLocationi(level, iy - 1, ix));
+			if (dem.isNotNull()) {
+				return _getAltitudeFromDEM(fx, 1, dem);
+			}
+		}
+		if (fy > d) {
+			dem = _getDEMTile(MapTileLocationi(level, iy + 1, ix));
+			if (dem.isNotNull()) {
+				return _getAltitudeFromDEM(fx, 0, dem);
+			}
+		}
+		level--;
+	} while (level >= 0);
+	return 0;
+}
 
 Ref<MapEarthRenderer::_PictureTileData> MapEarthRenderer::_getPictureTile(const MapTileLocationi& location)
 {
@@ -9,20 +173,28 @@ Ref<MapEarthRenderer::_PictureTileData> MapEarthRenderer::_getPictureTile(const 
 	m_mapPictureTiles.get(location, &tile);
 	if (tile.isNotNull()) {
 		tile->timeLastAccess = m_timeCurrentThreadControl;
-		return tile;
+		if (tile->texture.isNotNull()) {
+			return tile;
+		}
 	}
 	return Ref<_PictureTileData>::null();
 }
 
 Ref<MapEarthRenderer::_PictureTileData> MapEarthRenderer::_loadPictureTile(const MapTileLocationi& location)
 {
-	Ref<_PictureTileData> tile = _getPictureTile(location);
+	Ref<_PictureTileData> tile;
+	m_mapPictureTiles.get(location, &tile);
 	if (tile.isNotNull()) {
-		return tile;
+		tile->timeLastAccess = m_timeCurrentThreadControl;
+		if (tile->texture.isNotNull()) {
+			return tile;
+		} else {
+			return Ref<_PictureTileData>::null();
+		}
 	}
 	Ref<MapDataLoader> loader = getDataLoader();
 	if (loader.isNotNull()) {
-		Memory mem = loader->loadData(SLIB_MAP_PICTURE_TILE_TYPE, location, SLIB_MAP_PICTURE_TILE_EXT);
+		Memory mem = loader->loadData(SLIB_MAP_PICTURE_TILE_TYPE, location, SLIB_MAP_TILE_PACKAGE_DIMENSION, SLIB_MAP_PICTURE_TILE_EXT);
 		if (mem.isNotEmpty()) {
 			Ref<Texture> texture = Texture::create(Image::loadFromMemory(mem));
 			if (texture.isNotNull()) {
@@ -34,6 +206,15 @@ Ref<MapEarthRenderer::_PictureTileData> MapEarthRenderer::_loadPictureTile(const
 					m_mapPictureTiles.put(location, tile);
 					return tile;
 				}
+			}
+		} else {
+			tile = new _PictureTileData();
+			if (tile.isNotNull()) {
+				tile->location = location;
+				tile->texture = Ref<Texture>::null();
+				tile->timeLastAccess = m_timeCurrentThreadControl;
+				m_mapPictureTiles.put(location, tile);
+				return Ref<_PictureTileData>::null();
 			}
 		}
 	}
@@ -70,61 +251,34 @@ void MapEarthRenderer::_freeOldPictureTiles()
 	}
 }
 
-void MapEarthRenderer::_loadZeroLevelPictureTiles()
-{
-	for (sl_uint32 iy = 0; iy < m_nY; iy++) {
-		for (sl_uint32 ix = 0; ix < m_nX; ix++) {
-			_loadPictureTile(MapTileLocationi(0, iy, ix));
-		}
-	}
-}
-
-void MapEarthRenderer::_loadRequestedPictureTiles()
-{
-	MapTileLocationi loc;
-	while (m_listPictureTilesRequest.pop(&loc) && !Thread::isStoppingCurrent()) {
-		Ref<_PictureTileData> tile;
-		if (loc.level != 0) {
-			do {
-				tile = _loadPictureTile(loc);
-				loc.level--;
-				loc.x >>= 1;
-				loc.y >>= 1;
-			} while (tile.isNull() && loc.level > 0);
-		}
-	}
-}
-
-void MapEarthRenderer::_requestPictureTile(const MapTileLocationi& location)
-{
-	if (m_listPictureTilesRequest.count() > getMaxPictureTilesCount()) {
-		m_listPictureTilesRequest.clear();
-	}
-	m_listPictureTilesRequest.push(location);
-}
-
-
-
 Ref<MapEarthRenderer::_DEMTileData> MapEarthRenderer::_getDEMTile(const MapTileLocationi& location)
 {
 	Ref<_DEMTileData> tile;
 	m_mapDEMTiles.get(location, &tile);
 	if (tile.isNotNull()) {
 		tile->timeLastAccess = m_timeCurrentThreadControl;
-		return tile;
+		if (tile->dem.N != 0) {
+			return tile;
+		}
 	}
 	return Ref<_DEMTileData>::null();
 }
 
 Ref<MapEarthRenderer::_DEMTileData> MapEarthRenderer::_loadDEMTile(const MapTileLocationi& location)
 {
-	Ref<_DEMTileData> tile = _getDEMTile(location);
+	Ref<_DEMTileData> tile;
+	m_mapDEMTiles.get(location, &tile);
 	if (tile.isNotNull()) {
-		return tile;
+		tile->timeLastAccess = m_timeCurrentThreadControl;
+		if (tile->dem.N != 0) {
+			return tile;
+		} else {
+			return Ref<_DEMTileData>::null();
+		}
 	}
 	Ref<MapDataLoader> loader = getDataLoader();
 	if (loader.isNotNull()) {
-		Memory mem = loader->loadData(SLIB_MAP_DEM_TILE_TYPE, location, SLIB_MAP_DEM_TILE_EXT);
+		Memory mem = loader->loadData(SLIB_MAP_DEM_TILE_TYPE, location, SLIB_MAP_TILE_PACKAGE_DIMENSION, SLIB_MAP_DEM_TILE_EXT);
 		if (mem.getSize() == 16900) {
 			tile = new _DEMTileData();
 			if (tile.isNotNull()) {
@@ -133,6 +287,14 @@ Ref<MapEarthRenderer::_DEMTileData> MapEarthRenderer::_loadDEMTile(const MapTile
 				tile->timeLastAccess = m_timeCurrentThreadControl;
 				m_mapDEMTiles.put(location, tile);
 				return tile;
+			}
+		} else {
+			tile = new _DEMTileData();
+			if (tile.isNotNull()) {
+				tile->location = location;
+				tile->timeLastAccess = m_timeCurrentThreadControl;
+				m_mapDEMTiles.put(location, tile);
+				return Ref<_DEMTileData>::null();
 			}
 		}
 	}
@@ -168,49 +330,6 @@ void MapEarthRenderer::_freeOldDEMTiles()
 		}
 	}
 }
-
-void MapEarthRenderer::_loadZeroLevelDEMTiles()
-{
-	for (sl_uint32 iy = 0; iy < m_nY; iy++) {
-		for (sl_uint32 ix = 0; ix < m_nX; ix++) {
-			_loadDEMTile(MapTileLocationi(0, iy, ix));
-		}
-	}
-}
-
-void MapEarthRenderer::_loadRequestedDEMTiles()
-{
-	MapTileLocationi loc;
-	while (m_listDEMTilesRequest.pop(&loc) && !Thread::isStoppingCurrent()) {
-		if (loc.level != 0) {
-			Ref<_DEMTileData> tile;
-			do {
-				tile = _loadDEMTile(loc);
-				loc.level--;
-				loc.x >>= 1;
-				loc.y >>= 1;
-			} while (tile.isNull() && loc.level > 0);
-		}
-	}
-}
-
-void MapEarthRenderer::_requestDEMTile(const MapTileLocationi& location)
-{
-	if (m_listDEMTilesRequest.count() > getMaxDEMTilesCount()) {
-		m_listDEMTilesRequest.clear();
-	}
-	m_listDEMTilesRequest.push(location);
-}
-
-float MapEarthRenderer::_getAltitudeFromDEM(float x, float y, _DEMTileData* tile)
-{
-	if (tile) {
-		return tile->dem.getAltitudeAt(x, y);
-	} else {
-		return 0;
-	}
-}
-
 
 Ref<MapEarthRenderer::_RenderTileCache> MapEarthRenderer::_getRenderTileCache(const MapTileLocationi& location)
 {
@@ -250,12 +369,10 @@ void MapEarthRenderer::_freeOldRenderTileCaches()
 		for (sl_size i = 0; i < t.count(); i++) {
 			Ref<_RenderTileCache>& tile = t[i];
 			if (tile.isNotNull()) {
-				if (tile->location.level != 0) {
-					if ((m_timeCurrentThreadControl - tile->timeLastAccess).getMillisecondsCount() < timeLimit) {
-						tiles.add(tile);
-					} else {
-						m_mapRenderTileCaches.remove(tile->location);
-					}
+				if ((m_timeCurrentThreadControl - tile->timeLastAccess).getMillisecondsCount() < timeLimit) {
+					tiles.add(tile);
+				} else {
+					m_mapRenderTileCaches.remove(tile->location);
 				}
 			}
 		}

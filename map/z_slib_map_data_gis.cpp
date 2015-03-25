@@ -2,16 +2,18 @@
 
 #include "../../slib/core/io.h"
 
+#include "data_config.h"
+
 SLIB_MAP_NAMESPACE_START
-class _GIS_Poi_Loader
+class _Map_GIS_Poi_Loader
 {
 public:
 
-	List<GIS_Poi> pois;
+	List<Map_GIS_Poi> pois;
 
 	sl_bool loadFromFile(Ref<MapDataLoader> data, String type, const MapTileLocation& location)
 	{
-		Memory mem = data->loadData(type, location);
+		Memory mem = data->loadData(type, location, SLIB_MAP_TILE_PACKAGE_DIMENSION, SLIB_MAP_GIS_POI_TILE_EXT);
 		if (mem.isEmpty()) {
 			return sl_false;
 		}
@@ -19,13 +21,13 @@ public:
 		sl_int32 poiCount = reader.readInt32CVLI();
 		sl_int64 timeStamp = reader.readInt64CVLI();
 		for (sl_int32 poiIndex = 0; poiIndex < poiCount; poiIndex++) {
-			GIS_Poi poi;
+			Map_GIS_Poi poi;
 			poi.id = reader.readInt64CVLI();
-			poi.type = (GISPOI_TYPE)reader.readInt32CVLI();
+			poi.type = (MAP_GISPOI_TYPE)reader.readInt32CVLI();
 			poi.location.latitude = reader.readDouble();
 			poi.location.longitude = reader.readDouble();
 
-			if (poi.type != GISPOI_TYPE::POITypeNone && poi.id > 0) {
+			if (poi.type != MAP_GISPOI_TYPE::POITypeNone && poi.id > 0) {
 				pois.add(poi);
 			}
 		}
@@ -34,15 +36,15 @@ public:
 };
 
 
-class _GIS_Shape_Loader
+class _Map_GIS_Shape_Loader
 {
 public:
 
-	Map<sl_int32, Ref<GIS_Shape>> shapes;
+	Map<sl_int32, Ref<Map_GIS_Shape>> shapes;
 
 	sl_bool loadFromFile(Ref<MapDataLoader> data, String type, const MapTileLocation& location)
 	{
-		Memory mem = data->loadData(type, location);
+		Memory mem = data->loadData(type, location, SLIB_MAP_TILE_PACKAGE_DIMENSION, SLIB_MAP_GIS_LINE_TILE_EXT);
 		if (mem.isEmpty()) {
 			return sl_false;
 		}
@@ -51,7 +53,7 @@ public:
 		sl_int32 poiCount = reader.readInt32CVLI();
 		sl_int64 timeStamp = reader.readInt64CVLI();
 		for (sl_int32 poiIndex = 0; poiIndex < poiCount; poiIndex++) {
-			GIS_Line line;
+			Map_GIS_Line line;
 
 			line.id = reader.readInt64CVLI();
 			sl_int32 shapeType = (sl_int32)reader.readInt32CVLI();
@@ -61,12 +63,12 @@ public:
 			line.end.longitude = reader.readDouble();
 
 			if (shapeType > 0 && line.id > 0) {
-				Ref<GIS_Shape> shape = shapes.getValue(shapeType, sl_null);
+				Ref<Map_GIS_Shape> shape = shapes.getValue(shapeType, sl_null);
 				if (shape.isNotNull()) {
 					shape->lines.add(line);
 				}
 				else {
-					shape = new GIS_Shape;
+					shape = new Map_GIS_Shape;
 
 					shape->boundType = (shapeType >> 12) & 0xF;
 					shape->highWayType = (shapeType >> 8) & 0xF;
@@ -83,9 +85,9 @@ public:
 	}
 };
 
-sl_bool GIS_Poi_Tile::load(Ref<MapDataLoader> data, String type, const MapTileLocation& location)
+sl_bool Map_GIS_Poi_Tile::load(Ref<MapDataLoader> data, String type, const MapTileLocation& location)
 {
-	_GIS_Poi_Loader loader;
+	_Map_GIS_Poi_Loader loader;
 	if (loader.loadFromFile(data, type, location)) {
 		pois = loader.pois;
 		return sl_true;
@@ -93,9 +95,9 @@ sl_bool GIS_Poi_Tile::load(Ref<MapDataLoader> data, String type, const MapTileLo
 	return sl_false;
 }
 
-sl_bool GIS_Line_Tile::load(Ref<MapDataLoader> data, String type, const MapTileLocation& location)
+sl_bool Map_GIS_Line_Tile::load(Ref<MapDataLoader> data, String type, const MapTileLocation& location)
 {
-	_GIS_Shape_Loader loader;
+	_Map_GIS_Shape_Loader loader;
 	if (loader.loadFromFile(data, type, location)) {
 		shapes = loader.shapes;
 		return sl_true;
@@ -104,7 +106,7 @@ sl_bool GIS_Line_Tile::load(Ref<MapDataLoader> data, String type, const MapTileL
 }
 
 
-void GIS_Shape::initShape()
+void Map_GIS_Shape::initShape()
 {
 	if (boundType > 0) {
 		clr = Color::Yellow;

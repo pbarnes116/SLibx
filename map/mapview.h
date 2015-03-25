@@ -97,6 +97,8 @@ public:
 	virtual String formatCompass(sl_real f);
 	virtual String getStatusText();
 
+	void setFontForPOI(Ref<FreeType> font);
+
 protected:
 	void initialize();
 	

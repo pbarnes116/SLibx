@@ -6,13 +6,13 @@
 
 SLIB_MAP_NAMESPACE_START
 
-Memory MapDataLoaderList::loadData(const String& type, const MapTileLocationi& location, const String& subPath)
+Memory MapDataLoaderList::loadData(const String& type, const MapTileLocationi& location, sl_uint32 packageDimension, const String& subPath)
 {
 	ListLocker< Ref<MapDataLoader> > loaders(list);
 	for (sl_size i = 0; i < loaders.count(); i++) {
 		Ref<MapDataLoader> loader = loaders[i];
 		if (loader.isNotNull()) {
-			Memory ret = loader->loadData(type, location, subPath);
+			Memory ret = loader->loadData(type, location, packageDimension, subPath);
 			if (ret.isNotEmpty()) {
 				return ret;
 			}
@@ -25,20 +25,21 @@ MapData_GenericFileLoader::MapData_GenericFileLoader()
 {
 }
 
-MapData_GenericFileLoader::MapData_GenericFileLoader(String basePath, String password, sl_uint32 packageDimension)
+MapData_GenericFileLoader::MapData_GenericFileLoader(String basePath, String password)
 {
 	setBasePath(basePath);
 	setSecureFilePackagePassword(password);
-	setPackageDimension(packageDimension);
 }
 
-Memory MapData_GenericFileLoader::loadData(const String& type, const MapTileLocationi& location, const String& _subPath)
+Memory MapData_GenericFileLoader::loadData(const String& type, const MapTileLocationi& location, sl_uint32 packageDimension, const String& _subPath)
 {
 	// map-standard-package
  	{
-		MapPackage pkgReader(getSecureFilePackagePassword(), getPackageDimension(), getPackageDimension());
+		MapPackage pkgReader(getSecureFilePackagePassword(), packageDimension, packageDimension);
 		String subPath = _subPath;
-		if (!subPath.startsWith('/')) {
+		if (subPath.startsWith('/')) {
+			subPath = subPath.substring(1); 
+		} else {
 			subPath = String::null();
 		}
 		Memory mem = pkgReader.read(getBasePath() + _SLT("/") + type, location, subPath);
