@@ -29,13 +29,6 @@ MapView::~MapView()
 void MapView::release()
 {
 	m_earthRenderer->release();
-
-	if (m_sensorListener.isNotNull()) {
-		m_sensorListener.setNull();
-	}
-	if (m_sensor.isNotNull()) {
-		m_sensor->stop();
-	}
 }
 
 void MapView::setFontForPOI(Ref<FreeType> font)
@@ -62,18 +55,6 @@ void MapView::initialize()
 
 	m_textureStatus = Texture::create(Image::create(STATUS_WIDTH, STATUS_HEIGHT));
 
-	m_sensorListener = new MapViewSensorListener(this);
-
-	m_sensor = Sensor::create();
-	if (m_sensor.isNotNull()) {
-		m_sensorBeforeAccelY = 0;
-		m_compassBare = 0;
-		m_sensor->setListener(m_sensorListener);
-		Sensor::Param param;
-		param.flagUseAccelerometor = sl_true;
-		param.flagUseCompass = param.flagUseLocation = sl_true;
-		m_sensor->start(param);
-	}
 }
 
 void MapView::onFrame(RenderEngine* engine)
@@ -180,16 +161,6 @@ sl_bool MapView::onMouseEvent(MouseEvent& event)
 		} else {
 			m_flagTouch2 = sl_false;
 		}
-
-		GeoLocation loc = m_environment->cameraViewEarth->getEyeLocation();
-		sl_real tilt = m_environment->cameraViewEarth->getTilt();
-		if (loc.altitude > 10000 && tilt > 0) {
-			tilt -= 2;
-			if (tilt < 0) {
-				tilt = 0;
-			}
-			m_environment->cameraViewEarth->setTilt(tilt);
-		}
 		requestRender();
 	} else if (event.action == MouseEvent::actionRightButtonDown) {
 		m_mouseBeforeRightX = event.x;
@@ -234,37 +205,6 @@ sl_bool MapView::onMouseWheelEvent(MouseWheelEvent& event)
 	}
 	requestRender();
 	return sl_true;
-}
-void MapView::onAccelerometerChanged(Sensor* sensor, sl_real _xAccel, sl_real _yAccel, sl_real _zAccel)
-{
-	GeoLocation loc = m_environment->cameraViewEarth->getEyeLocation();
-	sl_real yAccel = Math::abs(_yAccel);
-	sl_real diff = yAccel - m_sensorBeforeAccelY;
-	if (loc.altitude < 10000 && Math::abs(diff) > 0.2) {
-		sl_real oldTilt = m_environment->cameraViewEarth->getTilt();
-		sl_real newTilt = (sl_real)(oldTilt + diff / 0.08);
-		if (newTilt < 0) {
-			newTilt = 0;
-		} 
-		if (newTilt > 80) {
-			newTilt = 80;
-		}
-		if (Math::abs(newTilt - oldTilt) > 4.5) {
-			m_environment->cameraViewEarth->setTilt(newTilt);
-			requestRender();
-		}
-		m_sensorBeforeAccelY = yAccel;
-	}
-}
-
-void MapView::onCompassChanged(Sensor* sensor, sl_real declination)
-{
-	m_compassBare = declination;
-}
-
-void MapView::onLocationChanged(Sensor* sensor, const GeoLocation& location)
-{
-
 }
 
 String MapView::formatLatitude(double f)
@@ -314,16 +254,10 @@ String MapView::formatAltitude(double f)
 	return ret;
 }
 
-String MapView::formatCompass(sl_real f)
-{
-	String ret = (sl_int32)(Math::floor(f)) + String(_SLT("°"));
-	return ret;
-}
-
 String MapView::getStatusText()
 {
 	GeoLocation loc = m_environment->cameraViewEarth->getEyeLocation();
-	String status = formatLatitude(loc.latitude) + _SLT(", ") + formatLongitude(loc.longitude) + _SLT(", ") + formatAltitude(loc.altitude) + _SLT(", ") + formatCompass(m_compassBare);
+	String status = formatLatitude(loc.latitude) + _SLT(", ") + formatLongitude(loc.longitude) + _SLT(", ") + formatAltitude(loc.altitude);
 	return status;
 }
 
