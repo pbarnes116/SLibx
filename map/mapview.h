@@ -98,7 +98,8 @@ public:
 	virtual String getStatusText();
 
 	void setFontForPOI(Ref<FreeType> font);
-	void setPoiDatabasePath(const String& dbPath);
+	void setPoiNames(Map<sl_int64, String> poiNames);
+	void setWayNames(Map<sl_int64, String> wayNames);
 protected:
 	void initialize();
 	
