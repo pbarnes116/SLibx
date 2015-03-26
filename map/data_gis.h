@@ -71,7 +71,7 @@ public:
 	{
 		lines.clear();
 		width = 0.f;
-		showMinLevel = 5;
+		showMinLevel = 0;
 		initShape();
 	}
 	~Map_GIS_Shape()

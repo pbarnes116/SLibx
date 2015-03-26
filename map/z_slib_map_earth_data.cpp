@@ -194,7 +194,7 @@ Ref<MapEarthRenderer::_PictureTileData> MapEarthRenderer::_loadPictureTile(const
 	}
 	Ref<MapDataLoader> loader = getDataLoader();
 	if (loader.isNotNull()) {
-		Memory mem = loader->loadData(SLIB_MAP_PICTURE_TILE_TYPE, location, SLIB_MAP_TILE_PACKAGE_DIMENSION, SLIB_MAP_PICTURE_TILE_EXT);
+		Memory mem = loader->loadData(SLIB_MAP_PICTURE_TILE_TYPE, location, SLIB_MAP_PICTURE_PACKAGE_DIMENSION, SLIB_MAP_PICTURE_TILE_EXT);
 		if (mem.isNotEmpty()) {
 			Ref<Texture> texture = Texture::create(Image::loadFromMemory(mem));
 			if (texture.isNotNull()) {
@@ -278,7 +278,7 @@ Ref<MapEarthRenderer::_DEMTileData> MapEarthRenderer::_loadDEMTile(const MapTile
 	}
 	Ref<MapDataLoader> loader = getDataLoader();
 	if (loader.isNotNull()) {
-		Memory mem = loader->loadData(SLIB_MAP_DEM_TILE_TYPE, location, SLIB_MAP_TILE_PACKAGE_DIMENSION, SLIB_MAP_DEM_TILE_EXT);
+		Memory mem = loader->loadData(SLIB_MAP_DEM_TILE_TYPE, location, SLIB_MAP_DEM_PACKAGE_DIMENSION, SLIB_MAP_DEM_TILE_EXT);
 		if (mem.getSize() == 16900) {
 			tile = new _DEMTileData();
 			if (tile.isNotNull()) {

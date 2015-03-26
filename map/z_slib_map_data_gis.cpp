@@ -9,7 +9,7 @@ SLIB_MAP_NAMESPACE_START
 List<Map_GIS_Poi> Map_GIS_Poi_TileLoader::loadTile(Ref<MapDataLoader> data, String type, const MapTileLocation& location)
 {
 	List<Map_GIS_Poi> ret;
-	Memory mem = data->loadData(type, location, SLIB_MAP_TILE_PACKAGE_DIMENSION, SLIB_MAP_GIS_POI_TILE_EXT);
+	Memory mem = data->loadData(type, location, SLIB_MAP_GIS_PACKAGE_DIMENSION, SLIB_MAP_GIS_POI_TILE_EXT);
 	if (mem.isEmpty()) {
 		return ret;
 	}
@@ -34,7 +34,7 @@ List<Map_GIS_Poi> Map_GIS_Poi_TileLoader::loadTile(Ref<MapDataLoader> data, Stri
 Map<sl_int32, Ref<Map_GIS_Shape>> Map_GIS_Line_TileLoader::loadTile(Ref<MapDataLoader> data, String type, const MapTileLocation& location)
 {
 	Map<sl_int32, Ref<Map_GIS_Shape>> ret;
-	Memory mem = data->loadData(type, location, SLIB_MAP_TILE_PACKAGE_DIMENSION, SLIB_MAP_GIS_LINE_TILE_EXT);
+	Memory mem = data->loadData(type, location, SLIB_MAP_GIS_PACKAGE_DIMENSION, SLIB_MAP_GIS_LINE_TILE_EXT);
 	if (mem.isEmpty()) {
 		return ret;
 	}
@@ -77,21 +77,24 @@ void Map_GIS_Poi::initPoi()
 {
 	if (type != POITypeNone) {
 		showMinLevel = 14;
-		clr = Color::Cyan;
-		fontSize = 14;
+		clr = Color::LightGoldenrodYellow;
+		fontSize = 15;
 		if (type == PlaceCountry || type == PlaceState) {
-			showMinLevel = 5;
+			showMinLevel = 6;
 			clr = Color::Yellow;
-			fontSize = 25;
+			fontSize = 30;
 		} else if (type == PlaceCity) {
 			showMinLevel = 7;
-			clr = Color::Yellow;
+			clr = Color::YellowGreen;
+			fontSize = 24;
 		} else if (type == PlaceTown) {
-			showMinLevel = 10;
-			clr = Color::White;
+			showMinLevel = 11;
+			clr = Color::Orange;
+			fontSize = 20;
 		} else if (type == PlaceVilliage) {
 			showMinLevel = 12;
-			clr = Color::White;
+			clr = Color::Orange;
+			fontSize = 15;
 		}
 	} else {
 		showMinLevel = 14;
@@ -102,26 +105,28 @@ void Map_GIS_Poi::initPoi()
 
 void Map_GIS_Shape::initShape()
 {
+	showMinLevel = 15;
 	if (boundType > 0) {
 		clr = Color::Yellow;
 		if (boundType < 5) {
-			showMinLevel = 5;
+			showMinLevel = 6;
 		} else if (boundType < 8) {
 			showMinLevel = 10;
-		} else {
-			showMinLevel = 13;
 		}
 		if (highWayType > 0) {
 			if (highWayType < 2) {
 				clr = Color::LightSalmon;
 				showMinLevel = 7;
-			} else if (highWayType < 3) {
+			} else if (highWayType < 4) {
 				clr = Color::LightSalmon;
 				showMinLevel = 9;
 			}
 		}
-		
-	} else if (highWayType > 0) {
+	}
+	if (showMinLevel != 15) {
+		return;
+	}
+	if (highWayType > 0) {
 		if (highWayType < 2) {
 			clr = Color::LightSalmon;
 			showMinLevel = 7;
@@ -139,7 +144,9 @@ void Map_GIS_Shape::initShape()
 			showMinLevel = 14;
 		}
 	} else if (extraType > 0) {
+		showMinLevel = 12;
 		if (extraType == 1 || extraType == 4) {
+			showMinLevel = 8;
 			clr = Color::LightCyan; 
 		} else if (extraType == 2) {
 			clr = Color::LightBlue; 
