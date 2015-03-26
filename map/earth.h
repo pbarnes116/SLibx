@@ -300,7 +300,6 @@ protected:
 	public:
 		MapTileLocationi location;
 		sl_bool flagLoaded;
-		Map_GIS_Line_Tile data;
 		List<_GISShape> shapes;
 		Time timeLastAccess;
 	};
@@ -323,13 +322,17 @@ protected:
 		GIS Poi Data Management
 	******************************************/
 public:
-	SLIB_INLINE void setPoiDatabasePath(const String& dbPath)
+	SLIB_INLINE void setPoiNames(Map<sl_int64, String> poiNames)
 	{
-		m_gisPoiTileLoader.openNameDatabase(dbPath);
+		m_gisPoiTileLoader.setPoiNames(poiNames);
+	}
+	SLIB_INLINE void setWayNames(Map<sl_int64, String> wayNames)
+	{
+		m_gisLineTileLoader.setWayNames(wayNames);
 	}
 protected:
 	Map_GIS_Poi_TileLoader m_gisPoiTileLoader;
-
+	Map_GIS_Line_TileLoader m_gisLineTileLoader;
 	struct _GISPoi
 	{
 		LatLon location;

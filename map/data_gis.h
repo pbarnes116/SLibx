@@ -49,6 +49,11 @@ struct Map_GIS_Poi
 	MAP_GISPOI_TYPE type;
 	LatLon location;
 	String name;
+
+	sl_int32 showMinLevel;
+	sl_real fontSize;
+	Color clr;
+	void initPoi();
 };
 
 struct Map_GIS_Line
@@ -56,6 +61,7 @@ struct Map_GIS_Line
 	sl_int64 id;
 	LatLon start;
 	LatLon end;
+
 };
 
 class Map_GIS_Shape : public Referable
@@ -88,19 +94,25 @@ public:
 class Map_GIS_Poi_TileLoader : public Referable
 {
 public:
-	void openNameDatabase(const String& dbPath);
+	void setPoiNames(Map<sl_int64, String> _poiNames)
+	{
+		this->poiNames = _poiNames;
+	}
 	List<Map_GIS_Poi> loadTile(Ref<MapDataLoader> data, String type, const MapTileLocation& location);
 private:
-	String getPoiNameFromDatabase(sl_int64 id);
-private:
-	Ref<SqliteDatabase> dbPoiName;
+	Map<sl_int64, String> poiNames;
 };
 
-class Map_GIS_Line_Tile
+class Map_GIS_Line_TileLoader: public Referable
 {
 public:
-	Map<sl_int32, Ref<Map_GIS_Shape>> shapes;
-	sl_bool load(Ref<MapDataLoader> loader, String type, const MapTileLocation& location);
+	void setWayNames(Map<sl_int64, String> _wayNames)
+	{
+		this->wayNames = _wayNames;
+	}
+	//Map<sl_int32, Ref<Map_GIS_Shape>> shapes;
+	Map<sl_int64, String> wayNames;
+	Map<sl_int32, Ref<Map_GIS_Shape>> loadTile(Ref<MapDataLoader> loader, String type, const MapTileLocation& location);
 };
 
 SLIB_MAP_NAMESPACE_END

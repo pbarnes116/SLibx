@@ -43,9 +43,14 @@ void MapView::setFontForPOI(Ref<FreeType> font)
 	m_earthRenderer->setFontForPOI(font);
 }
 
-void MapView::setPoiDatabasePath(const String& dbPath)
+void MapView::setWayNames(Map<sl_int64, String> wayNames)
 {
-	m_earthRenderer->setPoiDatabasePath(dbPath);
+	m_earthRenderer->setWayNames(wayNames);
+}
+
+void MapView::setPoiNames(Map<sl_int64, String> poiNames)
+{
+	m_earthRenderer->setPoiNames(poiNames);
 }
 
 void MapView::initialize()
