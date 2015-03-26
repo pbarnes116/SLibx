@@ -1,5 +1,6 @@
 
 #include "earth.h"
+#include "../../slib/render/opengl.h"
 
 SLIB_MAP_NAMESPACE_START
 
@@ -91,27 +92,73 @@ void MapEarthRenderer::_renderGISPoi(RenderEngine* engine, _GISPoiTile* tile)
 	for (sl_size i = 0; i < list.count(); i++) {
 		_GISPoi& s = list[i];
 		float altitude = _getAltitudeFromRenderingDEM(s.location);
-		altitude = 0;
 		Vector3 pos = MapEarth::getCartesianPosition(GeoLocation(s.location, altitude));
 		if (m_environment->viewFrustum.containsPoint(pos)) {
-			Vector3 posScreen = Transform3::projectToScreenPoint(m_environment->transformViewProjection, pos);
-			float x = (posScreen.x + 1.0f) * m_environment->viewportWidth / 2.0f;
-			float y = (1.0f - posScreen.y) * m_environment->viewportHeight / 2.0f;
+			Vector2 ps = convertPointToScreen(pos);
 			float w = (float)(s.texture->getWidth());
 			float h = (float)(s.texture->getHeight());
-			engine->drawTexture2D(x - w / 2, y - h / 2, w, h, s.texture);
+			engine->drawTexture2D(ps.x - w / 2, ps.y - h / 2, w, h, s.texture);
 		}
 	}
 }
 
 void MapEarthRenderer::_renderMarker(RenderEngine* engine, MapMarker* marker)
 {
-	
+	float altitude = _getAltitudeFromRenderingDEM(marker->location);
+	Vector3 pos = MapEarth::getCartesianPosition(GeoLocation(marker->location, altitude));
+	if (m_environment->viewFrustum.containsPoint(pos)) {
+		Vector2 ps = convertPointToScreen(pos);
+		if (marker->texture.isNotNull()) {
+			Rectangle rectangle = Rectangle(
+				ps.x - marker->rectangleTexture.getWidth() / 2
+				, ps.y - marker->rectangleTexture.getHeight()
+				, marker->rectangleTexture.getWidth()
+				, marker->rectangleTexture.getHeight());
+			engine->drawTexture2D(rectangle, marker->texture, marker->rectangleTexture);
+		}
+		if (marker->font.isNotNull()) {
+			if (marker->_textureText.isNull()) {
+				String text = marker->text;
+				if (text.length() > 50) {
+					text = text.substring(0, 50);
+				}
+				marker->font->setSize(marker->fontSize, marker->fontSize);
+				Sizei size = marker->font->getStringExtent(text);
+				Ref<Image> image = Image::create(size.width + 5, size.height + 5);
+				if (image.isNotNull()) {
+					marker->font->drawString(image, 2, size.height + 2, text, marker->colorText);
+					Ref<Texture> texture = Texture::create(image);
+					if (texture.isNotNull()) {
+						marker->_textureText = texture;
+					}
+				}
+			}
+			if (marker->_textureText.isNotNull()) {
+				Rectangle rectangle = Rectangle(
+					ps.x - marker->_textureText->getWidth() / 2
+					, ps.y
+					, (float)(marker->_textureText->getWidth())
+					, (float)(marker->_textureText->getHeight()));
+				engine->drawTexture2D(rectangle, marker->_textureText);
+			}
+		}
+	}	
 }
 
 void MapEarthRenderer::_renderPolygon(RenderEngine* engine, MapPolygon* polygon)
 {
-	
+	List<Vector3> points = polygon->points;
+	if (points.count() <= 1) {
+		return;
+	}
+	if (!m_environment->viewFrustum.containsFacets(points.getBuffer(), points.count())) {
+		return;
+	}
+	GLES2::setLineWidth(polygon->width);
+	m_programLine->setDiffuseColor(polygon->color);
+	Ref<VertexBuffer> vb = VertexBuffer::create(points.getBuffer(), points.count()*sizeof(Vector3));
+	engine->draw(m_programLine, points.count() + 1, vb, Primitive::typeLineStrip);
+	GLES2::setLineWidth(1);
 }
 
 void MapEarthRenderer::_prepareRendering(RenderEngine* engine, MapEnvironment* environment)

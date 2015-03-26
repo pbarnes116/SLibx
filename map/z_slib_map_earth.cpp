@@ -241,4 +241,11 @@ MapTileLocation MapEarthRenderer::getTileLocationFromLatLon(sl_uint32 level, con
 	return ret;
 }
 
+Vector2 MapEarthRenderer::convertPointToScreen(const Vector3& point)
+{
+	Vector3 posScreen = Transform3::projectToScreenPoint(m_environment->transformViewProjection, point);
+	float x = (posScreen.x + 1.0f) * m_environment->viewportWidth / 2.0f;
+	float y = (1.0f - posScreen.y) * m_environment->viewportHeight / 2.0f;
+	return Vector2(x, y);
+}
 SLIB_MAP_NAMESPACE_END

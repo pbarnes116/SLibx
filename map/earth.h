@@ -51,7 +51,7 @@ public:
 	String text;
 	Color colorText;
 	Ref<FreeType> font;
-	float fontSize;
+	sl_uint32 fontSize;
 	Ref<Texture> texture;
 	Rectangle rectangleTexture; // texture whole coordinate
 
@@ -116,6 +116,7 @@ public:
 public:
 	LatLon getLatLonFromTileLocation(const MapTileLocationi& location);
 	MapTileLocation getTileLocationFromLatLon(sl_uint32 level, const LatLon& latLon);
+	Vector2 convertPointToScreen(const Vector3& point);
 
 public:
 	Map< String, Ref<MapMarker> > markers;

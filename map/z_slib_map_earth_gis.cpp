@@ -177,13 +177,13 @@ Ref<MapEarthRenderer::_GISPoiTile> MapEarthRenderer::_loadGISPoiTile(const MapTi
 					p.type = list[i].type;
 					if (p.type == PlaceState || p.type == PlaceCountry) {
 						String text = list[i].name;
-						if (text.length() > 20) {
-							text = text.substring(0, 20);
+						if (text.length() > 50) {
+							text = text.substring(0, 50);
 						}
 						Sizei size = font->getStringExtent(text);
-						Ref<Image> image = Image::create(size.width, size.height);
+						Ref<Image> image = Image::create(size.width + 5, size.height + 5);
 						if (image.isNotNull()) {
-							font->drawString(image, 0, size.height, text, Color::red());
+							font->drawString(image, 2, size.height + 2, text, Color::red());
 							Ref<Texture> texture = Texture::create(image);
 							if (texture.isNotNull()) {
 								p.texture = texture;
