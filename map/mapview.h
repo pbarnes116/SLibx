@@ -33,6 +33,15 @@ public:
 	void setFontForPOI(Ref<FreeType> font);
 	void setPoiNames(Map<sl_int64, String> poiNames);
 	void setWayNames(Map<sl_int64, String> wayNames);
+
+	Ref<MapMarker> getMarker(String key);
+	void putMarker(String key, Ref<MapMarker> marker);
+	void removeMarker(String key);
+
+	Ref<MapPolygon> getPolygon(String key);
+	void putPolygon(String key, Ref<MapPolygon> polygon);
+	void removePolygon(String key);
+
 protected:
 	void initialize();
 	

@@ -23,6 +23,16 @@ void MapEarthRenderer::render(RenderEngine* engine, MapEnvironment* environment)
 		engine->clearDepth();
 		_renderBuildings(engine);
 	}
+
+	{
+		engine->setBlending(sl_true);
+		engine->setDepthTest(sl_false);
+		_renderMarkers(engine);
+		_renderPolygons(engine);
+		engine->setBlending(sl_false);
+		engine->setDepthTest(sl_true);
+	}
+
 	if (isShowGISPoi()) {
 		engine->setBlending(sl_true);
 		engine->setDepthTest(sl_false);
@@ -30,6 +40,7 @@ void MapEarthRenderer::render(RenderEngine* engine, MapEnvironment* environment)
 		engine->setBlending(sl_false);
 		engine->setDepthTest(sl_true);
 	}
+
 }
 
 void MapEarthRenderer::_renderTile(RenderEngine* engine, _RenderTile* tile)
@@ -97,36 +108,36 @@ void MapEarthRenderer::_renderGISPoi(RenderEngine* engine, _GISPoiTile* tile)
 			Vector2 ps = convertPointToScreen(pos);
 			float w = (float)(s.texture->getWidth());
 			float h = (float)(s.texture->getHeight());
-			engine->drawTexture2D(ps.x - w / 2, ps.y - h / 2, w, h, s.texture);
+			engine->drawTexture2D(
+				engine->screenToViewport(ps.x - w / 2, ps.y - h / 2, w, h)
+				, s.texture);
 		}
 	}
 }
 
 void MapEarthRenderer::_renderMarker(RenderEngine* engine, MapMarker* marker)
 {
-	float altitude = _getAltitudeFromRenderingDEM(marker->location);
-	Vector3 pos = MapEarth::getCartesianPosition(GeoLocation(marker->location, altitude));
+	Vector3 pos = MapEarth::getCartesianPosition(marker->location);
 	if (m_environment->viewFrustum.containsPoint(pos)) {
 		Vector2 ps = convertPointToScreen(pos);
-		if (marker->texture.isNotNull()) {
-			Rectangle rectangle = Rectangle(
-				ps.x - marker->rectangleTexture.getWidth() / 2
-				, ps.y - marker->rectangleTexture.getHeight()
-				, marker->rectangleTexture.getWidth()
-				, marker->rectangleTexture.getHeight());
-			engine->drawTexture2D(rectangle, marker->texture, marker->rectangleTexture);
+		if (marker->iconTexture.isNotNull()) {
+			Rectangle rectangle = Rectangle(Point(ps.x - marker->iconSize.width / 2, ps.y - marker->iconSize.height), marker->iconSize);
+			engine->drawTexture2D(
+				engine->screenToViewport(rectangle)
+				, marker->iconTexture
+				, marker->iconTextureRectangle);
 		}
-		if (marker->font.isNotNull()) {
+		if (marker->text.isNotEmpty() && marker->textFont.isNotNull()) {
 			if (marker->_textureText.isNull()) {
 				String text = marker->text;
 				if (text.length() > 50) {
 					text = text.substring(0, 50);
 				}
-				marker->font->setSize(marker->fontSize, marker->fontSize);
-				Sizei size = marker->font->getStringExtent(text);
+				marker->textFont->setSize(marker->textFontSize);
+				Sizei size = marker->textFont->getStringExtent(text);
 				Ref<Image> image = Image::create(size.width + 5, size.height + 5);
 				if (image.isNotNull()) {
-					marker->font->drawString(image, 2, size.height + 2, text, marker->colorText);
+					marker->textFont->drawString(image, 2, size.height + 2, text, marker->textColor);
 					Ref<Texture> texture = Texture::create(image);
 					if (texture.isNotNull()) {
 						marker->_textureText = texture;
@@ -139,7 +150,9 @@ void MapEarthRenderer::_renderMarker(RenderEngine* engine, MapMarker* marker)
 					, ps.y
 					, (float)(marker->_textureText->getWidth())
 					, (float)(marker->_textureText->getHeight()));
-				engine->drawTexture2D(rectangle, marker->_textureText);
+				engine->drawTexture2D(
+					engine->screenToViewport(rectangle)
+					, marker->_textureText);
 			}
 		}
 	}	

@@ -51,7 +51,7 @@ struct Map_GIS_Poi
 	String name;
 
 	sl_int32 showMinLevel;
-	sl_real fontSize;
+	sl_uint32 fontSize;
 	Color clr;
 	void initPoi();
 };

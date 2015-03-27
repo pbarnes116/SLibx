@@ -89,14 +89,13 @@ void MapView::onFrame(RenderEngine* engine)
 				, textStatus, Color::white());
 			m_textureStatus->update();
 			sl_real h = (sl_real)(STATUS_HEIGHT * m_environment->viewportWidth / STATUS_WIDTH);
-			engine->drawTexture2D(0, (sl_real)(m_environment->viewportHeight - h)
-				, (sl_real)(m_environment->viewportWidth), (sl_real)(h)
+			engine->drawTexture2D(
+				engine->screenToViewport(0, (sl_real)(m_environment->viewportHeight - h), (sl_real)(m_environment->viewportWidth), (sl_real)(h))
 				, m_textureStatus
-				, 0, 0, STATUS_WIDTH, STATUS_HEIGHT);
+				, Rectangle(0, 0, 1, 1));
 		}
 	}
 
-	//engine->drawDebugText();
 }
 
 sl_bool MapView::onMouseEvent(MouseEvent& event)
@@ -131,9 +130,9 @@ sl_bool MapView::onMouseEvent(MouseEvent& event)
 			sl_real dx = event.x - m_mouseBeforeX;
 			sl_real dy = event.y - m_mouseBeforeY;
 			Sphere earth(Transform3::getTransformedOrigin(m_environment->transformView), (sl_real)(MapEarth::getRadius()));
-			Line3 dirScreenO = Transform3::unprojectScreenPoint(m_environment->transformProjection, 0, 0, this->getClientRectangle());
-			Line3 dirScreenX = Transform3::unprojectScreenPoint(m_environment->transformProjection, 1, 0, this->getClientRectangle());
-			Line3 dirScreenY = Transform3::unprojectScreenPoint(m_environment->transformProjection, 0, 1, this->getClientRectangle());
+			Line3 dirScreenO = Transform3::unprojectScreenPoint(m_environment->transformProjection, Point(0, 0), this->getClientRectangle());
+			Line3 dirScreenX = Transform3::unprojectScreenPoint(m_environment->transformProjection, Point(1, 0), this->getClientRectangle());
+			Line3 dirScreenY = Transform3::unprojectScreenPoint(m_environment->transformProjection, Point(0, 1), this->getClientRectangle());
 			sl_real lx = (dirScreenO.getDirection().getNormalized() - dirScreenX.getDirection().getNormalized()).getLength();
 			sl_real ly = (dirScreenO.getDirection().getNormalized() - dirScreenY.getDirection().getNormalized()).getLength();
 			sl_real h = (sl_real)(m_environment->cameraViewEarth->getEyeLocation().altitude);
@@ -259,6 +258,36 @@ String MapView::getStatusText()
 	GeoLocation loc = m_environment->cameraViewEarth->getEyeLocation();
 	String status = formatLatitude(loc.latitude) + _SLT(", ") + formatLongitude(loc.longitude) + _SLT(", ") + formatAltitude(loc.altitude);
 	return status;
+}
+
+Ref<MapMarker> MapView::getMarker(String key)
+{
+	return m_earthRenderer->markers.getValue(key, Ref<MapMarker>::null());
+}
+
+void MapView::putMarker(String key, Ref<MapMarker> marker)
+{
+	m_earthRenderer->markers.put(key, marker);
+}
+
+void MapView::removeMarker(String key)
+{
+	m_earthRenderer->markers.remove(key);
+}
+
+Ref<MapPolygon> MapView::getPolygon(String key)
+{
+	return m_earthRenderer->polygons.getValue(key, Ref<MapPolygon>::null());
+}
+
+void MapView::putPolygon(String key, Ref<MapPolygon> polygon)
+{
+	m_earthRenderer->polygons.put(key, polygon);
+}
+
+void MapView::removePolygon(String key)
+{
+	m_earthRenderer->polygons.remove(key);
 }
 
 SLIB_MAP_NAMESPACE_END
