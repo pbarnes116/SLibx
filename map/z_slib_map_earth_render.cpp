@@ -108,7 +108,9 @@ void MapEarthRenderer::_renderGISPoi(RenderEngine* engine, _GISPoiTile* tile)
 			Vector2 ps = convertPointToScreen(pos);
 			float w = (float)(s.texture->getWidth());
 			float h = (float)(s.texture->getHeight());
-			engine->drawTexture2D(ps.x - w / 2, ps.y - h / 2, w, h, s.texture);
+			engine->drawTexture2D(
+				engine->screenToViewport(ps.x - w / 2, ps.y - h / 2, w, h)
+				, s.texture);
 		}
 	}
 }
@@ -120,7 +122,10 @@ void MapEarthRenderer::_renderMarker(RenderEngine* engine, MapMarker* marker)
 		Vector2 ps = convertPointToScreen(pos);
 		if (marker->iconTexture.isNotNull()) {
 			Rectangle rectangle = Rectangle(Point(ps.x - marker->iconSize.width / 2, ps.y - marker->iconSize.height), marker->iconSize);
-			engine->drawTexture2D(rectangle, marker->iconTexture, marker->iconTextureRectangle);
+			engine->drawTexture2D(
+				engine->screenToViewport(rectangle)
+				, marker->iconTexture
+				, marker->iconTextureRectangle);
 		}
 		if (marker->text.isNotEmpty() && marker->textFont.isNotNull()) {
 			if (marker->_textureText.isNull()) {
@@ -145,7 +150,9 @@ void MapEarthRenderer::_renderMarker(RenderEngine* engine, MapMarker* marker)
 					, ps.y
 					, (float)(marker->_textureText->getWidth())
 					, (float)(marker->_textureText->getHeight()));
-				engine->drawTexture2D(rectangle, marker->_textureText);
+				engine->drawTexture2D(
+					engine->screenToViewport(rectangle)
+					, marker->_textureText);
 			}
 		}
 	}	
