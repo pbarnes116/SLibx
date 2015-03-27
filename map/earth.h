@@ -46,14 +46,15 @@ public:
 class MapMarker : public Referable
 {
 public:
-	String key;
-	LatLon location;
+	GeoLocation location;
 	String text;
-	Color colorText;
-	Ref<FreeType> font;
-	sl_uint32 fontSize;
-	Ref<Texture> texture;
-	Rectangle rectangleTexture; // texture whole coordinate
+	Color textColor;
+	Ref<FreeType> textFont;
+	sl_uint32 textFontSize;
+
+	Size iconSize;
+	Ref<Texture> iconTexture;
+	Rectangle iconTextureRectangle; // texture whole coordinate
 
 public:
 	Ref<Texture> _textureText;

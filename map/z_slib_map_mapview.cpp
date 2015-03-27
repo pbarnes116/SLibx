@@ -261,4 +261,34 @@ String MapView::getStatusText()
 	return status;
 }
 
+Ref<MapMarker> MapView::getMarker(String key)
+{
+	return m_earthRenderer->markers.getValue(key, Ref<MapMarker>::null());
+}
+
+void MapView::putMarker(String key, Ref<MapMarker> marker)
+{
+	m_earthRenderer->markers.put(key, marker);
+}
+
+void MapView::removeMarker(String key)
+{
+	m_earthRenderer->markers.remove(key);
+}
+
+Ref<MapPolygon> MapView::getPolygon(String key)
+{
+	return m_earthRenderer->polygons.getValue(key, Ref<MapPolygon>::null());
+}
+
+void MapView::putPolygon(String key, Ref<MapPolygon> polygon)
+{
+	m_earthRenderer->polygons.put(key, polygon);
+}
+
+void MapView::removePolygon(String key)
+{
+	m_earthRenderer->polygons.remove(key);
+}
+
 SLIB_MAP_NAMESPACE_END
