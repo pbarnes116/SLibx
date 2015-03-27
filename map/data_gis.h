@@ -79,7 +79,6 @@ public:
 
 	}
 	void initShape();
-
 	sl_uint32 boundType;
 	sl_uint32 highWayType;
 	sl_uint32 extraType;

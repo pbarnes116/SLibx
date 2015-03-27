@@ -58,7 +58,6 @@ Map<sl_int32, Ref<Map_GIS_Shape>> Map_GIS_Line_TileLoader::loadTile(Ref<MapDataL
 				shape->lines.add(line);
 			} else {
 				shape = new Map_GIS_Shape;
-
 				shape->boundType = (shapeType >> 12) & 0xF;
 				shape->highWayType = (shapeType >> 8) & 0xF;
 				shape->naturalType = (shapeType >> 4) & 0xF;
@@ -144,12 +143,11 @@ void Map_GIS_Shape::initShape()
 			showMinLevel = 14;
 		}
 	} else if (extraType > 0) {
-		showMinLevel = 12;
+		showMinLevel = 14;
 		if (extraType == 1 || extraType == 4) {
-			showMinLevel = 8;
-			clr = Color::LightCyan; 
-		} else if (extraType == 2) {
-			clr = Color::LightBlue; 
+			clr = Color::LightCyan;
+		} else if (extraType == 1 || extraType == 4) {
+			clr = Color::LightBlue;
 		} else if (extraType == 3) {
 			clr = Color::Brown;
 		} else if (extraType == 5 || extraType == 6) {
