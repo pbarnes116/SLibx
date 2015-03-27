@@ -168,7 +168,7 @@ Ref<MapEarthRenderer::_GISPoiTile> MapEarthRenderer::_loadGISPoiTile(const MapTi
 						if (text.length() > 50) {
 							text = text.substring(0, 50);
 						}
-						font->setSize(list[i].fontSize, list[i].fontSize);
+						font->setSize(list[i].fontSize);
 						Sizei size = font->getStringExtent(text);
 						Ref<Image> image = Image::create(size.width + 5, size.height + 5);
 						if (image.isNotNull()) {
