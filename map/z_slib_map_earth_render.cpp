@@ -93,6 +93,7 @@ void MapEarthRenderer::_renderGISLine(RenderEngine* engine, _GISLineTile* tile)
 	for (sl_size i = 0; i < list.count(); i++) {
 		_GISShape& s = list[i];
 		m_programLine->setDiffuseColor(s.color);
+		GLES2::setLineWidth(s.width);
 		engine->draw(m_programLine, s.nElements, s.vb, Primitive::typeLines);
 	}
 }

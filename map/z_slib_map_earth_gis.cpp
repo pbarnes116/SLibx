@@ -40,6 +40,7 @@ Ref<MapEarthRenderer::_GISLineTile> MapEarthRenderer::_getGISLineTile(const MapT
 Ref<MapEarthRenderer::_GISLineTile> MapEarthRenderer::_loadGISLineTile(const MapTileLocationi& location)
 {
 	Ref<_GISLineTile> tile;
+	Ref<FreeType> font = _getFontForPOI();
 	m_mapGISLineTiles.get(location, &tile);
 	if (tile.isNotNull()) {
 		tile->timeLastAccess = m_timeCurrentThreadControl;
@@ -70,6 +71,7 @@ Ref<MapEarthRenderer::_GISLineTile> MapEarthRenderer::_loadGISLineTile(const Map
 								v[k * 2] = MapEarth::getCartesianPosition(GeoLocation(ll[k].start, sa));
 								float ea = 0; // _getAltitudeFromRenderingDEM(ll[k].end);
 								v[k * 2 + 1] = MapEarth::getCartesianPosition(GeoLocation(ll[k].end, ea));
+					
 							}
 							Ref<VertexBuffer> vb = VertexBuffer::create(v, ll.count() * 2 * sizeof(Vector3));
 							if (vb.isNotNull()) {
@@ -77,6 +79,7 @@ Ref<MapEarthRenderer::_GISLineTile> MapEarthRenderer::_loadGISLineTile(const Map
 								o.nElements = ll.count() * 2;
 								o.vb = vb;
 								o.color = s->clr;
+								o.width = s->width; 
 								tile->shapes.add(o);
 							}
 						}

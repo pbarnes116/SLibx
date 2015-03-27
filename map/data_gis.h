@@ -61,7 +61,7 @@ struct Map_GIS_Line
 	sl_int64 id;
 	LatLon start;
 	LatLon end;
-
+	String name;
 };
 
 class Map_GIS_Shape : public Referable
@@ -93,13 +93,13 @@ public:
 class Map_GIS_Poi_TileLoader : public Referable
 {
 public:
-	void setPoiNames(Map<sl_int64, String> _poiNames)
+	void setPoiInformation(Map<sl_int64, Variant> _poiInformation)
 	{
-		this->poiNames = _poiNames;
+		this->poiInformation = _poiInformation;
 	}
 	List<Map_GIS_Poi> loadTile(Ref<MapDataLoader> data, String type, const MapTileLocation& location);
 private:
-	Map<sl_int64, String> poiNames;
+	Map<sl_int64, Variant> poiInformation;
 };
 
 class Map_GIS_Line_TileLoader: public Referable

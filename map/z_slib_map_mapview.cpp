@@ -41,9 +41,9 @@ void MapView::setWayNames(Map<sl_int64, String> wayNames)
 	m_earthRenderer->setWayNames(wayNames);
 }
 
-void MapView::setPoiNames(Map<sl_int64, String> poiNames)
+void MapView::setPoiInformation(Map<sl_int64, Variant> poiInformation)
 {
-	m_earthRenderer->setPoiNames(poiNames);
+	m_earthRenderer->setPoiInformation(poiInformation);
 }
 
 void MapView::initialize()
