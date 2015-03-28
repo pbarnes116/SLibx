@@ -17,7 +17,7 @@ MapView::MapView()
 
 	m_earthRenderer = new MapEarthRenderer();
 	
-	initializeDataLoader(new MapDataLoaderList);
+	setDataLoader(new MapDataLoaderList);
 
 }
 

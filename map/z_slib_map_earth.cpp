@@ -146,26 +146,26 @@ MapEarthRenderer::MapEarthRenderer()
 {
 	m_flagInitialized = sl_false;
 
-	initializeMaxLevel(15);
-	initializeCountX0(10);
-	initializeCountY0(5);
+	setMaxLevel(15);
+	setCountX0(10);
+	setCountY0(5);
 
-	initializeTileLifeMillseconds(10000);
+	setTileLifeMillseconds(10000);
 
-	initializeMaxPictureTilesCount(300);
-	initializeMaxDEMTilesCount(2000);
-	initializeMaxBuildingTilesCount(100);
-	initializeMinBuildingLevel(13);
-	initializeMaxBuildingsCount(1000);
-	initializeMaxDetailedBuildingsCount(50);
-	initializeMaxGISLineTilesCount(200);
-	initializeMaxGISPoiTilesCount(200);
+	setMaxPictureTilesCount(300);
+	setMaxDEMTilesCount(2000);
+	setMaxBuildingTilesCount(100);
+	setMinBuildingLevel(13);
+	setMaxBuildingsCount(1000);
+	setMaxDetailedBuildingsCount(50);
+	setMaxGISLineTilesCount(200);
+	setMaxGISPoiTilesCount(200);
 
-	initializeMaxRenderTilesCount(100);
+	setMaxRenderTilesCount(100);
 
-	initializeShowBuilding(sl_true);
-	initializeShowGISLine(sl_true);
-	initializeShowGISPoi(sl_true);
+	setShowBuilding(sl_true);
+	setShowGISLine(sl_true);
+	setShowGISPoi(sl_true);
 
 	m_nMaxRenderTileLevel = 0;
 }
@@ -222,8 +222,8 @@ LatLon MapEarthRenderer::getLatLonFromTileLocation(const MapTileLocationi& locat
 {
 	LatLon ret;
 	sl_uint32 n = 1 << (location.level);
-	sl_uint32 nx = n * _getCountX0();
-	sl_uint32 ny = n * _getCountY0();
+	sl_uint32 nx = n * getCountX0();
+	sl_uint32 ny = n * getCountY0();
 	ret.latitude = (location.y) * 180.0 / ny - 90.0;
 	ret.longitude = (location.x) * 360.0 / nx - 180.0;
 	return ret;
@@ -233,8 +233,8 @@ MapTileLocation MapEarthRenderer::getTileLocationFromLatLon(sl_uint32 level, con
 {
 	MapTileLocation ret;
 	sl_uint32 n = 1 << level;
-	sl_uint32 nx = n * _getCountX0();
-	sl_uint32 ny = n * _getCountY0();
+	sl_uint32 nx = n * getCountX0();
+	sl_uint32 ny = n * getCountY0();
 	ret.level = level;
 	ret.y = (90.0 + latLon.latitude) * ny / 180.0;
 	ret.x = (180.0 + latLon.longitude) * nx / 360.0;

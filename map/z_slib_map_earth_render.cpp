@@ -202,12 +202,12 @@ void MapEarthRenderer::_renderTiles(RenderEngine* engine)
 			}
 		}
 	}
-	for (sl_uint32 level = 0; level <= _getMaxLevel(); level++) {
+	for (sl_uint32 level = 0; level <= getMaxLevel(); level++) {
 		List< Ref<_RenderTile> > listExpand;
 		// find expand
 		{
 			sl_bool flagExpand = sl_true;
-			if (level == _getMaxLevel()) {
+			if (level == getMaxLevel()) {
 				flagExpand = sl_false;
 			}
 			ListLocker< Ref<_RenderTile> > current(listCurrent);
@@ -458,7 +458,7 @@ void MapEarthRenderer::_renderBuildings(RenderEngine* engine)
 	buildings.setCount(Math::min(getMaxBuildingsCount(), (sl_uint32)(buildings.count())));
 	{
 		sl_bool flagRequestTexture = sl_false;
-		sl_uint32 maxt = _getMaxDetailedBuildingsCount();
+		sl_uint32 maxt = getMaxDetailedBuildingsCount();
 		sl_uint32 it = 0;
 		ListLocker<_MapEarthRenderer_Building> list(buildings);
 		for (sl_size i = 0; i < list.count(); i++) {

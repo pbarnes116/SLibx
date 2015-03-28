@@ -33,6 +33,10 @@ public:
 
 	void move(double latitudeOffset, double longitudeOffset, double altitudeOffset);
 	void moveTo(double latitude, double longitude, double altitude);
+	SLIB_INLINE void moveTo(const GeoLocation& location)
+	{
+		moveTo(location.latitude, location.longitude, location.altitude);
+	}
 	void zoom(double ratio, double altitudeMin = 20, double altitudeMax = 12000000);
 	void rotateZ(sl_real angle);
 

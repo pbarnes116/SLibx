@@ -135,7 +135,7 @@ Ref<MapEarthRenderer::_GISPoiTile> MapEarthRenderer::_getGISPoiTile(const MapTil
 
 Ref<MapEarthRenderer::_GISPoiTile> MapEarthRenderer::_loadGISPoiTile(const MapTileLocationi& location)
 {
-	Ref<FreeType> font = _getFontForPOI();
+	Ref<FreeType> font = getFontForPOI();
 	if (font.isNull()) {
 		return Ref<_GISPoiTile>::null();
 	}

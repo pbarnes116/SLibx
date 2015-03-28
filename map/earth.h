@@ -82,32 +82,32 @@ public:
 	~MapEarthRenderer();
 
 protected:	
-	SLIB_PROPERTY_SIMPLE(sl_uint32, MaxLevel);
-	SLIB_PROPERTY_SIMPLE(sl_uint32, CountX0);
-	SLIB_PROPERTY_SIMPLE(sl_uint32, CountY0);
+	SLIB_PROPERTY_INLINE(sl_uint32, MaxLevel);
+	SLIB_PROPERTY_INLINE(sl_uint32, CountX0);
+	SLIB_PROPERTY_INLINE(sl_uint32, CountY0);
 
-	SLIB_PROPERTY_SIMPLE(sl_uint32, TileLifeMillseconds);
+	SLIB_PROPERTY_INLINE(sl_uint32, TileLifeMillseconds);
 
-	SLIB_PROPERTY_SIMPLE(sl_uint32, MaxPictureTilesCount);
-	SLIB_PROPERTY_SIMPLE(sl_uint32, MaxDEMTilesCount);
+	SLIB_PROPERTY_INLINE(sl_uint32, MaxPictureTilesCount);
+	SLIB_PROPERTY_INLINE(sl_uint32, MaxDEMTilesCount);
 
-	SLIB_PROPERTY_SIMPLE(sl_uint32, MaxGISLineTilesCount);
-	SLIB_PROPERTY_SIMPLE(sl_uint32, MaxGISPoiTilesCount);
+	SLIB_PROPERTY_INLINE(sl_uint32, MaxGISLineTilesCount);
+	SLIB_PROPERTY_INLINE(sl_uint32, MaxGISPoiTilesCount);
 
-	SLIB_PROPERTY_SIMPLE(sl_uint32, MaxBuildingTilesCount);
-	SLIB_PROPERTY_SIMPLE(sl_uint32, MinBuildingLevel);
-	SLIB_PROPERTY_SIMPLE(sl_uint32, MaxBuildingsCount);
-	SLIB_PROPERTY_SIMPLE(sl_uint32, MaxDetailedBuildingsCount);
+	SLIB_PROPERTY_INLINE(sl_uint32, MaxBuildingTilesCount);
+	SLIB_PROPERTY_INLINE(sl_uint32, MinBuildingLevel);
+	SLIB_PROPERTY_INLINE(sl_uint32, MaxBuildingsCount);
+	SLIB_PROPERTY_INLINE(sl_uint32, MaxDetailedBuildingsCount);
 
-	SLIB_PROPERTY_SIMPLE(sl_uint32, MaxRenderTilesCount);
+	SLIB_PROPERTY_INLINE(sl_uint32, MaxRenderTilesCount);
 
-	SLIB_BOOLEAN_PROPERTY(ShowBuilding);
-	SLIB_BOOLEAN_PROPERTY(ShowGISLine);
-	SLIB_BOOLEAN_PROPERTY(ShowGISPoi);
+	SLIB_BOOLEAN_PROPERTY_INLINE(ShowBuilding);
+	SLIB_BOOLEAN_PROPERTY_INLINE(ShowGISLine);
+	SLIB_BOOLEAN_PROPERTY_INLINE(ShowGISPoi);
 
-	SLIB_PROPERTY_SIMPLE(Ref<FreeType>, FontForPOI);
+	SLIB_PROPERTY_INLINE(Ref<FreeType>, FontForPOI);
 
-	SLIB_PROPERTY_SIMPLE(Ref<MapDataLoader>, DataLoader);
+	SLIB_PROPERTY_INLINE(Ref<MapDataLoader>, DataLoader);
 
 public:
 	void initialize();

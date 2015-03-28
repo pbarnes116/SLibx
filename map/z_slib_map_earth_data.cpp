@@ -80,8 +80,8 @@ void MapEarthRenderer::_loadRenderingTilesData()
 
 void MapEarthRenderer::_loadZeroLevelTilesData()
 {
-	for (sl_uint32 iy = 0; iy < _getCountY0(); iy++) {
-		for (sl_uint32 ix = 0; ix < _getCountX0(); ix++) {
+	for (sl_uint32 iy = 0; iy < getCountY0(); iy++) {
+		for (sl_uint32 ix = 0; ix < getCountX0(); ix++) {
 			_loadPictureTile(MapTileLocationi(0, iy, ix));
 			_loadDEMTile(MapTileLocationi(0, iy, ix));
 		}
@@ -99,7 +99,7 @@ float MapEarthRenderer::_getAltitudeFromDEM(float x, float y, _DEMTileData* tile
 
 float MapEarthRenderer::_getAltitudeFromRenderingDEM(const LatLon& latLon)
 {
-	sl_int32 _level = _getMaxLevel() - 3;
+	sl_int32 _level = getMaxLevel() - 3;
 	sl_int32 level = _level;
 	do {
 		MapTileLocation loc = getTileLocationFromLatLon(level, latLon);

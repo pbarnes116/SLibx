@@ -66,8 +66,8 @@ public:
 		return m_environment;
 	}
 
-	SLIB_PROPERTY_SIMPLE(Ref<FreeType>, StatusFont);
-	SLIB_PROPERTY_SIMPLE(Ref<MapDataLoader>, DataLoader);
+	SLIB_PROPERTY_INLINE(Ref<FreeType>, StatusFont);
+	SLIB_PROPERTY_INLINE(Ref<MapDataLoader>, DataLoader);
 
 };
 SLIB_MAP_NAMESPACE_END
