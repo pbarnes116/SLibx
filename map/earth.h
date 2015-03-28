@@ -293,8 +293,10 @@ protected:
 	struct _GISShape
 	{
 		Color color;
+		sl_real width;
 		sl_uint32 nElements;
 		Ref<VertexBuffer> vb;
+		Ref<Texture> texture;
 	};
 	class _GISLineTile : public Referable
 	{
@@ -323,9 +325,9 @@ protected:
 		GIS Poi Data Management
 	******************************************/
 public:
-	SLIB_INLINE void setPoiNames(Map<sl_int64, String> poiNames)
+	SLIB_INLINE void setPoiInformation(Map<sl_int64, Variant> poiInfo)
 	{
-		m_gisPoiTileLoader.setPoiNames(poiNames);
+		m_gisPoiTileLoader.setPoiInformation(poiInfo);
 	}
 	SLIB_INLINE void setWayNames(Map<sl_int64, String> wayNames)
 	{

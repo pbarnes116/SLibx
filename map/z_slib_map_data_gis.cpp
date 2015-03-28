@@ -22,11 +22,16 @@ List<Map_GIS_Poi> Map_GIS_Poi_TileLoader::loadTile(Ref<MapDataLoader> data, Stri
 		poi.type = (MAP_GISPOI_TYPE)reader.readInt32CVLI();
 		poi.location.latitude = reader.readDouble();
 		poi.location.longitude = reader.readDouble();
-		poi.name = poiNames.getValue(poi.id, _SLT(""));
-		poi.initPoi();
-		if (poi.type != MAP_GISPOI_TYPE::POITypeNone && poi.id > 0 && poi.name.length() > 0) {
-			ret.add(poi);
+		Variant poiInfo = poiInformation.getValue(poi.id, Variant::null());
+		if (poiInfo.isNotNull()) {
+			poi.name = poiInfo.getField("name").getString();
+			poi.type = (MAP_GISPOI_TYPE)poiInfo.getField("type").getInt32();
+			poi.initPoi();
+			if (poi.type != MAP_GISPOI_TYPE::POITypeNone && poi.id > 0 && poi.name.length() > 0) {
+				ret.add(poi);
+			}
 		}
+		
 	}
 	return ret;
 }
@@ -51,6 +56,7 @@ Map<sl_int32, Ref<Map_GIS_Shape>> Map_GIS_Line_TileLoader::loadTile(Ref<MapDataL
 		line.start.longitude = reader.readDouble();
 		line.end.latitude = reader.readDouble();
 		line.end.longitude = reader.readDouble();
+		line.name = wayNames.getValue(line.id, _SLT(""));
 
 		if (shapeType > 0 && line.id > 0) {
 			Ref<Map_GIS_Shape> shape = ret.getValue(shapeType, sl_null);
@@ -62,7 +68,6 @@ Map<sl_int32, Ref<Map_GIS_Shape>> Map_GIS_Line_TileLoader::loadTile(Ref<MapDataL
 				shape->highWayType = (shapeType >> 8) & 0xF;
 				shape->naturalType = (shapeType >> 4) & 0xF;
 				shape->extraType = (shapeType)& 0xF;
-
 				shape->initShape();
 				shape->lines.add(line);
 				ret.put(shapeType, shape);
@@ -105,18 +110,23 @@ void Map_GIS_Poi::initPoi()
 void Map_GIS_Shape::initShape()
 {
 	showMinLevel = 15;
+	width = 2.0f;
 	if (boundType > 0) {
 		clr = Color::Yellow;
 		if (boundType < 5) {
+			width = 17.0f;
 			showMinLevel = 6;
 		} else if (boundType < 8) {
+			width = 15.0f;
 			showMinLevel = 10;
 		}
 		if (highWayType > 0) {
 			if (highWayType < 2) {
+				width = 5.0f;
 				clr = Color::LightSalmon;
 				showMinLevel = 7;
 			} else if (highWayType < 4) {
+				width = 5.0f;
 				clr = Color::LightSalmon;
 				showMinLevel = 9;
 			}
@@ -126,19 +136,21 @@ void Map_GIS_Shape::initShape()
 		return;
 	}
 	if (highWayType > 0) {
+		clr = Color::LightSalmon;
 		if (highWayType < 2) {
-			clr = Color::LightSalmon;
+			width = 5.0f;
 			showMinLevel = 7;
 		} else if (highWayType < 4) {
-			clr = Color::LightSalmon;
+			width = 5.0f;
 			showMinLevel = 9;
 		} else if (highWayType == 4) {
-			clr = Color::LightSalmon;
+			width = 3.0f;
 			showMinLevel = 11;
 		} else if (highWayType < 7) {
-			clr = Color::LightSalmon;
+			width = 3.0f;
 			showMinLevel = 13;
 		} else {
+			width = 2.0f;
 			clr = Color::White;
 			showMinLevel = 14;
 		}

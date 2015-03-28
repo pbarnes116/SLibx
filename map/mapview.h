@@ -31,7 +31,7 @@ public:
 	virtual String getStatusText();
 
 	void setFontForPOI(Ref<FreeType> font);
-	void setPoiNames(Map<sl_int64, String> poiNames);
+	void setPoiInformation(Map<sl_int64, Variant> poiInformation);
 	void setWayNames(Map<sl_int64, String> wayNames);
 
 	Ref<MapMarker> getMarker(String key);
