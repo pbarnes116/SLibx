@@ -1,4 +1,4 @@
-#include "data_gis.h"
+﻿#include "data_gis.h"
 
 #include "../../slib/core/io.h"
 
@@ -22,9 +22,11 @@ List<Map_GIS_Poi> Map_GIS_Poi_TileLoader::loadTile(Ref<MapDataLoader> data, Stri
 		poi.type = (MAP_GISPOI_TYPE)reader.readInt32CVLI();
 		poi.location.latitude = reader.readDouble();
 		poi.location.longitude = reader.readDouble();
+		
 		Variant poiInfo = poiInformation.getValue(poi.id, Variant::null());
 		if (poiInfo.isNotNull()) {
 			poi.name = poiInfo.getField("name").getString();
+			
 			poi.type = (MAP_GISPOI_TYPE)poiInfo.getField("type").getInt32();
 			poi.initPoi();
 			if (poi.type != MAP_GISPOI_TYPE::POITypeNone && poi.id > 0 && poi.name.length() > 0) {
@@ -114,19 +116,19 @@ void Map_GIS_Shape::initShape()
 	if (boundType > 0) {
 		clr = Color::Yellow;
 		if (boundType < 5) {
-			width = 17.0f;
+			width = 2.0f;
 			showMinLevel = 6;
 		} else if (boundType < 8) {
-			width = 15.0f;
+			width = 2.0f;
 			showMinLevel = 10;
 		}
 		if (highWayType > 0) {
 			if (highWayType < 2) {
-				width = 5.0f;
+				width = 2.0f;
 				clr = Color::LightSalmon;
 				showMinLevel = 7;
 			} else if (highWayType < 4) {
-				width = 5.0f;
+				width = 2.0f;
 				clr = Color::LightSalmon;
 				showMinLevel = 9;
 			}
@@ -138,19 +140,19 @@ void Map_GIS_Shape::initShape()
 	if (highWayType > 0) {
 		clr = Color::LightSalmon;
 		if (highWayType < 2) {
-			width = 5.0f;
+			width = 2.0f;
 			showMinLevel = 7;
 		} else if (highWayType < 4) {
-			width = 5.0f;
+			width = 2.0f;
 			showMinLevel = 9;
 		} else if (highWayType == 4) {
-			width = 3.0f;
+			width = 1.0f;
 			showMinLevel = 11;
 		} else if (highWayType < 7) {
-			width = 3.0f;
+			width = 1.0f;
 			showMinLevel = 13;
 		} else {
-			width = 2.0f;
+			width = 1.0f;
 			clr = Color::White;
 			showMinLevel = 14;
 		}
