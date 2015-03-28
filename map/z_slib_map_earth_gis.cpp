@@ -40,7 +40,7 @@ Ref<MapEarthRenderer::_GISLineTile> MapEarthRenderer::_getGISLineTile(const MapT
 Ref<MapEarthRenderer::_GISLineTile> MapEarthRenderer::_loadGISLineTile(const MapTileLocationi& location)
 {
 	Ref<_GISLineTile> tile;
-	Ref<FreeType> font = _getFontForPOI();
+	Ref<FreeType> font = getFontForPOI();
 	m_mapGISLineTiles.get(location, &tile);
 	if (tile.isNotNull()) {
 		tile->timeLastAccess = m_timeCurrentThreadControl;
