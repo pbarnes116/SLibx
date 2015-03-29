@@ -22,7 +22,7 @@ List<Map_GIS_Poi> Map_GIS_Poi_TileLoader::loadTile(Ref<MapDataLoader> data, Stri
 		poi.type = (MAP_GISPOI_TYPE)reader.readInt32CVLI();
 		poi.location.latitude = reader.readDouble();
 		poi.location.longitude = reader.readDouble();
-		
+
 		Variant poiInfo = poiInformation.getValue(poi.id, Variant::null());
 		if (poiInfo.isNotNull()) {
 			poi.name = poiInfo.getField("name").getString();
@@ -158,8 +158,9 @@ void Map_GIS_Shape::initShape()
 		}
 	} else if (extraType > 0) {
 		showMinLevel = 14;
-		if (extraType == 1 || extraType == 4) {
+		if (extraType == 4) {
 			clr = Color::LightCyan;
+			showMinLevel = 8;
 		} else if (extraType == 1 || extraType == 4) {
 			clr = Color::LightBlue;
 		} else if (extraType == 3) {
