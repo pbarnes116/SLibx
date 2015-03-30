@@ -6,9 +6,9 @@
 
 SLIB_MAP_NAMESPACE_START
 
-List<Map_GIS_Poi> Map_GIS_Poi_TileLoader::loadTile(Ref<MapDataLoader> data, String type, const MapTileLocation& location)
+List<MapGISPoiData> MapGISPoi_DataLoader::loadTile(Ref<MapDataLoader> data, String type, const MapTileLocation& location)
 {
-	List<Map_GIS_Poi> ret;
+	List<MapGISPoiData> ret;
 	Memory mem = data->loadData(type, location, SLIB_MAP_GIS_PACKAGE_DIMENSION, SLIB_MAP_GIS_POI_TILE_EXT);
 	if (mem.isEmpty()) {
 		return ret;
@@ -17,9 +17,9 @@ List<Map_GIS_Poi> Map_GIS_Poi_TileLoader::loadTile(Ref<MapDataLoader> data, Stri
 	sl_int32 poiCount = reader.readInt32CVLI();
 	sl_int64 timeStamp = reader.readInt64CVLI();
 	for (sl_int32 poiIndex = 0; poiIndex < poiCount; poiIndex++) {
-		Map_GIS_Poi poi;
+		MapGISPoiData poi;
 		poi.id = reader.readInt64CVLI();
-		poi.type = (MAP_GISPOI_TYPE)reader.readInt32CVLI();
+		poi.type = (MAP_GIS_POI_TYPE)reader.readInt32CVLI();
 		poi.location.latitude = reader.readDouble();
 		poi.location.longitude = reader.readDouble();
 		
@@ -27,9 +27,9 @@ List<Map_GIS_Poi> Map_GIS_Poi_TileLoader::loadTile(Ref<MapDataLoader> data, Stri
 		if (poiInfo.isNotNull()) {
 			poi.name = poiInfo.getField("name").getString();
 			
-			poi.type = (MAP_GISPOI_TYPE)poiInfo.getField("type").getInt32();
+			poi.type = (MAP_GIS_POI_TYPE)poiInfo.getField("type").getInt32();
 			poi.initPoi();
-			if (poi.type != MAP_GISPOI_TYPE::POITypeNone && poi.id > 0 && poi.name.length() > 0) {
+			if (poi.type != MAP_GIS_POI_TYPE::POITypeNone && poi.id > 0 && poi.name.length() > 0) {
 				ret.add(poi);
 			}
 		}
@@ -38,9 +38,9 @@ List<Map_GIS_Poi> Map_GIS_Poi_TileLoader::loadTile(Ref<MapDataLoader> data, Stri
 	return ret;
 }
 
-Map<sl_int32, Ref<Map_GIS_Shape>> Map_GIS_Line_TileLoader::loadTile(Ref<MapDataLoader> data, String type, const MapTileLocation& location)
+Map< sl_int32, Ref<MapGISShapeData> > MapGISLine_DataLoader::loadTile(Ref<MapDataLoader> data, String type, const MapTileLocation& location)
 {
-	Map<sl_int32, Ref<Map_GIS_Shape>> ret;
+	Map< sl_int32, Ref<MapGISShapeData> > ret;
 	Memory mem = data->loadData(type, location, SLIB_MAP_GIS_PACKAGE_DIMENSION, SLIB_MAP_GIS_LINE_TILE_EXT);
 	if (mem.isEmpty()) {
 		return ret;
@@ -50,7 +50,7 @@ Map<sl_int32, Ref<Map_GIS_Shape>> Map_GIS_Line_TileLoader::loadTile(Ref<MapDataL
 	sl_int32 poiCount = reader.readInt32CVLI();
 	sl_int64 timeStamp = reader.readInt64CVLI();
 	for (sl_int32 poiIndex = 0; poiIndex < poiCount; poiIndex++) {
-		Map_GIS_Line line;
+		MapGISLineData line;
 
 		line.id = reader.readInt64CVLI();
 		sl_int32 shapeType = (sl_int32)reader.readInt32CVLI();
@@ -61,11 +61,11 @@ Map<sl_int32, Ref<Map_GIS_Shape>> Map_GIS_Line_TileLoader::loadTile(Ref<MapDataL
 		line.name = wayNames.getValue(line.id, _SLT(""));
 
 		if (shapeType > 0 && line.id > 0) {
-			Ref<Map_GIS_Shape> shape = ret.getValue(shapeType, sl_null);
+			Ref<MapGISShapeData> shape = ret.getValue(shapeType, sl_null);
 			if (shape.isNotNull()) {
 				shape->lines.add(line);
 			} else {
-				shape = new Map_GIS_Shape;
+				shape = new MapGISShapeData;
 				shape->boundType = (shapeType >> 12) & 0xF;
 				shape->highWayType = (shapeType >> 8) & 0xF;
 				shape->naturalType = (shapeType >> 4) & 0xF;
@@ -79,7 +79,7 @@ Map<sl_int32, Ref<Map_GIS_Shape>> Map_GIS_Line_TileLoader::loadTile(Ref<MapDataL
 	return ret;
 }
 
-void Map_GIS_Poi::initPoi()
+void MapGISPoiData::initPoi()
 {
 	if (type != POITypeNone) {
 		showMinLevel = 14;
@@ -109,7 +109,7 @@ void Map_GIS_Poi::initPoi()
 
 }
 
-void Map_GIS_Shape::initShape()
+void MapGISShapeData::initShape()
 {
 	showMinLevel = 15;
 	width = 2.0f;

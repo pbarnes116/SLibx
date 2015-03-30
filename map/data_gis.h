@@ -6,9 +6,10 @@
 #include "data.h"
 #include "../../slib/render/engine.h"
 #include "../../slib/db.h"
+
 SLIB_MAP_NAMESPACE_START
 
-enum MAP_GISPOI_TYPE {
+enum MAP_GIS_POI_TYPE {
 	POITypeNone = 0
 	, AmenityStart = 1
 	, Transport = 10
@@ -43,10 +44,10 @@ enum MAP_GISPOI_TYPE {
 
 };
 
-struct Map_GIS_Poi
+struct MapGISPoiData
 {
 	sl_int64 id;
-	MAP_GISPOI_TYPE type;
+	MAP_GIS_POI_TYPE type;
 	LatLon location;
 	String name;
 
@@ -56,7 +57,7 @@ struct Map_GIS_Poi
 	void initPoi();
 };
 
-struct Map_GIS_Line
+struct MapGISLineData
 {
 	sl_int64 id;
 	LatLon start;
@@ -64,17 +65,17 @@ struct Map_GIS_Line
 	String name;
 };
 
-class Map_GIS_Shape : public Referable
+class MapGISShapeData : public Referable
 {
 public:
-	SLIB_INLINE Map_GIS_Shape()
+	SLIB_INLINE MapGISShapeData()
 	{
 		lines.clear();
 		width = 0.f;
 		showMinLevel = 0;
 		initShape();
 	}
-	~Map_GIS_Shape()
+	~MapGISShapeData()
 	{
 
 	}
@@ -84,34 +85,34 @@ public:
 	sl_uint32 extraType;
 	sl_uint32 naturalType;
 
-	List<Map_GIS_Line> lines;
+	List<MapGISLineData> lines;
 	Color clr;
 	sl_real width;
 	sl_uint32 showMinLevel;
 };
 
-class Map_GIS_Poi_TileLoader : public Referable
+class MapGISPoi_DataLoader : public Referable
 {
 public:
 	void setPoiInformation(Map<sl_int64, Variant> _poiInformation)
 	{
 		this->poiInformation = _poiInformation;
 	}
-	List<Map_GIS_Poi> loadTile(Ref<MapDataLoader> data, String type, const MapTileLocation& location);
+	List<MapGISPoiData> loadTile(Ref<MapDataLoader> data, String type, const MapTileLocation& location);
 private:
 	Map<sl_int64, Variant> poiInformation;
 };
 
-class Map_GIS_Line_TileLoader: public Referable
+class MapGISLine_DataLoader: public Referable
 {
 public:
 	void setWayNames(Map<sl_int64, String> _wayNames)
 	{
 		this->wayNames = _wayNames;
 	}
-	//Map<sl_int32, Ref<Map_GIS_Shape>> shapes;
+
 	Map<sl_int64, String> wayNames;
-	Map<sl_int32, Ref<Map_GIS_Shape>> loadTile(Ref<MapDataLoader> loader, String type, const MapTileLocation& location);
+	Map<sl_int32, Ref<MapGISShapeData>> loadTile(Ref<MapDataLoader> loader, String type, const MapTileLocation& location);
 };
 
 SLIB_MAP_NAMESPACE_END

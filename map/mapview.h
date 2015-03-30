@@ -3,9 +3,9 @@
 
 #include "definition.h"
 
-#include "environment.h"
-#include "earth.h"
+#include "earth_renderer.h"
 #include "data.h"
+#include "tile_dem.h"
 
 #include "../../slib/ui/view.h"
 #include "../../slib/image/freetype.h"
@@ -19,16 +19,13 @@ public:
 	~MapView();
 
 public:
+	void initialize();
 	virtual void release();
 
-	virtual void onFrame(RenderEngine* engine);
-	virtual sl_bool onMouseEvent(MouseEvent& event);
-	virtual sl_bool onMouseWheelEvent(MouseWheelEvent& event);
-
-	virtual String formatLatitude(double f);
-	virtual String formatLongitude(double f);
-	virtual String formatAltitude(double f);
-	virtual String getStatusText();
+	Ref<MapCamera> getCamera()
+	{
+		return m_earthRenderer.getCamera();
+	}
 
 	void setFontForPOI(Ref<FreeType> font);
 	void setPoiInformation(Map<sl_int64, Variant> poiInformation);
@@ -43,13 +40,24 @@ public:
 	void removePolygon(String key);
 
 protected:
-	void initialize();
+	virtual void onFrame(RenderEngine* engine);
+	virtual sl_bool onMouseEvent(MouseEvent& event);
+	virtual sl_bool onMouseWheelEvent(MouseWheelEvent& event);
+
+	virtual String formatLatitude(double f);
+	virtual String formatLongitude(double f);
+	virtual String formatAltitude(double f);
+	virtual String getStatusText();
+
+protected:
+	Ref<MapDEMTileManager> getDEMTiles();
+	void _zoom(double ratio);
 	
 private:
 	sl_bool m_flagInit;
 
-	Ref<MapEnvironment> m_environment;
-	Ref<MapEarthRenderer> m_earthRenderer;
+	MapEarthRenderer m_earthRenderer;
+
 	Ref<Texture> m_textureStatus;
 
 	sl_real m_mouseBeforeX;
@@ -61,11 +69,6 @@ private:
 	sl_real m_mouseBeforeRightY;
 
 public:
-	const Ref<MapEnvironment>& getEnvironment()
-	{
-		return m_environment;
-	}
-
 	SLIB_PROPERTY_INLINE(Ref<FreeType>, StatusFont);
 	SLIB_PROPERTY_INLINE(Ref<MapDataLoader>, DataLoader);
 
