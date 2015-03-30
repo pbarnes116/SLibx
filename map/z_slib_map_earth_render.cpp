@@ -542,7 +542,7 @@ void MapEarthRenderer::_renderMarkers(RenderEngine* engine)
 	ListLocker< Ref<MapMarker> > list(markers.values());
 	for (sl_size i = 0; i < list.count(); i++) {
 		Ref<MapMarker> marker = list[i];
-		if (marker.isNotNull()) {
+		if (marker.isNotNull() && marker->flagVisible) {
 			_renderMarker(engine, marker);
 		}
 	}

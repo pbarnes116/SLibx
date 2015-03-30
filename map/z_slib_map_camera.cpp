@@ -232,8 +232,8 @@ void MapCamera::stepMotions(sl_real dt)
 	}
 	if (m_flagRotatingZ) {
 		sl_real tr = Math::normalizeDegree(m_targetRotationZ);
-		sl_real or = getRotationZ();
-		sl_real dr = tr - or;
+		sl_real _or = getRotationZ();
+		sl_real dr = tr - _or;
 		if (dr > 180) {
 			dr -= 360;
 		} else if (dr < -180) {
@@ -245,25 +245,25 @@ void MapCamera::stepMotions(sl_real dt)
 			m_flagRotatingZ = sl_false;
 		} else {
 			if (dr > 0) {
-				setRotationZ(Math::normalizeDegree(or + s));
+				setRotationZ(Math::normalizeDegree(_or + s));
 			} else {
-				setRotationZ(Math::normalizeDegree(or - s));
+				setRotationZ(Math::normalizeDegree(_or - s));
 			}
 		}
 	}
 	if (m_flagTilting) {
 		sl_real tr = normalizeTilt(m_targetTilt);
-		sl_real or = getTilt();
-		sl_real dr = tr - or;
+		sl_real _or = getTilt();
+		sl_real dr = tr - _or;
 		sl_real s = 360.0f * dt / 1000.0f;
 		if (Math::abs(dr) <= s) {
 			setTilt(tr);
 			m_flagTilting = sl_false;
 		} else {
 			if (dr > 0) {
-				setTilt(normalizeTilt(or + s));
+				setTilt(normalizeTilt(_or + s));
 			} else {
-				setTilt(normalizeTilt(or - s));
+				setTilt(normalizeTilt(_or - s));
 			}
 		}
 	}

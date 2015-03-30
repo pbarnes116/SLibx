@@ -21,6 +21,7 @@ public:
 	Size iconSize;
 	Ref<Texture> iconTexture;
 	Rectangle iconTextureRectangle; // texture whole coordinate
+	sl_bool flagVisible;
 
 public:
 	Ref<Texture> _textureText;
