@@ -26,6 +26,10 @@ public:
 	{
 		return m_earthRenderer.getCamera();
 	}
+	MapEarthRenderer& getEarthRenderer()
+	{
+		return m_earthRenderer;
+	}
 
 	void setFontForPOI(Ref<FreeType> font);
 	void setPoiInformation(Map<sl_int64, Variant> poiInformation);

@@ -117,10 +117,10 @@ void MapGISShapeData::initShape()
 		clr = Color::Yellow;
 		if (boundType < 5) {
 			width = 2.0f;
-			showMinLevel = 6;
+			showMinLevel = 5;
 		} else if (boundType < 8) {
 			width = 2.0f;
-			showMinLevel = 10;
+			showMinLevel = 8;
 		}
 		if (highWayType > 0) {
 			if (highWayType < 2) {
