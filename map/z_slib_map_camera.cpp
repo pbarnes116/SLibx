@@ -56,30 +56,30 @@ sl_real MapCameraLocation::getRevisedTilt() const
 	return t;
 }
 
-Matrix4 MapCameraLocation::getVerticalViewMatrix() const
+Matrix4lf MapCameraLocation::getVerticalViewMatrix() const
 {
-	Matrix4 matView;
-	Vector3 eye = MapEarth::getCartesianPosition(m_location);
-	sl_real lenEye = eye.getLength();
+	Matrix4lf matView;
+	Vector3lf eye = MapEarth::getCartesianPosition(m_location);
+	double lenEye = eye.getLength();
 
 	// look at
 	{
-		matView = Transform3::getRotationYMatrix((float)(Math::getRadianFromDegree(m_location.longitude)));
-		matView *= Transform3::getRotationXMatrix((float)(Math::getRadianFromDegree(-m_location.latitude)));
-		matView *= Transform3::getTranslationMatrix(0, 0, lenEye);
+		matView = Transform3lf::getRotationYMatrix((float)(Math::getRadianFromDegree(m_location.longitude)));
+		matView *= Transform3lf::getRotationXMatrix((float)(Math::getRadianFromDegree(-m_location.latitude)));
+		matView *= Transform3lf::getTranslationMatrix(0, 0, lenEye);
 	}
 	if (m_rotationZ != 0) {
-		matView *= Transform3::getRotationZMatrix(Math::getRadianFromDegree(m_rotationZ));
+		matView *= Transform3lf::getRotationZMatrix(Math::getRadianFromDegree(m_rotationZ));
 	}
 	return matView;
 }
 
-Matrix4 MapCameraLocation::getViewMatrix() const
+Matrix4lf MapCameraLocation::getViewMatrix() const
 {
-	Matrix4 matView = getVerticalViewMatrix();
+	Matrix4lf matView = getVerticalViewMatrix();
 	sl_real t = getRevisedTilt();
 	if (t > 0) {
-		matView *= Transform3::getRotationXMatrix(Math::getRadianFromDegree(t));
+		matView *= Transform3lf::getRotationXMatrix(Math::getRadianFromDegree(t));
 	}
 	return matView;
 }

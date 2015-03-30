@@ -97,7 +97,7 @@ void DEM::scaleDEM(float* o, sl_uint32 M, const Rectangle& rectDEM) const
 }
 
 template <class GLOBE>
-void _DEM_makeMesh(const DEM* _dem, const GLOBE& globe, Primitive& out, sl_uint32 M
+void _DEM_makeMesh(const DEM* _dem, const GLOBE& globe, const Vector3lf& positionCenter, Primitive& out, sl_uint32 M
 	, const GeoRectangle& region, const Rectangle& rectDEM, const Rectangle& rectTexture)
 {
 	if (M <= 1) {
@@ -172,7 +172,7 @@ void _DEM_makeMesh(const DEM* _dem, const GLOBE& globe, Primitive& out, sl_uint3
 			} else {
 				loc.altitude = 0;
 			}
-			pv->position = globe.getCartesianPosition(loc);
+			pv->position = globe.getCartesianPosition(loc) - positionCenter;
 			pv->altitude = (sl_real)(loc.altitude);
 			pv->texCoord.x = tx0 + dtx * x / (M - 1);
 			pv->texCoord.y = ty0 + dty * y / (M - 1);
@@ -196,16 +196,16 @@ void _DEM_makeMesh(const DEM* _dem, const GLOBE& globe, Primitive& out, sl_uint3
 	out.indexBuffer = IndexBuffer::create(ib, out.countElements * sizeof(sl_uint16));
 }
 
-void DEM::makeMeshFromGlobe(const Globe& globe, Primitive& out, sl_uint32 M
+void DEM::makeMeshFromGlobe(const Globe& globe, const Vector3lf& positionCenter, Primitive& out, sl_uint32 M
 	, const GeoRectangle& region, const Rectangle& rectDEM, const Rectangle& rectTexture) const
 {
-	_DEM_makeMesh(this, globe, out, M, region, rectDEM, rectTexture);
+	_DEM_makeMesh(this, globe, positionCenter, out, M, region, rectDEM, rectTexture);
 }
 
-void DEM::makeMeshFromSphericalGlobe(const SphericalGlobe& globe, Primitive& out, sl_uint32 M
+void DEM::makeMeshFromSphericalGlobe(const SphericalGlobe& globe, const Vector3lf& positionCenter, Primitive& out, sl_uint32 M
 	, const GeoRectangle& region, const Rectangle& rectDEM, const Rectangle& rectTexture) const
 {
-	_DEM_makeMesh(this, globe, out, M, region, rectDEM, rectTexture);
+	_DEM_makeMesh(this, globe, positionCenter, out, M, region, rectDEM, rectTexture);
 }
 
 float DEM::getAltitudeAt(float x, float y)

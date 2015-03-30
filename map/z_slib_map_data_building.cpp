@@ -265,14 +265,14 @@ List< Ref<VW_Building_ObjectInfo> > VW_Building::readTile(Ref<MapDataLoader> dat
 	return ret;
 }
 
-Vector3 VW_Building::convertVWPosition(const Vector3& positionVW)
+Vector3lf VW_Building::convertVWPosition(const Vector3lf& positionVW)
 {
-	return Vector3(-positionVW.y, positionVW.z, -positionVW.x);
+	return Vector3lf(-positionVW.y, positionVW.z, -positionVW.x);
 }
 
-Matrix4 VW_Building::getModelTransformMatrixForMesh(const Vector3& positionCenter)
+Matrix4lf VW_Building::getModelTransformMatrixForMesh(const Vector3lf& positionCenter)
 {
-	Matrix4 m;
+	Matrix4lf m;
 	m.setRow0(Vector4(0, 0, -1, 0));
 	m.setRow1(Vector4(-1, 0, 0, 0));
 	m.setRow2(Vector4(0, 1, 0, 0));

@@ -69,7 +69,7 @@ public:
 		return m_tilesDEM;
 	}
 
-	SLIB_INLINE const Matrix4& getProjectionMatrix() const
+	SLIB_INLINE const Matrix4lf& getProjectionMatrix() const
 	{
 		return m_transformProjection;
 	}
@@ -129,12 +129,12 @@ protected:
 
 	sl_uint32 m_viewportWidth;
 	sl_uint32 m_viewportHeight;
-	Vector3 m_positionEye;
-	Matrix4 m_transformView;
-	Matrix4 m_transformViewInverse;
-	Matrix4 m_transformProjection;
-	Matrix4 m_transformViewProjection;
-	ViewFrustum m_viewFrustum;
+	Vector3lf m_positionEye;
+	Matrix4lf m_transformView;
+	Matrix4lf m_transformViewInverse;
+	Matrix4lf m_transformProjection;
+	Matrix4lf m_transformViewProjection;
+	ViewFrustumlf m_viewFrustum;
 
 protected:
 	void _prepareRendering(RenderEngine* engine);
@@ -143,11 +143,26 @@ protected:
 	void _loadRenderingTilesData();
 	void _initializeShaders();
 
-	Ref<MapRenderTile> _getRenderTile(const MapTileLocationi& location);
+	class _Tile : public Referable
+	{
+	public:
+		MapTileLocationi location;
+		GeoRectangle region;
+		Vector3lf positions[4];
+		Vector3lf positionsWithDEM[4];
+		Vector3lf positionCenter;
+
+		Ref<MapPictureTile> picture;
+		Rectangle rectanglePicture;
+		Ref<MapDEMTile> dem;
+		Rectangle rectangleDEM;
+	};
+
+	Ref<_Tile> _getTile(const MapTileLocationi& location);
 	void _renderTiles(RenderEngine* engine);
-	void _renderTile(RenderEngine* engine, MapRenderTile* tile);
-	sl_bool _checkTileVisible(MapRenderTile* tile);
-	sl_bool _checkTileExpandable(MapRenderTile* tile);
+	void _renderTile(RenderEngine* engine, _Tile* tile);
+	sl_bool _checkTileVisible(_Tile* tile);
+	sl_bool _checkTileExpandable(_Tile* tile);
 
 	void _renderBuildings(RenderEngine* engine);
 	void _renderBuilding(RenderEngine* engine, MapBuilding* building);

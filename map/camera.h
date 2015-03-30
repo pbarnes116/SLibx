@@ -49,8 +49,8 @@ public:
 	sl_real getRevisedRotationZ() const;
 	sl_real getRevisedTilt() const;
 
-	Matrix4 getViewMatrix() const;
-	Matrix4 getVerticalViewMatrix() const;
+	Matrix4lf getViewMatrix() const;
+	Matrix4lf getVerticalViewMatrix() const;
 
 private:
 	GeoLocation m_location;

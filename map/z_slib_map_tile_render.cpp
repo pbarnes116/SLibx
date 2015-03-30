@@ -22,6 +22,7 @@ Ref<MapRenderTile> MapRenderTileManager::getTile(const MapTileLocationi& locatio
 
 void MapRenderTileManager::saveTile(const MapTileLocationi& location, const Ref<MapRenderTile>& tile)
 {
+	tile->timeLastAccess = Time::now();
 	m_tiles.put(tile->location, tile);
 }
 

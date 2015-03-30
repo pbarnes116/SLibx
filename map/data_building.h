@@ -61,8 +61,8 @@ public:
 	static List< Ref<VW_Building_ObjectInfo> > readTile(Ref<MapDataLoader> loader, String type, const MapTileLocationi& location, sl_bool flagBridge);
 	static Ref<VW_Building_Object> readObject(Ref<MapDataLoader> loader, VW_Building_ObjectInfo* info);
 
-	static Vector3 convertVWPosition(const Vector3& positionVW);
-	static Matrix4 getModelTransformMatrixForMesh(const Vector3& positionCenter);
+	static Vector3lf convertVWPosition(const Vector3lf& positionVW);
+	static Matrix4lf getModelTransformMatrixForMesh(const Vector3lf& positionCenter);
 };
 
 SLIB_MAP_NAMESPACE_END

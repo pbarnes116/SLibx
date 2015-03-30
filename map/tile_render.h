@@ -12,15 +12,9 @@ class MapRenderTile : public Referable
 {
 public:
 	MapTileLocationi location;
-	GeoRectangle region;
-	Vector3 positions[4];
-	Vector3 positionsWithDEM[4];
-	Vector3 positionCenter;
 
 	Ref<MapPictureTile> picture;
-	Rectangle rectanglePicture;
 	Ref<MapDEMTile> dem;
-	Rectangle rectangleDEM;
 	
 	Primitive primitive;
 	

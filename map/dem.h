@@ -36,10 +36,10 @@ public:
 
 	void scaleDEM(float* output, sl_uint32 M, const Rectangle& rectDEM) const;
 
-	void makeMeshFromGlobe(const Globe& globe, Primitive& out, sl_uint32 M
+	void makeMeshFromGlobe(const Globe& globe, const Vector3lf& positionCenter, Primitive& out, sl_uint32 M
 		, const GeoRectangle& region, const Rectangle& rectDEM, const Rectangle& rectTexture) const;
 
-	void makeMeshFromSphericalGlobe(const SphericalGlobe& globe, Primitive& out, sl_uint32 M
+	void makeMeshFromSphericalGlobe(const SphericalGlobe& globe, const Vector3lf& positionCenter, Primitive& out, sl_uint32 M
 		, const GeoRectangle& region, const Rectangle& rectDEM, const Rectangle& rectTexture) const;
 
 	float getAltitudeAt(float x, float y);

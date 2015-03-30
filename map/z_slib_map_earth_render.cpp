@@ -43,7 +43,7 @@ void MapEarthRenderer::render(RenderEngine* engine)
 
 }
 
-void MapEarthRenderer::_renderTile(RenderEngine* engine, MapRenderTile* tile)
+void MapEarthRenderer::_renderTile(RenderEngine* engine, _Tile* tile)
 {
 	m_programSurfaceTile->setTexture(tile->picture->texture);
 
@@ -54,21 +54,27 @@ void MapEarthRenderer::_renderTile(RenderEngine* engine, MapRenderTile* tile)
 			flagUseCache = sl_true;
 		}
 	}
+
+	m_programSurfaceTile->setViewMatrix(Transform3lf::getTranslationMatrix(tile->positionCenter) * m_transformView);
 	if (flagUseCache) {
 		engine->draw(m_programSurfaceTile, &(cache->primitive));
 	} else {
 		Primitive primitive;
 		if (tile->dem.isNotNull()) {
-			tile->dem->dem.makeMeshFromSphericalGlobe(MapEarth::getGlobe(), primitive, 17, tile->region, tile->rectangleDEM, tile->rectanglePicture);
+			tile->dem->dem.makeMeshFromSphericalGlobe(MapEarth::getGlobe(), tile->positionCenter, primitive, 17, tile->region, tile->rectangleDEM, tile->rectanglePicture);
 		} else {
 			DEM dem;
-			dem.makeMeshFromSphericalGlobe(MapEarth::getGlobe(), primitive, 17, tile->region, Rectangle(0, 0, 1, 1), tile->rectanglePicture);
+			dem.makeMeshFromSphericalGlobe(MapEarth::getGlobe(), tile->positionCenter, primitive, 17, tile->region, Rectangle(0, 0, 1, 1), tile->rectanglePicture);
 		}
+
 		engine->draw(m_programSurfaceTile, &(primitive));
 
-		tile->primitive = primitive;
-
-		m_tilesRender->saveTile(tile->location, tile);
+		cache = new MapRenderTile;
+		cache->location = tile->location;
+		cache->picture = tile->picture;
+		cache->dem = tile->dem;
+		cache->primitive = primitive;
+		m_tilesRender->saveTile(tile->location, cache);
 	}
 }
 
@@ -76,7 +82,7 @@ void MapEarthRenderer::_renderBuilding(RenderEngine* engine, MapBuilding* buildi
 {
 	m_programBuilding->setAmbientColor(Color(120, 120, 120));
 	m_programBuilding->setDiffuseColor(Color(120, 120, 120));
-	m_programBuilding->setModelMatrix(VW_Building::getModelTransformMatrixForMesh(building->info->bound.center()));
+	m_programBuilding->setViewMatrix(VW_Building::getModelTransformMatrixForMesh(building->info->bound.center()) * m_transformView);
 	ListLocker<VW_Building_Mesh> meshes(building->object->meshes);
 	for (sl_size i = 0; i < meshes.count(); i++) {
 		VW_Building_Mesh& mesh = meshes[i];
@@ -203,17 +209,22 @@ void MapEarthRenderer::_renderMarker(RenderEngine* engine, MapMarker* marker)
 
 void MapEarthRenderer::_renderPolygon(RenderEngine* engine, MapPolygon* polygon)
 {
-	List<Vector3> points = polygon->points;
-	if (points.count() <= 1) {
+	List<GeoLocation> points = polygon->points;
+	sl_size n = points.count();
+	if (n <= 1) {
 		return;
 	}
-	if (!(m_viewFrustum.containsFacets(points.getBuffer(), points.count()))) {
+	SLIB_SCOPED_ARRAY(Vector3, pos, n);
+	for (sl_size i = 0; i < n; i++) {
+		pos[i] = MapEarth::getCartesianPosition(points[i]);
+	}
+	if (!(ViewFrustum(m_viewFrustum).containsFacets(pos, n))) {
 		return;
 	}
 	GLES2::setLineWidth(polygon->width);
 	m_programLine->setDiffuseColor(polygon->color);
-	Ref<VertexBuffer> vb = VertexBuffer::create(points.getBuffer(), points.count()*sizeof(Vector3));
-	engine->draw(m_programLine, points.count() + 1, vb, Primitive::typeLineStrip);
+	Ref<VertexBuffer> vb = VertexBuffer::create(pos, n*sizeof(Vector3));
+	engine->draw(m_programLine, n, vb, Primitive::typeLineStrip);
 	GLES2::setLineWidth(1);
 }
 
@@ -223,27 +234,25 @@ void MapEarthRenderer::_prepareRendering(RenderEngine* engine)
 	{
 		m_viewportWidth = engine->getViewportWidth();
 		m_viewportHeight = engine->getViewportHeight();
-		sl_real dist = (sl_real)(m_camera->getEyeLocation().altitude + 0.1f);
-		sl_real zNear, zFar;
+		double dist = m_camera->getEyeLocation().altitude + 0.1;
+		double zNear, zFar;
 		if (dist < 5000) {
 			zNear = dist / 50;
 			zFar = dist * 20 + 1000;
 		} else {
 			zNear = dist / 5;
-			zFar = (sl_real)(dist + MapEarth::getRadius() * 2);
+			zFar = dist + MapEarth::getRadius() * 2;
 		}
-		m_transformProjection = Transform3::getPerspectiveProjectionFovYMatrix(SLIB_PI / 3, (float)m_viewportWidth / m_viewportHeight, zNear, zFar);
+		m_transformProjection = Transform3lf::getPerspectiveProjectionFovYMatrix(SLIB_PI / 3, (double)m_viewportWidth / m_viewportHeight, zNear, zFar);
 	}
 	m_transformView = m_camera->getViewMatrix();
 	m_transformViewInverse = m_transformView.inverse();
 	m_transformViewProjection = m_transformView * m_transformProjection;
-	m_viewFrustum = ViewFrustum::fromMVP(m_transformViewProjection);
+	m_viewFrustum = ViewFrustumlf::fromMVP(m_transformViewProjection);
 	m_positionEye = m_camera->getEyeCartesianPosition();
 
-	m_programSurfaceTile->setViewMatrix(m_transformView);
 	m_programSurfaceTile->setProjectionMatrix(m_transformProjection);
 
-	m_programBuilding->setViewMatrix(m_transformView);
 	m_programBuilding->setProjectionMatrix(m_transformProjection);
 
 	m_programLine->setViewMatrix(m_transformView);
@@ -256,27 +265,27 @@ void MapEarthRenderer::_prepareRendering(RenderEngine* engine)
 
 void MapEarthRenderer::_renderTiles(RenderEngine* engine)
 {
-	List< Ref<MapRenderTile> > listRender;
-	List< Ref<MapRenderTile> > listCurrent;
+	List< Ref<_Tile> > listRender;
+	List< Ref<_Tile> > listCurrent;
 	for (sl_uint32 y = 0; y < 5; y++) {
 		for (sl_uint32 x = 0; x < 10; x++) {
-			Ref<MapRenderTile> tile = _getRenderTile(MapTileLocationi(0, y, x));
+			Ref<_Tile> tile = _getTile(MapTileLocationi(0, y, x));
 			if (tile.isNotNull()) {
 				listCurrent.add(tile);
 			}
 		}
 	}
 	for (sl_uint32 level = 0; level <= getMaxLevel(); level++) {
-		List< Ref<MapRenderTile> > listExpand;
+		List< Ref<_Tile> > listExpand;
 		// find expand
 		{
 			sl_bool flagExpand = sl_true;
 			if (level == getMaxLevel()) {
 				flagExpand = sl_false;
 			}
-			ListLocker< Ref<MapRenderTile> > current(listCurrent);
+			ListLocker< Ref<_Tile> > current(listCurrent);
 			for (sl_size i = 0; i < current.count(); i++) {
-				Ref<MapRenderTile> tile = current[i];
+				Ref<_Tile> tile = current[i];
 				if (_checkTileVisible(tile)) {
 					if (flagExpand && _checkTileExpandable(tile)) {
 						listExpand.add(tile);
@@ -288,15 +297,15 @@ void MapEarthRenderer::_renderTiles(RenderEngine* engine)
 		}
 		// expand
 		{
-			listCurrent = List< Ref<MapRenderTile> >::null();
-			ListLocker< Ref<MapRenderTile> > expand(listExpand);
+			listCurrent = List< Ref<_Tile> >::null();
+			ListLocker< Ref<_Tile> > expand(listExpand);
 			for (sl_size i = 0; i < expand.count(); i++) {
-				Ref<MapRenderTile> tile = expand[i];
+				Ref<_Tile> tile = expand[i];
 				for (sl_uint32 iy = 0; iy < 2; iy++) {
 					for (sl_uint32 ix = 0; ix < 2; ix++) {
 						sl_uint32 ty = (tile->location.y << 1) + iy;
 						sl_uint32 tx = (tile->location.x << 1) + ix;
-						Ref<MapRenderTile> tileNew = _getRenderTile(MapTileLocationi(level + 1, ty, tx));
+						Ref<_Tile> tileNew = _getTile(MapTileLocationi(level + 1, ty, tx));
 						if (tileNew.isNotNull()) {
 							listCurrent.add(tileNew);
 						}
@@ -310,9 +319,9 @@ void MapEarthRenderer::_renderTiles(RenderEngine* engine)
 	sl_uint32 nLevelMax = 0;
 	// prepare render surface tiles
 	{
-		ListLocker< Ref<MapRenderTile> > list(listRender);
+		ListLocker< Ref<_Tile> > list(listRender);
 		for (sl_size i = 0; i < list.count(); i++) {
-			const Ref<MapRenderTile>& tile = list[i];
+			const Ref<_Tile>& tile = list[i];
 			if (tile->location.level > nLevelMax) {
 				nLevelMax = tile->location.level;
 			}
@@ -324,9 +333,9 @@ void MapEarthRenderer::_renderTiles(RenderEngine* engine)
 	m_listRenderedTiles = listRenderedTiles;
 }
 
-Ref<MapRenderTile> MapEarthRenderer::_getRenderTile(const MapTileLocationi& location)
+Ref<MapEarthRenderer::_Tile> MapEarthRenderer::_getTile(const MapTileLocationi& location)
 {
-	Ref<MapRenderTile> ret;
+	Ref<_Tile> ret;
 	Rectangle rectanglePicture;
 	Ref<MapPictureTile> tilePicture = m_tilesPicture->getTileHierarchically(location, &rectanglePicture);
 	if (tilePicture.isNull()) {
@@ -336,7 +345,7 @@ Ref<MapRenderTile> MapEarthRenderer::_getRenderTile(const MapTileLocationi& loca
 	Rectangle rectangleDEM;
 	Ref<MapDEMTile> tileDEM = m_tilesDEM->getTileHierarchically(location, &rectangleDEM);
 
-	SLIB_NEW_REF(MapRenderTile, tile);
+	SLIB_NEW_REF(_Tile, tile);
 	if (tile) {
 		tile->picture = tilePicture;
 		tile->rectanglePicture = rectanglePicture;
@@ -386,15 +395,15 @@ Ref<MapRenderTile> MapEarthRenderer::_getRenderTile(const MapTileLocationi& loca
 	return tile;
 }
 
-sl_bool MapEarthRenderer::_checkTileVisible(MapRenderTile* tile)
+sl_bool MapEarthRenderer::_checkTileVisible(_Tile* tile)
 {
 	// check distance
 	{
-		sl_real e2 = m_positionEye.getLength2p();
-		sl_real r2 = (sl_real)(MapEarth::getRadius());
+		double e2 = m_positionEye.getLength2p();
+		double r2 = MapEarth::getRadius();
 		r2 *= r2;
 		if (e2 < r2 * 4) {
-			sl_real p2 = (m_positionEye - tile->positionCenter).getLength2p();
+			double p2 = (m_positionEye - tile->positionCenter).getLength2p();
 			if (p2 > e2 + r2) {
 				return sl_false;
 			}
@@ -402,7 +411,7 @@ sl_bool MapEarthRenderer::_checkTileVisible(MapRenderTile* tile)
 	}
 	// check normal
 	{
-		Vector3 normal = m_transformView.transformDirection(tile->positionCenter);
+		Vector3lf normal = m_transformView.transformDirection(tile->positionCenter);
 		normal.normalize();
 		if (normal.z > 0.2f) {
 			return sl_false;
@@ -416,7 +425,7 @@ sl_bool MapEarthRenderer::_checkTileVisible(MapRenderTile* tile)
 	return sl_false;
 }
 
-sl_bool MapEarthRenderer::_checkTileExpandable(MapRenderTile* tile)
+sl_bool MapEarthRenderer::_checkTileExpandable(_Tile* tile)
 {
 	// check size
 	Vector3 ptBL = m_transformView.transformPosition(tile->positions[0]);

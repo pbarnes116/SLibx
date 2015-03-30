@@ -37,7 +37,7 @@ class MapPolygon : public Referable
 {
 public:
 	String key;
-	List<Vector3> points;
+	List<GeoLocation> points;
 	Color color;
 	float width;
 };
