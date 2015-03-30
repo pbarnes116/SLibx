@@ -64,22 +64,15 @@ private:
 	sl_real m_viewportWidth;
 	sl_real m_viewportHeight;
 
-	sl_real m_mouseBeforeX;
-	sl_real m_mouseBeforeY;
-	Time m_timeMouseBefore;
+	Point m_pointMouseBefore;
+	Point m_pointMouseBefore2;
+	sl_bool m_flagTouchBefore2;
 
-	LatLon m_locationDown;
-	sl_real m_mouseDownX;
-	sl_real m_mouseDownY;
+	LatLon m_locationMouseDown;
+	Point m_pointMouseDown;
 	Time m_timeMouseDown;
-	Matrix4 m_transformDown;
-	
-	sl_bool m_flagTouch2;
-	sl_real m_mouseBefore2X;
-	sl_real m_mouseBefore2Y;
-	sl_real m_mouseBeforeRightX;
-	sl_real m_mouseBeforeRightY;
-
+	Matrix4 m_transformMouseDown;
+	sl_bool m_flagMouseExitMoving;
 
 public:
 	SLIB_PROPERTY_INLINE(Ref<FreeType>, StatusFont);

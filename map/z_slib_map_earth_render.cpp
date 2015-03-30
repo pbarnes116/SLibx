@@ -128,7 +128,9 @@ void MapEarthRenderer::_renderGISLine(RenderEngine* engine, MapGISLineTile* tile
 						pos[i * 2 + 1] = MapEarth::getCartesianPosition(GeoLocation(lines[i].end, altitude));
 					}
 				}
+				s.demTileRef = dem;
 				s.vb = VertexBuffer::create(pos, n * 2 * sizeof(Vector3));
+				vb = s.vb;
 			}
 			if (vb.isNotNull()) {
 				engine->draw(m_programLine, n * 2, vb, Primitive::typeLines);

@@ -255,7 +255,7 @@ void MapCamera::stepMotions(sl_real dt)
 		sl_real tr = normalizeTilt(m_targetTilt);
 		sl_real _or = getTilt();
 		sl_real dr = tr - _or;
-		sl_real s = 360.0f * dt / 1000.0f;
+		sl_real s = 90.0f * dt / 2000.0f;
 		if (Math::abs(dr) <= s) {
 			setTilt(tr);
 			m_flagTilting = sl_false;

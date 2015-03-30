@@ -17,6 +17,9 @@ MapView::MapView()
 
 	m_viewportWidth = 1;
 	m_viewportHeight = 1;
+
+	m_flagTouchBefore2 = sl_false;
+	m_flagMouseExitMoving = sl_false;
 }
 
 MapView::~MapView()
@@ -118,25 +121,24 @@ sl_bool MapView::onMouseEvent(MouseEvent& event)
 		return sl_false;
 	}
 
+	Point pt(event.x, event.y);
+	Point pt2;
+	sl_bool flagTouch2 = sl_false;
+	if (event.points.count() >= 2) {
+		pt2.x = event.points[1].x;
+		pt2.y = event.points[1].y;
+		flagTouch2 = sl_true;
+	}
+
 	if (event.action == MouseEvent::actionLeftButtonDown || event.action == MouseEvent::actionTouchDown) {
 		
-		m_mouseBeforeX = event.x;
-		m_mouseBeforeY = event.y;
-		m_timeMouseBefore = Time::now();
+		m_pointMouseBefore = pt;
 
-		m_locationDown = getCamera()->getEyeLocation().getLatLon();
-		m_mouseDownX = event.x;
-		m_mouseDownY = event.y;
+		m_pointMouseDown = pt;
 		m_timeMouseDown = Time::now();
-		m_transformDown = getCamera()->getVerticalViewMatrix();
-
-		if (event.points.count() == 2) {
-			m_flagTouch2 = sl_true;
-			m_mouseBefore2X = event.points[1].x - event.x;
-			m_mouseBefore2Y = event.points[1].y - event.y;
-		} else {
-			m_flagTouch2 = sl_false;
-		}
+		m_locationMouseDown = getCamera()->getEyeLocation().getLatLon();
+		m_transformMouseDown = getCamera()->getVerticalViewMatrix();
+		m_flagMouseExitMoving = sl_false;
 
 		setFocus();
 
@@ -147,70 +149,67 @@ sl_bool MapView::onMouseEvent(MouseEvent& event)
 		|| event.action == MouseEvent::actionTouchUp
 		) {
 
-		if (!m_flagTouch2) {
+		if (!flagTouch2 && !m_flagMouseExitMoving) {
 
-			double dx = (event.x - m_mouseDownX) / m_viewportWidth;
-			double dy = -(event.y - m_mouseDownY) / m_viewportHeight;
-			double dt = (double)((Time::now() - m_timeMouseDown).getMillisecondsCount());
-
-			sl_real time = 500;
-			if (event.action == MouseEvent::actionLeftButtonUp
-				|| event.action == MouseEvent::actionTouchUp) {
-				if (dt < 400) {
-					time = 4000;
-					dx *= 8;
-					dy *= 8;
-				}
-				if (dt < 100 && dx * dx + dy * dy < 0.01) {
-					time = 0;
-				}
-			}
-
-			GeoLocation locEye = camera->getEyeLocation();
-			double alt = locEye.altitude;
-			Vector3lf posViewSurface(-dx * alt, -dy * alt, alt);
-			Vector3 pos = m_transformDown.inverse().transformPosition(posViewSurface);
-			GeoLocation locTarget = MapEarth::getGeoLocation(pos);
-			if (time > 0) {
-				camera->startMoving(GeoLocation(locTarget.getLatLon(), alt), time);
-			} else {
+			double dx = (pt.x - m_pointMouseDown.x);
+			double dy = -(pt.y - m_pointMouseDown.y);
+			if (dx * dx + dy * dy < 20) {
 				camera->stopMoving();
+			} else {
+				dx /= m_viewportWidth;
+				dy /= m_viewportHeight;
+				double dt = (double)((Time::now() - m_timeMouseDown).getMillisecondsCount());
+
+				sl_real time = 500;
+				if (event.action == MouseEvent::actionLeftButtonUp
+					|| event.action == MouseEvent::actionTouchUp) {
+					if (dt < 400) {
+						time = 4000;
+						dx *= 8;
+						dy *= 8;
+					}
+				}
+				GeoLocation locEye = camera->getEyeLocation();
+				double alt = locEye.altitude;
+				Vector3lf posViewSurface(-dx * alt, -dy * alt, alt);
+				Vector3 pos = m_transformMouseDown.inverse().transformPosition(posViewSurface);
+				GeoLocation locTarget = MapEarth::getGeoLocation(pos);
+				camera->startMoving(GeoLocation(locTarget.getLatLon(), alt), time);
+
 			}
 		}
 
-		m_mouseBeforeX = event.x;
-		m_mouseBeforeY = event.y;
-		m_timeMouseBefore = Time::now();
+		if (flagTouch2) {
+			m_flagMouseExitMoving = sl_true;
+			if (flagTouch2 && m_flagTouchBefore2) {
 
-		if (event.points.count() == 2) {
-			sl_real dx2 = event.points[1].x - event.x;
-			sl_real dy2 = event.points[1].y - event.y;
-			if (m_flagTouch2) {
-				Vector2 v1(m_mouseBefore2X, m_mouseBefore2Y);
-				Vector2 v2(dx2, dy2);
-				if (v1.length() > 10 && v2.length() > 10) {
-					_zoom(Math::square(v1.length() / v2.length()));
-				}				
+				Vector2 v1 = m_pointMouseBefore2 - m_pointMouseBefore;
+				Vector2 v2 = pt2 - pt;
+
+				sl_real len1 = v1.getLength();
+				sl_real len2 = v2.getLength();
+
+				if (len1 > 10 && len2 > 10) {
+
+					_zoom(len1 / len2);
+
+					sl_real a = Math::getDegreeFromRadian(Transform2::getRotationAngleFromDirToDir(v1, v2));
+
+					sl_real r = getCamera()->getRotationZ();
+					r -= a;
+					getCamera()->startRotatingZ(r);
+				}
 			}
-			m_mouseBefore2X = dx2;
-			m_mouseBefore2Y = dy2;
-			m_flagTouch2 = sl_true;
-		} else {
-			m_flagTouch2 = sl_false;
 		}
-		requestRender();
 
 	} else if (event.action == MouseEvent::actionRightButtonDown) {
 		
-		m_mouseBeforeRightX = event.x;
-		m_mouseBeforeRightY = event.y;
-
 		setFocus();
 
 	} else if (event.action == MouseEvent::actionRightButtonDrag) {
 
-		sl_real dx = event.x - m_mouseBeforeRightX;
-		sl_real dy = event.y - m_mouseBeforeRightY;
+		sl_real dx = pt.x - m_pointMouseBefore.x;
+		sl_real dy = pt.y - m_pointMouseBefore.y;
 
 		sl_real r = getCamera()->getRotationZ();
 		r -= dx;
@@ -226,10 +225,12 @@ sl_bool MapView::onMouseEvent(MouseEvent& event)
 		}
 		getCamera()->startTilting(t);
 
-		m_mouseBeforeRightX = event.x;
-		m_mouseBeforeRightY = event.y;
-
 	}
+
+	m_pointMouseBefore = pt;
+	m_pointMouseBefore2 = pt2;
+	m_flagTouchBefore2 = flagTouch2;
+
 	return sl_true;
 }
 
