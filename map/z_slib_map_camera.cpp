@@ -64,8 +64,8 @@ Matrix4lf MapCameraLocation::getVerticalViewMatrix() const
 
 	// look at
 	{
-		matView = Transform3lf::getRotationYMatrix((float)(Math::getRadianFromDegree(m_location.longitude)));
-		matView *= Transform3lf::getRotationXMatrix((float)(Math::getRadianFromDegree(-m_location.latitude)));
+		matView = Transform3lf::getRotationYMatrix(Math::getRadianFromDegree(m_location.longitude));
+		matView *= Transform3lf::getRotationXMatrix(Math::getRadianFromDegree(-m_location.latitude));
 		matView *= Transform3lf::getTranslationMatrix(0, 0, lenEye);
 	}
 	if (m_rotationZ != 0) {

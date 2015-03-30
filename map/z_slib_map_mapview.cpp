@@ -20,6 +20,11 @@ MapView::MapView()
 
 	m_flagTouchBefore2 = sl_false;
 	m_flagMouseExitMoving = sl_false;
+	m_flagMouseDown = sl_false;
+
+	m_flagCompassHighlight = sl_false;
+	setCompassSize(150);
+	setCompassPosition(Point(75, 75));
 }
 
 MapView::~MapView()
@@ -100,11 +105,36 @@ void MapView::onFrame(RenderEngine* engine)
 				, STATUS_HEIGHT / 2 + (sl_uint32)(size.y / 2)
 				, textStatus, Color::white());
 			m_textureStatus->update();
-			sl_real h = (sl_real)(STATUS_HEIGHT * viewportWidth / STATUS_WIDTH);
+			
+			sl_real heightStatus = (sl_real)(STATUS_HEIGHT * viewportWidth / STATUS_WIDTH);
 			engine->drawTexture2D(
-				engine->screenToViewport(0, (sl_real)(viewportHeight - h), (sl_real)(viewportWidth), (sl_real)(h))
+				engine->screenToViewport(0, (sl_real)(viewportHeight - heightStatus), (sl_real)(viewportWidth), (sl_real)(heightStatus))
 				, m_textureStatus
 				, Rectangle(0, 0, 1, 1));
+		}
+	}
+
+	// render compass
+	{
+		Ref<Texture> texture;
+		Rectangle rect;
+		if (m_flagCompassHighlight) {
+			texture = getCompassHighlightTexture();
+			rect = getCompassHighlightTextureRectangle();
+		}
+		if (texture.isNull()) {
+			texture = getCompassTexture();
+			rect = getCompassTextureRectangle();
+		}
+		if (texture.isNotNull()) {
+			sl_real sizeCompass = getCompassSize();
+			Matrix3 transform = Transform2::getTranslationMatrix(-0.5f, -0.5f)
+				* Transform2::getScalingMatrix(sizeCompass, sizeCompass)
+				* Transform2::getRotationMatrix(-Math::getRadianFromDegree(getCamera()->getRotationZ()))
+				* Transform2::getTranslationMatrix(getCompassPosition())
+				* Transform2::getScalingMatrix(2.0f / viewportWidth, - 2.0f / viewportHeight)
+				* Transform2::getTranslationMatrix(-1, 1);
+			engine->drawTexture2D(transform, texture, rect);
 		}
 	}
 
@@ -132,13 +162,24 @@ sl_bool MapView::onMouseEvent(MouseEvent& event)
 
 	if (event.action == MouseEvent::actionLeftButtonDown || event.action == MouseEvent::actionTouchDown) {
 		
-		m_pointMouseBefore = pt;
-
+		sl_real lenCompass = (pt - getCompassPosition()).getLength();
+		if (lenCompass < getCompassSize() / 2) {
+			if (lenCompass > getCompassSize() / 5) {
+				m_flagCompassHighlight = sl_true;
+			} else {
+				getCamera()->startRotatingZ(0);
+				m_flagMouseDown = sl_false;
+				return sl_false;
+			}
+		} else {
+			m_flagCompassHighlight = sl_false;
+		}
 		m_pointMouseDown = pt;
 		m_timeMouseDown = Time::now();
 		m_locationMouseDown = getCamera()->getEyeLocation().getLatLon();
 		m_transformMouseDown = getCamera()->getVerticalViewMatrix();
 		m_flagMouseExitMoving = sl_false;
+		m_flagMouseDown = sl_true;
 
 		setFocus();
 
@@ -149,57 +190,77 @@ sl_bool MapView::onMouseEvent(MouseEvent& event)
 		|| event.action == MouseEvent::actionTouchUp
 		) {
 
-		if (!flagTouch2 && !m_flagMouseExitMoving) {
+		if (m_flagMouseDown) {
+			if (m_flagCompassHighlight) {
 
-			double dx = (pt.x - m_pointMouseDown.x);
-			double dy = -(pt.y - m_pointMouseDown.y);
-			if (dx * dx + dy * dy < 20) {
-				camera->stopMoving();
+				Vector2 v = pt - getCompassPosition();
+				if (v.length2p() > 30) {
+					sl_real r = -Math::getDegreeFromRadian(Transform2::getRotationAngleFromDirToDir(Vector2(0, -1), v));
+					getCamera()->startRotatingZ(r);
+				}
+
 			} else {
-				dx /= m_viewportWidth;
-				dy /= m_viewportHeight;
-				double dt = (double)((Time::now() - m_timeMouseDown).getMillisecondsCount());
 
-				sl_real time = 500;
-				if (event.action == MouseEvent::actionLeftButtonUp
-					|| event.action == MouseEvent::actionTouchUp) {
-					if (dt < 400) {
-						time = 4000;
-						dx *= 8;
-						dy *= 8;
+				if (!flagTouch2 && !m_flagMouseExitMoving) {
+
+					double dx = (pt.x - m_pointMouseDown.x);
+					double dy = -(pt.y - m_pointMouseDown.y);
+					if (dx * dx + dy * dy < 20) {
+						camera->stopMoving();
+					} else {
+						dx /= m_viewportWidth;
+						dy /= m_viewportHeight;
+						double dt = (double)((Time::now() - m_timeMouseDown).getMillisecondsCount());
+
+						sl_real time = 500;
+						if (event.action == MouseEvent::actionLeftButtonUp
+							|| event.action == MouseEvent::actionTouchUp) {
+							if (dt < 400) {
+								time = 4000;
+								dx *= 8;
+								dy *= 8;
+							}
+						}
+						GeoLocation locEye = camera->getEyeLocation();
+						double alt = locEye.altitude;
+						Vector3lf posViewSurface(-dx * alt, -dy * alt, alt);
+						Vector3 pos = m_transformMouseDown.inverse().transformPosition(posViewSurface);
+						GeoLocation locTarget = MapEarth::getGeoLocation(pos);
+						camera->startMoving(GeoLocation(locTarget.getLatLon(), alt), time);
+
 					}
 				}
-				GeoLocation locEye = camera->getEyeLocation();
-				double alt = locEye.altitude;
-				Vector3lf posViewSurface(-dx * alt, -dy * alt, alt);
-				Vector3 pos = m_transformMouseDown.inverse().transformPosition(posViewSurface);
-				GeoLocation locTarget = MapEarth::getGeoLocation(pos);
-				camera->startMoving(GeoLocation(locTarget.getLatLon(), alt), time);
 
+				if (flagTouch2) {
+					m_flagMouseExitMoving = sl_true;
+					if (flagTouch2 && m_flagTouchBefore2) {
+
+						Vector2 v1 = m_pointMouseBefore2 - m_pointMouseBefore;
+						Vector2 v2 = pt2 - pt;
+
+						sl_real len1 = v1.getLength();
+						sl_real len2 = v2.getLength();
+
+						if (len1 > 10 && len2 > 10) {
+
+							_zoom(len1 / len2);
+
+							sl_real a = Math::getDegreeFromRadian(Transform2::getRotationAngleFromDirToDir(v1, v2));
+
+							sl_real r = getCamera()->getRotationZ();
+							r -= a;
+							getCamera()->startRotatingZ(r);
+						}
+					}
+				}
 			}
 		}
 
-		if (flagTouch2) {
-			m_flagMouseExitMoving = sl_true;
-			if (flagTouch2 && m_flagTouchBefore2) {
+		if (event.action == MouseEvent::actionLeftButtonUp
+			|| event.action == MouseEvent::actionTouchUp) {
 
-				Vector2 v1 = m_pointMouseBefore2 - m_pointMouseBefore;
-				Vector2 v2 = pt2 - pt;
-
-				sl_real len1 = v1.getLength();
-				sl_real len2 = v2.getLength();
-
-				if (len1 > 10 && len2 > 10) {
-
-					_zoom(len1 / len2);
-
-					sl_real a = Math::getDegreeFromRadian(Transform2::getRotationAngleFromDirToDir(v1, v2));
-
-					sl_real r = getCamera()->getRotationZ();
-					r -= a;
-					getCamera()->startRotatingZ(r);
-				}
-			}
+			m_flagCompassHighlight = sl_false;
+			m_flagMouseDown = sl_false;
 		}
 
 	} else if (event.action == MouseEvent::actionRightButtonDown) {

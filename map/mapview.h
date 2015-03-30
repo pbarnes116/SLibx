@@ -57,7 +57,7 @@ protected:
 	Ref<MapDEMTileManager> getDEMTiles();
 
 	void _zoom(double ratio);
-	
+
 private:
 	sl_bool m_flagInit;
 
@@ -77,10 +77,20 @@ private:
 	Time m_timeMouseDown;
 	Matrix4 m_transformMouseDown;
 	sl_bool m_flagMouseExitMoving;
+	sl_bool m_flagMouseDown;
+
+	sl_bool m_flagCompassHighlight;
 
 public:
 	SLIB_PROPERTY_INLINE(Ref<FreeType>, StatusFont);
 	SLIB_PROPERTY_INLINE(Ref<MapDataLoader>, DataLoader);
+
+	SLIB_PROPERTY_INLINE(Ref<Texture>, CompassTexture);
+	SLIB_PROPERTY_INLINE(Rectangle, CompassTextureRectangle);
+	SLIB_PROPERTY_INLINE(Ref<Texture>, CompassHighlightTexture);
+	SLIB_PROPERTY_INLINE(Rectangle, CompassHighlightTextureRectangle);
+	SLIB_PROPERTY_INLINE(Point, CompassPosition);
+	SLIB_PROPERTY_INLINE(sl_real, CompassSize);
 
 };
 SLIB_MAP_NAMESPACE_END
