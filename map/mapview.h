@@ -51,6 +51,7 @@ protected:
 
 protected:
 	Ref<MapDEMTileManager> getDEMTiles();
+
 	void _zoom(double ratio);
 	
 private:
@@ -60,13 +61,25 @@ private:
 
 	Ref<Texture> m_textureStatus;
 
+	sl_real m_viewportWidth;
+	sl_real m_viewportHeight;
+
 	sl_real m_mouseBeforeX;
 	sl_real m_mouseBeforeY;
+	Time m_timeMouseBefore;
+
+	LatLon m_locationDown;
+	sl_real m_mouseDownX;
+	sl_real m_mouseDownY;
+	Time m_timeMouseDown;
+	Matrix4 m_transformDown;
+	
 	sl_bool m_flagTouch2;
 	sl_real m_mouseBefore2X;
 	sl_real m_mouseBefore2Y;
 	sl_real m_mouseBeforeRightX;
 	sl_real m_mouseBeforeRightY;
+
 
 public:
 	SLIB_PROPERTY_INLINE(Ref<FreeType>, StatusFont);

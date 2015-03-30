@@ -56,12 +56,12 @@ sl_real MapCameraLocation::getRevisedTilt() const
 	return t;
 }
 
-Matrix4 MapCameraLocation::getViewMatrix() const
+Matrix4 MapCameraLocation::getVerticalViewMatrix() const
 {
 	Matrix4 matView;
 	Vector3 eye = MapEarth::getCartesianPosition(m_location);
 	sl_real lenEye = eye.getLength();
-	
+
 	// look at
 	{
 		matView = Transform3::getRotationYMatrix((float)(Math::getRadianFromDegree(m_location.longitude)));
@@ -71,6 +71,12 @@ Matrix4 MapCameraLocation::getViewMatrix() const
 	if (m_rotationZ != 0) {
 		matView *= Transform3::getRotationZMatrix(Math::getRadianFromDegree(m_rotationZ));
 	}
+	return matView;
+}
+
+Matrix4 MapCameraLocation::getViewMatrix() const
+{
+	Matrix4 matView = getVerticalViewMatrix();
 	sl_real t = getRevisedTilt();
 	if (t > 0) {
 		matView *= Transform3::getRotationXMatrix(Math::getRadianFromDegree(t));

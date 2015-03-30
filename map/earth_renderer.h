@@ -69,6 +69,11 @@ public:
 		return m_tilesDEM;
 	}
 
+	SLIB_INLINE const Matrix4& getProjectionMatrix() const
+	{
+		return m_transformProjection;
+	}
+
 public:
 	LatLon getLatLonFromTileLocation(const MapTileLocationi& location);
 	MapTileLocation getTileLocationFromLatLon(sl_uint32 level, const LatLon& latLon);

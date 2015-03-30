@@ -50,6 +50,7 @@ public:
 	sl_real getRevisedTilt() const;
 
 	Matrix4 getViewMatrix() const;
+	Matrix4 getVerticalViewMatrix() const;
 
 private:
 	GeoLocation m_location;
@@ -104,6 +105,11 @@ public:
 	SLIB_INLINE Matrix4 getViewMatrix() const
 	{
 		return m_current.getViewMatrix();
+	}
+
+	SLIB_INLINE Matrix4 getVerticalViewMatrix() const
+	{
+		return m_current.getVerticalViewMatrix();
 	}
 
 	void clearMovingTargets();

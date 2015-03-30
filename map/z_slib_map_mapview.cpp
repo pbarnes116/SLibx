@@ -14,6 +14,9 @@ MapView::MapView()
 	//setRenderMode(renderModeWhenDirty);
 
 	setDataLoader(new MapDataLoaderList);
+
+	m_viewportWidth = 1;
+	m_viewportHeight = 1;
 }
 
 MapView::~MapView()
@@ -61,6 +64,9 @@ void MapView::onFrame(RenderEngine* engine)
 {
 	sl_int32 viewportWidth = engine->getViewportWidth();
 	sl_int32 viewportHeight = engine->getViewportHeight();
+	m_viewportWidth = (sl_real)viewportWidth;
+	m_viewportHeight = (sl_real)viewportHeight;
+
 	if (!m_flagInit) {
 		return;
 	}
@@ -107,10 +113,22 @@ sl_bool MapView::onMouseEvent(MouseEvent& event)
 		return sl_false;
 	}
 
+	Ref<MapCamera> camera = getCamera();
+	if (camera.isNull()) {
+		return sl_false;
+	}
+
 	if (event.action == MouseEvent::actionLeftButtonDown || event.action == MouseEvent::actionTouchDown) {
 		
 		m_mouseBeforeX = event.x;
 		m_mouseBeforeY = event.y;
+		m_timeMouseBefore = Time::now();
+
+		m_locationDown = getCamera()->getEyeLocation().getLatLon();
+		m_mouseDownX = event.x;
+		m_mouseDownY = event.y;
+		m_timeMouseDown = Time::now();
+		m_transformDown = getCamera()->getVerticalViewMatrix();
 
 		if (event.points.count() == 2) {
 			m_flagTouch2 = sl_true;
@@ -122,17 +140,44 @@ sl_bool MapView::onMouseEvent(MouseEvent& event)
 
 		setFocus();
 
-	} else if (event.action == MouseEvent::actionLeftButtonDrag || event.action == MouseEvent::actionTouchMove) {
+	} else if (
+		event.action == MouseEvent::actionLeftButtonDrag
+		|| event.action == MouseEvent::actionTouchMove
+		|| event.action == MouseEvent::actionLeftButtonUp
+		|| event.action == MouseEvent::actionTouchUp
+		) {
 
-		GeoLocation le = getCamera()->getEyeLocation();
-		sl_real dx = event.x - m_mouseBeforeX;
-		sl_real dy = event.y - m_mouseBeforeY;
-		getCamera()->setEyeLocation(GeoLocation(
-			le.latitude + dy * 0.1
-			, le.longitude - dx * 0.1
-			, le.altitude));
+		double dx = (event.x - m_mouseDownX) / m_viewportWidth;
+		double dy = -(event.y - m_mouseDownY) / m_viewportHeight;
+		double dt = (double)((Time::now() - m_timeMouseDown).getMillisecondsCount());
+
+		sl_real time = 500;
+		if (event.action == MouseEvent::actionLeftButtonUp
+			|| event.action == MouseEvent::actionTouchUp) {
+			if (dt < 400) {
+				time = 4000;
+				dx *= 8;
+				dy *= 8;
+			}
+			if (dt < 100 && dx * dx + dy * dy < 0.01 ) {
+				time = 0;
+			}
+		}
+
+		GeoLocation locEye = camera->getEyeLocation();
+		double alt = locEye.altitude;
+		Vector3lf posViewSurface(-dx * alt, -dy * alt, alt);
+		Vector3 pos = m_transformDown.inverse().transformPosition(posViewSurface);
+		GeoLocation locTarget = MapEarth::getGeoLocation(pos);
+		if (time > 0) {
+			camera->startMoving(GeoLocation(locTarget.getLatLon(), alt), time);
+		} else {
+			camera->stopMoving();
+		}
+
 		m_mouseBeforeX = event.x;
 		m_mouseBeforeY = event.y;
+		m_timeMouseBefore = Time::now();
 		/*
 		sl_real dx = event.x - m_mouseDownX;
 		sl_real dy = event.y - m_mouseDownY;
@@ -208,10 +253,6 @@ sl_bool MapView::onMouseEvent(MouseEvent& event)
 		m_mouseBeforeRightX = event.x;
 		m_mouseBeforeRightY = event.y;
 
-	} else if (event.action == MouseEvent::actionLeftButtonUp
-		|| event.action == MouseEvent::actionRightButtonUp
-		|| event.action == MouseEvent::actionTouchUp) {
-		
 	}
 	return sl_true;
 }

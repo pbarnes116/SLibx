@@ -29,6 +29,15 @@ public:
 	{
 		return getCartesianPosition(location.latitude, location.longitude, location.altitude);
 	}
+
+	SLIB_INLINE static GeoLocation getGeoLocation(double x, double y, double z)
+	{
+		return getGlobe().getGeoLocation(x, y, z);
+	}
+	SLIB_INLINE static GeoLocation getGeoLocation(const Vector3& pos)
+	{
+		return getGlobe().getGeoLocation(pos.x, pos.y, pos.z);
+	}
 };
 
 SLIB_MAP_NAMESPACE_END
