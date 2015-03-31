@@ -554,22 +554,47 @@ void MapEarthRenderer::_renderGISPois(RenderEngine* engine)
 
 void MapEarthRenderer::_renderMarkers(RenderEngine* engine)
 {
-	ListLocker< Ref<MapMarker> > list(markers.values());
-	for (sl_size i = 0; i < list.count(); i++) {
-		Ref<MapMarker> marker = list[i];
-		if (marker.isNotNull() && marker->flagVisible) {
-			_renderMarker(engine, marker);
+	{
+		ListLocker< Ref<MapMarker> > list(markers.values());
+		for (sl_size i = 0; i < list.count(); i++) {
+			Ref<MapMarker> marker = list[i];
+			if (marker.isNotNull() && marker->flagVisible) {
+				_renderMarker(engine, marker);
+			}
 		}
 	}
+	
+	{
+		ListLocker< Ref<MapMarker> > list(additionalMarkers.values());
+		for (sl_size i = 0; i < list.count(); i++) {
+			Ref<MapMarker> marker = list[i];
+			if (marker.isNotNull() && marker->flagVisible) {
+				_renderMarker(engine, marker);
+			}
+		}
+	}
+	
 }
 
 void MapEarthRenderer::_renderPolygons(RenderEngine* engine)
 {
-	ListLocker< Ref<MapPolygon> > list(polygons.values());
-	for (sl_size i = 0; i < list.count(); i++) {
-		Ref<MapPolygon> polygon = list[i];
-		if (polygon.isNotNull()) {
-			_renderPolygon(engine, polygon);
+	{
+		ListLocker< Ref<MapPolygon> > list(polygons.values());
+		for (sl_size i = 0; i < list.count(); i++) {
+			Ref<MapPolygon> polygon = list[i];
+			if (polygon.isNotNull()) {
+				_renderPolygon(engine, polygon);
+			}
+		}
+	}
+	
+	{
+		ListLocker< Ref<MapPolygon> > list(additionalPolygons.values());
+		for (sl_size i = 0; i < list.count(); i++) {
+			Ref<MapPolygon> polygon = list[i];
+			if (polygon.isNotNull()) {
+				_renderPolygon(engine, polygon);
+			}
 		}
 	}
 }

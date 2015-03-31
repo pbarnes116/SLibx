@@ -38,10 +38,14 @@ public:
 	Ref<MapMarker> getMarker(String key);
 	void putMarker(String key, Ref<MapMarker> marker);
 	void removeMarker(String key);
+	void putAdditionalMarker(String key, Ref<MapMarker> marker);
+	void clearAdditionalMarkers();
 
 	Ref<MapPolygon> getPolygon(String key);
 	void putPolygon(String key, Ref<MapPolygon> polygon);
+	void putAdditionalPolygon(String key, Ref<MapPolygon> polygon);
 	void removePolygon(String key);
+	void clearAdditionalPolygons();
 
 protected:
 	virtual void onFrame(RenderEngine* engine);
