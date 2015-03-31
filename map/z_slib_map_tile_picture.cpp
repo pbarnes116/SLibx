@@ -76,18 +76,38 @@ Ref<MapPictureTile> MapPictureTileManager::loadTile(const MapTileLocationi& loca
 	}
 	Ref<MapDataLoader> loader = getDataLoader();
 	if (loader.isNotNull()) {
-		Memory mem = loader->loadData(SLIB_MAP_PICTURE_TILE_TYPE, location, SLIB_MAP_PICTURE_PACKAGE_DIMENSION, SLIB_MAP_PICTURE_TILE_EXT);
-		if (mem.isNotEmpty()) {
-			Ref<Texture> texture = Texture::create(Image::loadFromMemory(mem));
-			if (texture.isNotNull()) {
-				tile = new MapPictureTile();
-				if (tile.isNotNull()) {
-					tile->location = location;
-					tile->texture = texture;
-					tile->timeLastAccess = Time::now();
-					m_tiles.put(location, tile);
-					return tile;
+		Image::FileType type;
+		Ref<Image> image;
+		// first load x picture
+		{
+			Memory mem = loader->loadData(SLIB_MAP_PICTUREX_TILE_TYPE, location, SLIB_MAP_PICTURE_PACKAGE_DIMENSION, SLIB_MAP_PICTUREX_TILE_EXT);
+			if (mem.isNotEmpty()) {
+				type = Image::getFileType(mem);
+				image = Image::loadFromMemory(mem);
+			}
+		}
+		if (image.isNull() || type == Image::fileTypePNG) {
+			Ref<Image> imagex = image;
+			image.setNull();
+			Memory mem = loader->loadData(SLIB_MAP_PICTURE_TILE_TYPE, location, SLIB_MAP_PICTURE_PACKAGE_DIMENSION, SLIB_MAP_PICTURE_TILE_EXT);
+			if (mem.isNotEmpty()) {
+				image = Image::loadFromMemory(mem);
+				if (imagex.isNotNull()) {
+					image->drawImage(
+						0, 0, image->getWidth(), image->getHeight()
+						, imagex, 0, 0, imagex->getWidth(), imagex->getHeight(), Image::blendSrcAlpha);
 				}
+			}
+		}
+		Ref<Texture> texture = Texture::create(image);
+		if (texture.isNotNull()) {
+			tile = new MapPictureTile();
+			if (tile.isNotNull()) {
+				tile->location = location;
+				tile->texture = texture;
+				tile->timeLastAccess = Time::now();
+				m_tiles.put(location, tile);
+				return tile;
 			}
 		} else {
 			tile = new MapPictureTile();

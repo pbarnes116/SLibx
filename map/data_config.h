@@ -2,6 +2,7 @@
 #define CHECKHEADER_SLIB_MAP_DATA_CONFIG
 
 #define SLIB_MAP_PICTURE_TILE_EXT _SLT(".jpg")
+#define SLIB_MAP_PICTUREX_TILE_EXT _SLT(".png")
 #define SLIB_MAP_DEM_TILE_EXT _SLT(".bil")
 #define SLIB_MAP_GIS_LINE_TILE_EXT _SLT(".lin")
 #define SLIB_MAP_GIS_POI_TILE_EXT _SLT(".poi")
@@ -13,6 +14,7 @@
 #define SLIB_MAP_BUILDING_PACKAGE_DIMENSION 32
 
 #define SLIB_MAP_PICTURE_TILE_TYPE _SLT("picture")
+#define SLIB_MAP_PICTUREX_TILE_TYPE _SLT("picture-special")
 #define SLIB_MAP_DEM_TILE_TYPE _SLT("dem")
 #define SLIB_MAP_GIS_LINE_TILE_TYPE _SLT("gis/line")
 #define SLIB_MAP_GIS_POI_TILE_TYPE _SLT("gis/poi")

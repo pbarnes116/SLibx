@@ -101,7 +101,7 @@ void MapView::onFrame(RenderEngine* engine)
 		if (fontStatus.isNotNull()) {
 			engine->setDepthTest(sl_false);
 			engine->setBlending(sl_true);
-			m_textureStatus->getImage()->fillColor(Color(0, 0, 0, 50));
+			m_textureStatus->getImage()->fillColor(Color(0, 0, 0, 100));
 
 			String textStatus = getStatusText();
 			Size size = fontStatus->getStringExtent(textStatus);
