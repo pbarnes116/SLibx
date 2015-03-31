@@ -1,8 +1,9 @@
 #include "camera.h"
 #include "earth.h"
 
-SLIB_MAP_NAMESPACE_START
+#include "../../slib/core/system.h"
 
+SLIB_MAP_NAMESPACE_START
 
 void MapCameraLocation::setEyeLocation(const GeoLocation& eye)
 {
@@ -239,6 +240,7 @@ void MapCamera::stepMotions(sl_real dt)
 		} else if (dr < -180) {
 			dr += 360;
 		}
+		Console::println(String("rotate-") + tr);
 		sl_real s = 360.0f * dt / 1000.0f;
 		if (Math::abs(dr) <= s) {
 			setRotationZ(tr);

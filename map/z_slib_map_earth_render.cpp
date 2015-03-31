@@ -258,7 +258,11 @@ void MapEarthRenderer::_prepareRendering(RenderEngine* engine)
 	m_programLine->setViewMatrix(m_transformView);
 	m_programLine->setProjectionMatrix(m_transformProjection);
 
-	m_sizeTileMinimum = (65536.0f / m_viewportWidth / m_viewportWidth) * 4;
+	sl_real _w = (sl_real)m_viewportWidth;
+	if (_w > 1280) {
+		_w = 1280;
+	}
+	m_sizeTileMinimum = (65536.0f / _w / _w) * 4;
 
 	m_flagStartedRendering = sl_true;
 }
