@@ -195,10 +195,9 @@ void MapEarthRenderer::_renderMarker(RenderEngine* engine, MapMarker* marker)
 			}
 			if (marker->_textureText.isNotNull()) {
 				Rectangle rectangle = Rectangle(
-					ps.x - marker->_textureText->getWidth() / 2
-					, ps.y
-					, (float)(marker->_textureText->getWidth())
-					, (float)(marker->_textureText->getHeight()));
+					Point(ps.x - marker->_textureText->getWidth() / 2, ps.y)
+					,Size((float)(marker->_textureText->getWidth()), (float)(marker->_textureText->getHeight()))
+					);
 				engine->drawTexture2D(
 					engine->screenToViewport(rectangle)
 					, marker->_textureText);

@@ -37,6 +37,11 @@ void MapView::release()
 	m_earthRenderer.release();
 }
 
+Ref<FreeType> MapView::getFontForPOI()
+{
+	return m_earthRenderer.getFontForPOI();
+}
+
 void MapView::setFontForPOI(Ref<FreeType> font)
 {
 	m_earthRenderer.setFontForPOI(font);

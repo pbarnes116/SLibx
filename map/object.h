@@ -12,6 +12,8 @@ SLIB_MAP_NAMESPACE_START
 class MapMarker : public Referable
 {
 public:
+	String key;
+
 	GeoLocation location;
 	String text;
 	Color textColor;

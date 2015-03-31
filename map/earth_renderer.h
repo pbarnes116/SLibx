@@ -55,6 +55,10 @@ public:
 	{
 		m_tilesGISPoi->setPoiInformation(poiInfo);
 	}
+	SLIB_INLINE Ref<FreeType> getFontForPOI()
+	{
+		return m_tilesGISPoi->getFontForPOI();
+	}
 	SLIB_INLINE void setFontForPOI(Ref<FreeType> font)
 	{
 		m_tilesGISPoi->setFontForPOI(font);
@@ -78,6 +82,7 @@ public:
 	LatLon getLatLonFromTileLocation(const MapTileLocationi& location);
 	MapTileLocation getTileLocationFromLatLon(sl_uint32 level, const LatLon& latLon);
 	Vector2 convertPointToScreen(const Vector3& point);
+	sl_bool getLocationFromScreenPoint(GeoLocation& out, const Vector2& point);
 
 public:
 	Map< String, Ref<MapMarker> > markers;

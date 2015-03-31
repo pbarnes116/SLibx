@@ -108,4 +108,18 @@ Vector2 MapEarthRenderer::convertPointToScreen(const Vector3& point)
 	float y = (1.0f - posScreen.y) * m_viewportHeight / 2.0f;
 	return Vector2(x, y);
 }
+
+sl_bool MapEarthRenderer::getLocationFromScreenPoint(GeoLocation& out, const Vector2& point)
+{
+	Line3lf line = Transform3lf::unprojectScreenPoint(m_transformProjection, Vector2lf(point.x, point.y), m_viewportWidth, m_viewportHeight);
+	Spherelf globe(Vector3lf::zero(), MapEarth::getRadius());
+	Vector3lf pt1, pt2;
+	line.transform(m_transformViewInverse);
+	if (globe.intersectLine(line, &pt1, &pt2) > 0) {
+		out = MapEarth::getGeoLocation(pt1);
+		return sl_true;
+	} else {
+		return sl_false;
+	}
+}
 SLIB_MAP_NAMESPACE_END
