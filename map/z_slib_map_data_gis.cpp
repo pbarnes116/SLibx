@@ -23,11 +23,10 @@ List<MapGISPoiData> MapGISPoi_DataLoader::loadTile(Ref<MapDataLoader> data, Stri
 		poi.location.latitude = reader.readDouble();
 		poi.location.longitude = reader.readDouble();
 
-		Variant poiInfo = poiInformation.getValue(poi.id, Variant::null());
-		if (poiInfo.isNotNull()) {
-			poi.name = poiInfo.getField("name").getString();
-			
-			poi.type = (MAP_GIS_POI_TYPE)poiInfo.getField("type").getInt32();
+		MapGISPoiInfo poiInfo;
+		if (poiInformation.get(poi.id, &poiInfo)) {
+			poi.name = poiInfo.name;			
+			poi.type = (MAP_GIS_POI_TYPE)(poiInfo.type);
 			poi.initPoi();
 			if (poi.type != MAP_GIS_POI_TYPE::POITypeNone && poi.id > 0 && poi.name.length() > 0) {
 				ret.add(poi);

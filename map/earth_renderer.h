@@ -51,7 +51,7 @@ public:
 	{
 		m_tilesGISLine->setWayNames(wayNames);
 	}
-	SLIB_INLINE void setPoiInformation(Map<sl_int64, Variant> poiInfo)
+	SLIB_INLINE void setPoiInformation(Map<sl_int64, MapGISPoiInfo> poiInfo)
 	{
 		m_tilesGISPoi->setPoiInformation(poiInfo);
 	}

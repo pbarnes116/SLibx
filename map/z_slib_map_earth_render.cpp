@@ -123,13 +123,13 @@ void MapEarthRenderer::_renderGISLine(RenderEngine* engine, MapGISLineTile* tile
 						location = getTileLocationFromLatLon(dem->location.level, lines[i].start);
 						altitude = MapDEMTileManager::getAltitudeFromDEM(
 							(sl_real)(location.x - dem->location.x)
-							, (sl_real)(location.y - dem->location.y)
+							, 1 - (sl_real)(location.y - dem->location.y)
 							, dem);
 						pos[i * 2] = MapEarth::getCartesianPosition(GeoLocation(lines[i].start, altitude));
 						location = getTileLocationFromLatLon(dem->location.level, lines[i].end);
 						altitude = MapDEMTileManager::getAltitudeFromDEM(
 							(sl_real)(location.x - dem->location.x)
-							, (sl_real)(location.y - dem->location.y)
+							, 1 - (sl_real)(location.y - dem->location.y)
 							, dem);
 						pos[i * 2 + 1] = MapEarth::getCartesianPosition(GeoLocation(lines[i].end, altitude));
 					}
@@ -413,13 +413,28 @@ sl_bool MapEarthRenderer::_checkTileVisible(_Tile* tile)
 		}
 	}
 	// check normal
-	{
-		Vector3lf normal = m_transformView.transformDirection(tile->positionCenter);
+	do {
+		Vector3lf normal = m_transformView.transformDirection(tile->positions[0]);
 		normal.normalize();
-		if (normal.z > 0.2f) {
-			return sl_false;
+		if (normal.z <= 0) {
+			break;
 		}
-	}
+		normal = m_transformView.transformDirection(tile->positions[1]);
+		normal.normalize();
+		if (normal.z <= 0) {
+			break;
+		}
+		normal = m_transformView.transformDirection(tile->positions[2]);
+		normal.normalize();
+		if (normal.z <= 0) {
+			break;
+		}
+		normal = m_transformView.transformDirection(tile->positions[3]);
+		normal.normalize();
+		if (normal.z <= 0) {
+			break;
+		}
+	} while (0);
 	// check frustum
 	if (m_viewFrustum.containsFacets(tile->positions, 4)
 		|| m_viewFrustum.containsFacets(tile->positionsWithDEM, 4)) {
@@ -462,7 +477,10 @@ sl_bool MapEarthRenderer::_checkTileExpandable(_Tile* tile)
 		t.point3.x = ptTL.x / ptTL.z;
 		t.point3.y = ptTL.y / ptTL.z;
 		sl_real size = Math::abs(t.getSize());
-		if (size * 2 > m_sizeTileMinimum * 1.5f) {
+		t.point1.x = ptBL.x / ptTR.z;
+		t.point1.y = ptBL.y / ptTR.z;
+		size += Math::abs(t.getSize());
+		if (size > m_sizeTileMinimum * 1.5f) {
 			return sl_true;
 		}
 	}

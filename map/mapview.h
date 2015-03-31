@@ -33,7 +33,7 @@ public:
 
 	Ref<FreeType> getFontForPOI();
 	void setFontForPOI(Ref<FreeType> font);
-	void setPoiInformation(Map<sl_int64, Variant> poiInformation);
+	void setPoiInformation(Map<sl_int64, MapGISPoiInfo> poiInformation);
 	void setWayNames(Map<sl_int64, String> wayNames);
 
 	Ref<MapMarker> getMarker(String key);

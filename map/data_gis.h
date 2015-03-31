@@ -91,16 +91,23 @@ public:
 	sl_uint32 showMinLevel;
 };
 
+struct MapGISPoiInfo
+{
+	String name;
+	sl_int32 type;
+};
+
+
 class MapGISPoi_DataLoader : public Referable
 {
 public:
-	void setPoiInformation(Map<sl_int64, Variant> _poiInformation)
+	void setPoiInformation(Map<sl_int64, MapGISPoiInfo> _poiInformation)
 	{
 		this->poiInformation = _poiInformation;
 	}
 	List<MapGISPoiData> loadTile(Ref<MapDataLoader> data, String type, const MapTileLocation& location);
 private:
-	Map<sl_int64, Variant> poiInformation;
+	Map<sl_int64, MapGISPoiInfo> poiInformation;
 };
 
 class MapGISLine_DataLoader: public Referable

@@ -100,7 +100,7 @@ public:
 	Ref<MapGISPoiTile> loadTile(const MapTileLocationi& location);
 	void freeOldTiles();
 
-	SLIB_INLINE void setPoiInformation(Map<sl_int64, Variant> poiInfo)
+	SLIB_INLINE void setPoiInformation(Map<sl_int64, MapGISPoiInfo> poiInfo)
 	{
 		m_dataLoader.setPoiInformation(poiInfo);
 	}

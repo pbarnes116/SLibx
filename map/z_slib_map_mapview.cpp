@@ -57,7 +57,7 @@ Ref<MapDEMTileManager> MapView::getDEMTiles()
 	return m_earthRenderer.getDEMTiles();
 }
 
-void MapView::setPoiInformation(Map<sl_int64, Variant> poiInformation)
+void MapView::setPoiInformation(Map<sl_int64, MapGISPoiInfo> poiInformation)
 {
 	m_earthRenderer.setPoiInformation(poiInformation);
 }
