@@ -434,6 +434,7 @@ sl_bool MapEarthRenderer::_checkTileExpandable(_Tile* tile)
 	Vector3 ptBL = m_transformView.transformPosition(tile->positions[0]);
 	Vector3 ptBR = m_transformView.transformPosition(tile->positions[1]);
 	Vector3 ptTL = m_transformView.transformPosition(tile->positions[2]);
+	Vector3 ptTR = m_transformView.transformPosition(tile->positions[3]);
 	sl_uint32 nBehind = 0;
 	if (Math::isLessThanEpsilon(ptBL.z)) {
 		nBehind++;
@@ -444,7 +445,10 @@ sl_bool MapEarthRenderer::_checkTileExpandable(_Tile* tile)
 	if (Math::isLessThanEpsilon(ptTL.z)) {
 		nBehind++;
 	}
-	if (nBehind == 3) {
+	if (Math::isLessThanEpsilon(ptTR.z)) {
+		nBehind++;
+	}
+	if (nBehind == 4) {
 		return sl_false;
 	}
 	if (nBehind != 0) {
