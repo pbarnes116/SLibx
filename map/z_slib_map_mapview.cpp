@@ -392,16 +392,6 @@ Ref<MapMarker> MapView::getMarker(String key)
 	return m_earthRenderer.markers.getValue(key, Ref<MapMarker>::null());
 }
 
-void MapView::putAdditionalMarker(String key, Ref<MapMarker> marker)
-{
-	m_earthRenderer.additionalMarkers.put(key, marker);
-}
-
-void MapView::clearAdditionalMarkers()
-{
-	m_earthRenderer.additionalMarkers.clear();
-}
-
 void MapView::putMarker(String key, Ref<MapMarker> marker)
 {
 	m_earthRenderer.markers.put(key, marker);
@@ -415,16 +405,6 @@ void MapView::removeMarker(String key)
 Ref<MapPolygon> MapView::getPolygon(String key)
 {
 	return m_earthRenderer.polygons.getValue(key, Ref<MapPolygon>::null());
-}
-
-void MapView::putAdditionalPolygon(String key, Ref<MapPolygon> polygon)
-{
-	m_earthRenderer.additionalPolygons.put(key, polygon);
-}
-
-void MapView::clearAdditionalPolygons()
-{
-	m_earthRenderer.additionalPolygons.clear();
 }
 
 void MapView::putPolygon(String key, Ref<MapPolygon> polygon)

@@ -86,10 +86,8 @@ public:
 
 public:
 	Map< String, Ref<MapMarker> > markers;
-	Map< String, Ref<MapMarker> > additionalMarkers;
-
 	Map< String, Ref<MapPolygon> > polygons;
-	Map< String, Ref<MapPolygon> > additionalPolygons;
+
 protected:
 	sl_bool m_flagInitialized;
 	sl_bool m_flagStartedRendering;
