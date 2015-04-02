@@ -47,6 +47,11 @@ void MapView::setFontForPOI(Ref<FreeType> font)
 	m_earthRenderer.setFontForPOI(font);
 }
 
+void MapView::setViewportSize(const Sizef& size)
+{
+	m_earthRenderer.setViewportSize(size);
+}
+
 void MapView::setWayNames(Map<sl_int64, String> wayNames)
 {
 	m_earthRenderer.setWayNames(wayNames);

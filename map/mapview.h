@@ -33,6 +33,7 @@ public:
 
 	Ref<FreeType> getFontForPOI();
 	void setFontForPOI(Ref<FreeType> font);
+	void setViewportSize(const Sizef& size);
 	void setPoiInformation(Map<sl_int64, MapGISPoiInfo> poiInformation);
 	void setWayNames(Map<sl_int64, String> wayNames);
 

@@ -63,6 +63,11 @@ public:
 	{
 		m_tilesGISPoi->setFontForPOI(font);
 	}
+	SLIB_INLINE void setViewportSize(const Sizef& size)
+	{
+		m_tilesGISPoi->setViewportSize(size);
+		m_tilesGISLine->setViewportSize(size);
+	}
 
 	SLIB_INLINE const Ref<MapCamera>& getCamera() const
 	{

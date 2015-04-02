@@ -43,7 +43,7 @@ public:
 
 public:
 	SLIB_PROPERTY_INLINE(Ref<MapDataLoader>, DataLoader);
-
+	SLIB_PROPERTY_INLINE(Sizef, ViewportSize);
 	SLIB_PROPERTY_INLINE(sl_uint32, TileLifeMillseconds);
 	SLIB_PROPERTY_INLINE(sl_uint32, MaxTilesCount);
 
@@ -85,7 +85,7 @@ public:
 
 public:
 	SLIB_PROPERTY_INLINE(Ref<MapDataLoader>, DataLoader);
-
+	SLIB_PROPERTY_INLINE(Sizef, ViewportSize);
 	SLIB_PROPERTY_INLINE(sl_uint32, TileLifeMillseconds);
 	SLIB_PROPERTY_INLINE(sl_uint32, MaxTilesCount);
 

@@ -159,7 +159,6 @@ void MapGISShapeData::initShape()
 		showMinLevel = 14;
 		if (extraType == 4) {
 			clr = Color::LightCyan;
-			showMinLevel = 8;
 		} else if (extraType == 1 || extraType == 4) {
 			clr = Color::LightBlue;
 		} else if (extraType == 3) {

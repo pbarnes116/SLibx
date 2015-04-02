@@ -166,6 +166,8 @@ void MapEarthRenderer::_renderGISPoi(RenderEngine* engine, MapGISPoiTile* tile)
 
 void MapEarthRenderer::_renderMarker(RenderEngine* engine, MapMarker* marker)
 {
+	sl_real screenRatio = m_viewportWidth / 1280;
+
 	Vector3 pos = MapEarth::getCartesianPosition(marker->location);
 	if (m_viewFrustum.containsPoint(pos)) {
 		Vector2 ps = convertPointToScreen(pos);
@@ -182,7 +184,7 @@ void MapEarthRenderer::_renderMarker(RenderEngine* engine, MapMarker* marker)
 				if (text.length() > 50) {
 					text = text.substring(0, 50);
 				}
-				marker->textFont->setSize(marker->textFontSize);
+				marker->textFont->setSize(marker->textFontSize * screenRatio);
 				Sizei size = marker->textFont->getStringExtent(text);
 				Ref<Image> image = Image::create(size.width + 5, size.height + 5);
 				if (image.isNotNull()) {

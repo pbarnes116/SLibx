@@ -35,6 +35,7 @@ Ref<MapGISLineTile> MapGISLineTileManager::loadTile(const MapTileLocationi& loca
 			return Ref<MapGISLineTile>::null();
 		}
 	}
+	sl_real screenRatio = getViewportSize().width / 1280;
 	Ref<MapDataLoader> loader = getDataLoader();
 	if (loader.isNotNull()) {
 		Map< sl_int32, Ref<MapGISShapeData> > shapes = m_dataLoader.loadTile(loader, SLIB_MAP_GIS_LINE_TILE_TYPE, location);
@@ -51,7 +52,7 @@ Ref<MapGISLineTile> MapGISLineTileManager::loadTile(const MapTileLocationi& loca
 						if (s->showMinLevel <= location.level) {							
 							MapGISShape o;
 							o.color = s->clr;
-							o.width = s->width;
+							o.width = s->width * screenRatio;
 							o.lines = s->lines;
 							tile->shapes.add(o);
 						}
@@ -139,6 +140,7 @@ Ref<MapGISPoiTile> MapGISPoiTileManager::loadTile(const MapTileLocationi& locati
 			return Ref<MapGISPoiTile>::null();
 		}
 	}
+	sl_real screenRatio = getViewportSize().width / 1280;
 	Ref<MapDataLoader> loader = getDataLoader();
 	if (loader.isNotNull()) {
 		List<MapGISPoiData> pois = m_dataLoader.loadTile(loader, SLIB_MAP_GIS_POI_TILE_TYPE, location);
@@ -158,7 +160,7 @@ Ref<MapGISPoiTile> MapGISPoiTileManager::loadTile(const MapTileLocationi& locati
 						if (text.length() > 50) {
 							text = text.substring(0, 50);
 						}
-						font->setSize(list[i].fontSize);
+						font->setSize(list[i].fontSize * screenRatio);
 						Sizei size = font->getStringExtent(text);
 						Ref<Image> image = Image::create(size.width + 5, size.height + 5);
 						if (image.isNotNull()) {
