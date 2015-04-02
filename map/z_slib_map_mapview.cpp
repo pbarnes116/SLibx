@@ -269,11 +269,11 @@ sl_bool MapView::onMouseEvent(MouseEvent& event)
 								m_flagTouchRotateStarted = sl_true;
 							} else {
 								if (len1 > len2) {
-									_zoomTo(m_zoomTouchStart * len1 / len2 * 2);
+									_zoomTo(m_zoomTouchStart * len1 / len2 * 1.4);
 								}
 
 								if (len1 < len2) {
-									_zoomTo(m_zoomTouchStart * len1 / len2 / 2);
+									_zoomTo(m_zoomTouchStart * len1 / len2 / 1.4);
 								}
 							}
 						}
