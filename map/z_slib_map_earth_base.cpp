@@ -23,6 +23,8 @@ MapEarthRenderer::MapEarthRenderer()
 
 	m_camera = new MapCamera;
 	m_camera->setEyeLocation(GeoLocation(38, 126, 8000000));
+
+	m_altitudeEyeSurface = 0;
 	
 	m_tilesRender = new MapRenderTileManager;
 	m_tilesPicture = new MapPictureTileManager;
@@ -78,48 +80,4 @@ void MapEarthRenderer::release()
 	}
 }
 
-LatLon MapEarthRenderer::getLatLonFromTileLocation(const MapTileLocationi& location)
-{
-	LatLon ret;
-	sl_uint32 n = 1 << (location.level);
-	sl_uint32 nx = n * getCountX0();
-	sl_uint32 ny = n * getCountY0();
-	ret.latitude = (location.y) * 180.0 / ny - 90.0;
-	ret.longitude = (location.x) * 360.0 / nx - 180.0;
-	return ret;
-}
-
-MapTileLocation MapEarthRenderer::getTileLocationFromLatLon(sl_uint32 level, const LatLon& latLon)
-{
-	MapTileLocation ret;
-	sl_uint32 n = 1 << level;
-	sl_uint32 nx = n * getCountX0();
-	sl_uint32 ny = n * getCountY0();
-	ret.level = level;
-	ret.y = (90.0 + latLon.latitude) * ny / 180.0;
-	ret.x = (180.0 + latLon.longitude) * nx / 360.0;
-	return ret;
-}
-
-Vector2 MapEarthRenderer::convertPointToScreen(const Vector3& point)
-{
-	Vector3 posScreen = Transform3::projectToViewport(m_transformViewProjection, point);
-	float x = (posScreen.x + 1.0f) * m_viewportWidth / 2.0f;
-	float y = (1.0f - posScreen.y) * m_viewportHeight / 2.0f;
-	return Vector2(x, y);
-}
-
-sl_bool MapEarthRenderer::getLocationFromScreenPoint(GeoLocation& out, const Vector2& point)
-{
-	Line3lf line = Transform3lf::unprojectScreenPoint(m_transformProjection, Vector2lf(point.x, point.y), m_viewportWidth, m_viewportHeight);
-	Spherelf globe(Vector3lf::zero(), MapEarth::getRadius());
-	Vector3lf pt1, pt2;
-	line.transform(m_transformViewInverse);
-	if (globe.intersectLine(line, &pt1, &pt2) > 0) {
-		out = MapEarth::getGeoLocation(pt1);
-		return sl_true;
-	} else {
-		return sl_false;
-	}
-}
 SLIB_MAP_NAMESPACE_END

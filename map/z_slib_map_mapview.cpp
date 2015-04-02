@@ -23,6 +23,8 @@ MapView::MapView()
 	m_flagMouseDown = sl_false;
 
 	m_flagCompassHighlight = sl_false;
+	m_compassMouseDown = 0;
+
 	setCompassSize(150);
 	setCompassPosition(Point(75, 75));
 }
@@ -166,16 +168,13 @@ sl_bool MapView::onMouseEvent(MouseEvent& event)
 	}
 
 	if (event.action == MouseEvent::actionLeftButtonDown || event.action == MouseEvent::actionTouchDown) {
-		
+
+		getCamera()->clearMotions();
+
 		sl_real lenCompass = (pt - getCompassPosition()).getLength();
-		if (lenCompass < getCompassSize() / 2) {
-			if (lenCompass > getCompassSize() / 5) {
-				m_flagCompassHighlight = sl_true;
-			} else {
-				getCamera()->startRotatingZ(0);
-				m_flagMouseDown = sl_false;
-				return sl_false;
-			}
+		if (lenCompass < getCompassSize() / 2 && lenCompass > getCompassSize() / 8) {
+			m_flagCompassHighlight = sl_true;
+			m_compassMouseDown = getCamera()->getRotationZ();
 		} else {
 			m_flagCompassHighlight = sl_false;
 		}
@@ -185,7 +184,6 @@ sl_bool MapView::onMouseEvent(MouseEvent& event)
 		m_transformMouseDown = getCamera()->getVerticalViewMatrix();
 		m_flagMouseExitMoving = sl_false;
 		m_flagMouseDown = sl_true;
-
 		setFocus();
 
 	} else if (
@@ -201,7 +199,7 @@ sl_bool MapView::onMouseEvent(MouseEvent& event)
 				Vector2 v = pt - getCompassPosition();
 				if (v.length2p() > 30) {
 					sl_real r = -Math::getDegreeFromRadian(Transform2::getRotationAngleFromDirToDir(Vector2(0, -1), v));
-					getCamera()->startRotatingZ(r);
+					getCamera()->setTargetRotationZ(r);
 				}
 
 			} else {
@@ -254,7 +252,7 @@ sl_bool MapView::onMouseEvent(MouseEvent& event)
 
 							sl_real r = getCamera()->getRotationZ();
 							r -= a;
-							getCamera()->startRotatingZ(r);
+							getCamera()->setTargetRotationZ(r);
 						}
 					}
 				}
@@ -264,12 +262,28 @@ sl_bool MapView::onMouseEvent(MouseEvent& event)
 		if (event.action == MouseEvent::actionLeftButtonUp
 			|| event.action == MouseEvent::actionTouchUp) {
 
-			m_flagCompassHighlight = sl_false;
+			if (m_flagCompassHighlight) {
+
+				double dx = (pt.x - m_pointMouseDown.x);
+				double dy = -(pt.y - m_pointMouseDown.y);
+				if (dx * dx + dy * dy < 20) {
+
+					double dt = (double)((Time::now() - m_timeMouseDown).getMillisecondsCount());
+					if (dt < 300) {
+						if (Math::abs(Math::normalizeDegreeDistance(getCamera()->getTargetRotationZ() - m_compassMouseDown)) < 20) {
+							getCamera()->setTargetRotationZ(0);
+						}
+					}
+
+				}
+				m_flagCompassHighlight = sl_false;
+			}
 			m_flagMouseDown = sl_false;
 		}
 
 	} else if (event.action == MouseEvent::actionRightButtonDown) {
 		
+		getCamera()->clearMotions();
 		setFocus();
 
 	} else if (event.action == MouseEvent::actionRightButtonDrag) {
@@ -278,18 +292,12 @@ sl_bool MapView::onMouseEvent(MouseEvent& event)
 		sl_real dy = pt.y - m_pointMouseBefore.y;
 
 		sl_real r = getCamera()->getRotationZ();
-		r -= dx;
-		getCamera()->startRotatingZ(r);
+		r += dx;
+		getCamera()->setTargetRotationZ(r);
 
 		sl_real t = getCamera()->getTilt();
 		t += dy;
-		if (t < 0) {
-			t = 0;
-		}
-		if (t > 80) {
-			t = 80;
-		}
-		getCamera()->startTilting(t);
+		getCamera()->setTargetTilt(t);
 
 	}
 
@@ -363,6 +371,16 @@ String MapView::formatLongitude(double f)
 	return ret;
 }
 
+String MapView::formatRotationZ(double f)
+{
+	return (sl_int32)(Math::floor(f)) + String(_SLT("°"));
+}
+
+String MapView::formatTilt(double f)
+{
+	return (sl_int32)(Math::floor(f)) + String(_SLT("°"));
+}
+
 String MapView::formatAltitude(double f)
 {
 	String ret;
@@ -383,7 +401,9 @@ String MapView::formatAltitude(double f)
 String MapView::getStatusText()
 {
 	GeoLocation loc = getCamera()->getEyeLocation();
-	String status = formatLatitude(loc.latitude) + _SLT(", ") + formatLongitude(loc.longitude) + _SLT(", ") + formatAltitude(loc.altitude);
+	String status = formatLatitude(loc.latitude) + _SLT(", ") + formatLongitude(loc.longitude) 
+		+ _SLT(", ") + formatAltitude(loc.altitude)
+		+ _SLT(", ") + formatRotationZ(getCamera()->getRotationZ()) + _SLT(", ") + formatTilt(getCamera()->getTilt());
 	return status;
 }
 

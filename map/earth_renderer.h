@@ -78,11 +78,18 @@ public:
 		return m_transformProjection;
 	}
 
+	SLIB_INLINE sl_real getEyeSurfaceAltitude() const
+	{
+		return m_altitudeEyeSurface;
+	}
+
 public:
 	LatLon getLatLonFromTileLocation(const MapTileLocationi& location);
 	MapTileLocation getTileLocationFromLatLon(sl_uint32 level, const LatLon& latLon);
 	Vector2 convertPointToScreen(const Vector3& point);
 	sl_bool getLocationFromScreenPoint(GeoLocation& out, const Vector2& point);
+	GeoLocation getLocationFromLatLon(const LatLon& latLon, sl_bool flagReadDEMAlways = sl_false);
+	sl_real getAltitudeFromLatLon(const LatLon& latLon, sl_bool flagReadDEMAlways = sl_false);
 
 public:
 	Map< String, Ref<MapMarker> > markers;
@@ -98,6 +105,8 @@ protected:
 	Time m_timeLastThreadControl;
 	Time m_timeCurrentThreadControl;
 	sl_uint32 m_dtimeThreadControl;
+
+	sl_real m_altitudeEyeSurface;
 
 	void _runThreadControl();
 	void _runThreadControlStep();
@@ -166,6 +175,7 @@ protected:
 	Ref<_Tile> _getTile(const MapTileLocationi& location);
 	void _renderTiles(RenderEngine* engine);
 	void _renderTile(RenderEngine* engine, _Tile* tile);
+	sl_bool _checkPointVisible(const Vector3& point);
 	sl_bool _checkTileVisible(_Tile* tile);
 	sl_bool _checkTileExpandable(_Tile* tile);
 

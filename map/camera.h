@@ -46,11 +46,10 @@ public:
 		m_rotationZ = degree;
 	}
 
-	sl_real getRevisedRotationZ() const;
-	sl_real getRevisedTilt() const;
-
 	Matrix4lf getViewMatrix() const;
 	Matrix4lf getVerticalViewMatrix() const;
+
+	sl_real getMaxTilt() const;
 
 private:
 	GeoLocation m_location;
@@ -86,7 +85,7 @@ public:
 
 	SLIB_INLINE sl_real getTilt() const
 	{
-		return m_current.getRevisedTilt();
+		return m_current.getTilt();
 	}
 	SLIB_INLINE void setTilt(sl_real degree)
 	{
@@ -95,7 +94,7 @@ public:
 
 	SLIB_INLINE sl_real getRotationZ() const
 	{
-		return m_current.getRevisedRotationZ();
+		return m_current.getRotationZ();
 	}
 	SLIB_INLINE void setRotationZ(sl_real degree)
 	{
@@ -122,8 +121,23 @@ public:
 	void resumeMoving();
 	void stopMoving();
 
-	void startRotatingZ(sl_real target);
-	void startTilting(sl_real target);
+	void setTargetRotationZ(sl_real target);
+	sl_real getTargetRotationZ()
+	{
+		return m_targetRotationZ;
+	}
+
+	void setTargetTilt(sl_real target);
+	sl_real getTargetTilt()
+	{
+		return m_targetTilt;
+	}
+
+	void setMinimumAltitude(double altitude);
+	double getMimimumAltitude()
+	{
+		return m_targetAltitudeMin;
+	}
 
 	void clearMotions();
 
@@ -142,6 +156,8 @@ private:
 	sl_bool m_flagMoving;
 	List<MapCameraMovingTarget> m_listMovingTargets;
 	sl_size m_indexMovingTargets;
+
+	double m_targetAltitudeMin;
 
 	sl_bool m_flagRotatingZ;
 	sl_real m_targetRotationZ;

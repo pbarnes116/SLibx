@@ -215,8 +215,8 @@ float DEM::getAltitudeAt(float x, float y)
 	} else if (N == 1) {
 		return dem[0];
 	} else {
-		sl_real mx = x / (N - 1);
-		sl_real my = y / (N - 1);
+		sl_real mx = x * (N - 1);
+		sl_real my = y * (N - 1);
 		sl_int32 mxi = (sl_int32)(mx);
 		sl_int32 myi = (sl_int32)(my);
 		sl_real mxf;

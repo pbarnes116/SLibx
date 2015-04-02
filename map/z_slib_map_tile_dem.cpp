@@ -193,65 +193,71 @@ float MapDEMTileManager::getAltitude(const MapTileLocation& location)
 	sl_int32 level = location.level;
 	sl_real x = (sl_real)(location.x);
 	sl_real y = (sl_real)(location.y);
+	sl_int32 iy = (sl_int32)(y);
+	sl_int32 ix = (sl_int32)(x);
+	sl_real fy = (float)(y - iy);
+	sl_real fx = (float)(x - ix);
+	Ref<MapDEMTile> dem;
+	dem = getTile(MapTileLocationi(level, iy, ix));
+	if (dem.isNotNull()) {
+		return getAltitudeFromDEM(fx, 1 - fy, dem);
+	}
+	return 0;
+}
+
+float MapDEMTileManager::getAltitudeHierarchically(const MapTileLocation& location)
+{
+	sl_int32 level = location.level;
+	sl_real x = (sl_real)(location.x);
+	sl_real y = (sl_real)(location.y);
 	do {
 		sl_int32 iy = (sl_int32)(y);
 		sl_int32 ix = (sl_int32)(x);
 		sl_real fy = (float)(y - iy);
 		sl_real fx = (float)(x - ix);
-		sl_real e = 0.0000001f;
-		sl_real d = 0.9999999f;
 		Ref<MapDEMTile> dem;
 		dem = getTile(MapTileLocationi(level, iy, ix));
 		if (dem.isNotNull()) {
-			return getAltitudeFromDEM(fx, fy, dem);
+			return getAltitudeFromDEM(fx, 1 - fy, dem);
 		}
-		if (fx < e) {
-			dem = getTile(MapTileLocationi(level, iy, ix - 1));
-			if (dem.isNotNull()) {
-				return getAltitudeFromDEM(1, fy, dem);
-			}
-			if (fy < e) {
-				dem = getTile(MapTileLocationi(level, iy - 1, ix - 1));
-				if (dem.isNotNull()) {
-					return getAltitudeFromDEM(1, 1, dem);
-				}
-			}
-			if (fy > d) {
-				dem = getTile(MapTileLocationi(level, iy + 1, ix - 1));
-				if (dem.isNotNull()) {
-					return getAltitudeFromDEM(1, 0, dem);
-				}
-			}
-		}
-		if (fx > d) {
-			dem = getTile(MapTileLocationi(level, iy, ix + 1));
-			if (dem.isNotNull()) {
-				return getAltitudeFromDEM(0, fy, dem);
-			}
-			if (fy < e) {
-				dem = getTile(MapTileLocationi(level, iy - 1, ix + 1));
-				if (dem.isNotNull()) {
-					return getAltitudeFromDEM(0, 1, dem);
-				}
-			}
-			if (fy > d) {
-				dem = getTile(MapTileLocationi(level, iy + 1, ix + 1));
-				if (dem.isNotNull()) {
-					return getAltitudeFromDEM(0, 0, dem);
-				}
-			}
-		}
-		if (fy < e) {
-			dem = getTile(MapTileLocationi(level, iy - 1, ix));
-			if (dem.isNotNull()) {
-				return getAltitudeFromDEM(fx, 1, dem);
-			}
-		}
-		if (fy > d) {
-			dem = getTile(MapTileLocationi(level, iy + 1, ix));
-			if (dem.isNotNull()) {
-				return getAltitudeFromDEM(fx, 0, dem);
-			}
+		level--;
+		y /= 2;
+		x /= 2;
+	} while (level >= 0);
+	return 0;
+}
+
+float MapDEMTileManager::readAltitude(const MapTileLocation& location)
+{
+	sl_int32 level = location.level;
+	sl_real x = (sl_real)(location.x);
+	sl_real y = (sl_real)(location.y);
+	sl_int32 iy = (sl_int32)(y);
+	sl_int32 ix = (sl_int32)(x);
+	sl_real fy = (float)(y - iy);
+	sl_real fx = (float)(x - ix);
+	Ref<MapDEMTile> dem;
+	dem = loadTile(MapTileLocationi(level, iy, ix));
+	if (dem.isNotNull()) {
+		return getAltitudeFromDEM(fx, 1 - fy, dem);
+	}
+	return 0;
+}
+
+float MapDEMTileManager::readAltitudeHierarchically(const MapTileLocation& location)
+{
+	sl_int32 level = location.level;
+	sl_real x = (sl_real)(location.x);
+	sl_real y = (sl_real)(location.y);
+	do {
+		sl_int32 iy = (sl_int32)(y);
+		sl_int32 ix = (sl_int32)(x);
+		sl_real fy = (float)(y - iy);
+		sl_real fx = (float)(x - ix);
+		Ref<MapDEMTile> dem;
+		dem = loadTile(MapTileLocationi(level, iy, ix));
+		if (dem.isNotNull()) {
+			return getAltitudeFromDEM(fx, 1 - fy, dem);
 		}
 		level--;
 		y /= 2;
