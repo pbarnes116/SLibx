@@ -50,8 +50,12 @@ public:
 	{
 		return getAltitudeFromDEM(pos.x, pos.y, tile);
 	}
-	float getAltitude(const MapTileLocation& location);
 
+	float getAltitude(const MapTileLocation& location);
+	float getAltitudeHierarchically(const MapTileLocation& location);
+
+	float readAltitude(const MapTileLocation& location);
+	float readAltitudeHierarchically(const MapTileLocation& location);
 };
 
 SLIB_MAP_NAMESPACE_END

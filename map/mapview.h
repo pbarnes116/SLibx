@@ -53,6 +53,8 @@ protected:
 	virtual String formatLatitude(double f);
 	virtual String formatLongitude(double f);
 	virtual String formatAltitude(double f);
+	virtual String formatRotationZ(double f);
+	virtual String formatTilt(double f);
 	virtual String getStatusText();
 
 protected:
@@ -82,6 +84,7 @@ private:
 	sl_bool m_flagMouseDown;
 
 	sl_bool m_flagCompassHighlight;
+	sl_real m_compassMouseDown;
 
 public:
 	SLIB_PROPERTY_INLINE(Ref<FreeType>, StatusFont);

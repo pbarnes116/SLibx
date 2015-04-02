@@ -26,35 +26,6 @@ void MapCameraLocation::setTilt(sl_real angle)
 	m_tilt = angle;
 }
 
-sl_real MapCameraLocation::getRevisedRotationZ() const
-{
-	return m_rotationZ;
-}
-
-sl_real MapCameraLocation::getRevisedTilt() const
-{
-	Vector3 eye = MapEarth::getCartesianPosition(m_location);
-	sl_real lenEye = eye.getLength();
-	sl_real R = (float)(MapEarth::getRadius());
-	sl_real t = m_tilt;
-	if (t > 0) {
-		if (lenEye < R) {
-			lenEye = R;
-		}
-		sl_real sinAlpha = (float)(R / lenEye);
-		sl_real alpha = Math::getDegreeFromRadian(Math::arcsin(sinAlpha));
-		if (t > alpha) {
-			t = alpha;
-		}
-		if (m_location.altitude > 20000) {
-			t = (sl_real)(t * (20000 / m_location.altitude));
-		}
-	} else {
-		t = 0;
-	}
-	return t;
-}
-
 Matrix4lf MapCameraLocation::getVerticalViewMatrix() const
 {
 	Matrix4lf matView;
@@ -76,20 +47,39 @@ Matrix4lf MapCameraLocation::getVerticalViewMatrix() const
 Matrix4lf MapCameraLocation::getViewMatrix() const
 {
 	Matrix4lf matView = getVerticalViewMatrix();
-	sl_real t = getRevisedTilt();
+	double t = getTilt();
 	if (t > 0) {
 		matView *= Transform3lf::getRotationXMatrix(Math::getRadianFromDegree(t));
 	}
 	return matView;
 }
 
+sl_real MapCameraLocation::getMaxTilt() const
+{
+	Vector3lf eye = MapEarth::getCartesianPosition(m_location);
+	double lenEye = eye.getLength();
+	double R = MapEarth::getRadius();
+	if (lenEye < R) {
+		lenEye = R;
+	}
+	double sinAlpha = (R - 1) / lenEye;
+	double alpha = Math::getDegreeFromRadian(Math::arcsin(sinAlpha));
+	return (sl_real)alpha;
+}
+
 
 MapCamera::MapCamera()
 {
 	m_flagMoving = sl_false;
-	m_flagRotatingZ = sl_false;
-	m_flagTilting = sl_false;
 	m_indexMovingTargets = 0;
+	m_targetAltitudeMin = 0;
+
+	m_flagRotatingZ = sl_false;
+	m_targetRotationZ = 0;
+
+	m_flagTilting = sl_false;
+	m_targetTilt = 0;
+
 }
 
 void MapCamera::clearMovingTargets()
@@ -188,18 +178,23 @@ void MapCamera::resumeMoving()
 	m_flagMoving = sl_true;
 }
 
-void MapCamera::startRotatingZ(sl_real target)
+void MapCamera::setTargetRotationZ(sl_real target)
 {
 	MutexLocker lock(getLocker());
 	m_flagRotatingZ = sl_true;
 	m_targetRotationZ = target;
 }
 
-void MapCamera::startTilting(sl_real target)
+void MapCamera::setTargetTilt(sl_real target)
 {
 	MutexLocker lock(getLocker());
 	m_flagTilting = sl_true;
-	m_targetTilt = target;
+	m_targetTilt = normalizeTilt(target);
+}
+
+void MapCamera::setMinimumAltitude(double target)
+{
+	m_targetAltitudeMin = target;
 }
 
 void MapCamera::clearMotions()
@@ -216,19 +211,38 @@ void MapCamera::stepMotions(sl_real dt)
 	if (m_flagMoving) {
 		if (m_indexMovingTargets < m_listMovingTargets.count()) {
 			MapCameraMovingTarget& t = m_listMovingTargets[m_indexMovingTargets];
+			GeoLocation tl = t.location;
+			if (tl.altitude < m_targetAltitudeMin) {
+				tl.altitude = m_targetAltitudeMin;
+			}
 			if (Math::isLessThanEpsilon(t.duration) || t.duration < dt) {
-				setEyeLocation(t.location);
+				setEyeLocation(tl);
 				m_indexMovingTargets++;
 			} else {
 				GeoLocation o = getEyeLocation();
 				sl_real s = dt / t.duration;
-				setEyeLocation(o.lerp(t.location, s));
+				setEyeLocation(o.lerp(tl, s));
 				t.duration -= dt;
 			}
 		} else {
 			m_flagMoving = sl_false;
 		}
 	}
+	{
+		double ta = m_targetAltitudeMin;
+		double a = getEyeLocation().altitude;
+		if (a < ta) {
+			double da = ta - a;
+			double k = dt;
+			if (da < k) {
+				a = ta;
+			} else {
+				a += k;
+			}
+			setEyeLocation(GeoLocation(getEyeLocation().getLatLon(), a));
+		}
+	}
+
 	if (m_flagRotatingZ) {
 		sl_real tr = Math::normalizeDegree(m_targetRotationZ);
 		sl_real _or = getRotationZ();
@@ -250,7 +264,17 @@ void MapCamera::stepMotions(sl_real dt)
 			}
 		}
 	}
+	sl_real maxTilt = m_current.getMaxTilt();
+	if (!m_flagTilting) {
+		if (getTilt() > maxTilt) {
+			m_targetTilt = maxTilt;
+			m_flagTilting = sl_true;
+		}
+	}
 	if (m_flagTilting) {
+		if (m_targetTilt > maxTilt) {
+			m_targetTilt = maxTilt;
+		}
 		sl_real tr = normalizeTilt(m_targetTilt);
 		sl_real _or = getTilt();
 		sl_real dr = tr - _or;
@@ -266,6 +290,7 @@ void MapCamera::stepMotions(sl_real dt)
 			}
 		}
 	}
+	
 }
 
 sl_real MapCamera::normalizeTilt(sl_real t)

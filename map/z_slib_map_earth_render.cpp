@@ -98,8 +98,7 @@ void MapEarthRenderer::_renderBuilding(RenderEngine* engine, MapBuilding* buildi
 
 void MapEarthRenderer::_renderGISLine(RenderEngine* engine, MapGISLineTile* tile)
 {
-	Rectangle rect;
-	Ref<MapDEMTile> dem = m_tilesDEM->getTileHierarchically(tile->location, &rect);
+	Ref<MapDEMTile> dem = m_tilesDEM->getTileHierarchically(tile->location, sl_null);
 	ListLocker<MapGISShape> list(tile->shapes);
 	for (sl_size i = 0; i < list.count(); i++) {
 		MapGISShape& s = list[i];
@@ -151,7 +150,7 @@ void MapEarthRenderer::_renderGISPoi(RenderEngine* engine, MapGISPoiTile* tile)
 	for (sl_size i = 0; i < list.count(); i++) {
 		MapGISPoi& s = list[i];
 		MapTileLocation location = getTileLocationFromLatLon(tile->location.level, s.location);
-		float altitude = m_tilesDEM->getAltitude(location);
+		float altitude = m_tilesDEM->getAltitudeHierarchically(location);
 		Vector3 pos = MapEarth::getCartesianPosition(GeoLocation(s.location, altitude));
 		if (m_viewFrustum.containsPoint(pos)) {
 			Vector2 ps = convertPointToScreen(pos);
@@ -167,9 +166,8 @@ void MapEarthRenderer::_renderGISPoi(RenderEngine* engine, MapGISPoiTile* tile)
 void MapEarthRenderer::_renderMarker(RenderEngine* engine, MapMarker* marker)
 {
 	sl_real screenRatio = m_viewportWidth / 1280;
-
-	Vector3 pos = MapEarth::getCartesianPosition(marker->location);
-	if (m_viewFrustum.containsPoint(pos)) {
+	Vector3 pos = MapEarth::getCartesianPosition(getLocationFromLatLon(marker->location.getLatLon()));
+	if (_checkPointVisible(pos)) {
 		Vector2 ps = convertPointToScreen(pos);
 		if (marker->iconTexture.isNotNull()) {
 			Rectangle rectangle = Rectangle(Point(ps.x - marker->iconSize.width / 2, ps.y - marker->iconSize.height), marker->iconSize);
@@ -216,10 +214,16 @@ void MapEarthRenderer::_renderPolygon(RenderEngine* engine, MapPolygon* polygon)
 		return;
 	}
 	SLIB_SCOPED_ARRAY(Vector3, pos, n);
+	sl_bool flagVisible = sl_false;
 	for (sl_size i = 0; i < n; i++) {
-		pos[i] = MapEarth::getCartesianPosition(points[i]);
+		pos[i] = MapEarth::getCartesianPosition(getLocationFromLatLon(points[i].getLatLon()));
+		Vector3lf normal = m_transformView.transformDirection(pos[i]);
+		normal.normalize();
+		if (normal.z <= 0) {
+			flagVisible = sl_true;
+		}
 	}
-	if (!(ViewFrustum(m_viewFrustum).containsFacets(pos, n))) {
+	if (!flagVisible) {
 		return;
 	}
 	GLES2::setLineWidth(polygon->width);
@@ -400,6 +404,23 @@ Ref<MapEarthRenderer::_Tile> MapEarthRenderer::_getTile(const MapTileLocationi& 
 	return tile;
 }
 
+sl_bool MapEarthRenderer::_checkPointVisible(const Vector3& point)
+{
+	// check distance
+	double e2 = m_positionEye.getLength2p();
+	double r2 = MapEarth::getRadius();
+	r2 *= r2;
+	double p2 = (m_positionEye - point).getLength2p();
+	if (p2 > e2 - r2) {
+		return sl_false;
+	}
+	// check frustum
+	if (!m_viewFrustum.containsPoint(point)) {
+		return sl_false;
+	}
+	return sl_true;
+}
+
 sl_bool MapEarthRenderer::_checkTileVisible(_Tile* tile)
 {
 	// check distance
@@ -415,28 +436,20 @@ sl_bool MapEarthRenderer::_checkTileVisible(_Tile* tile)
 		}
 	}
 	// check normal
-	do {
-		Vector3lf normal = m_transformView.transformDirection(tile->positions[0]);
-		normal.normalize();
-		if (normal.z <= 0) {
-			break;
+	{
+		sl_bool flagVisible = sl_false;
+		for (sl_uint32 i = 0; i < 4; i++) {
+			Vector3lf normal = m_transformView.transformDirection(tile->positions[i]);
+			normal.normalize();
+			if (normal.z <= 0) {
+				flagVisible = sl_true;
+				break;
+			}
 		}
-		normal = m_transformView.transformDirection(tile->positions[1]);
-		normal.normalize();
-		if (normal.z <= 0) {
-			break;
+		if (!flagVisible) {
+			return sl_false;
 		}
-		normal = m_transformView.transformDirection(tile->positions[2]);
-		normal.normalize();
-		if (normal.z <= 0) {
-			break;
-		}
-		normal = m_transformView.transformDirection(tile->positions[3]);
-		normal.normalize();
-		if (normal.z <= 0) {
-			break;
-		}
-	} while (0);
+	}
 	// check frustum
 	if (m_viewFrustum.containsFacets(tile->positions, 4)
 		|| m_viewFrustum.containsFacets(tile->positionsWithDEM, 4)) {
