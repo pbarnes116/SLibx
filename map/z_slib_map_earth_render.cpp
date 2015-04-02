@@ -146,26 +146,64 @@ void MapEarthRenderer::_renderGISLine(RenderEngine* engine, MapGISLineTile* tile
 
 void MapEarthRenderer::_renderGISPoi(RenderEngine* engine, MapGISPoiTile* tile)
 {
-	ListLocker<MapGISPoi> list(tile->pois);
+	ListLocker<MapGISPoi> list(tile->pois); 
+	Ref<FreeType> font = getFontForPOI();
+	if (font.isNull()) {
+		return;
+	}
+	sl_real screenRatio = (sl_real)m_viewportWidth / 1280;
 	for (sl_size i = 0; i < list.count(); i++) {
 		MapGISPoi& s = list[i];
-		MapTileLocation location = getTileLocationFromLatLon(tile->location.level, s.location);
-		float altitude = m_tilesDEM->getAltitudeHierarchically(location);
-		Vector3 pos = MapEarth::getCartesianPosition(GeoLocation(s.location, altitude));
-		if (m_viewFrustum.containsPoint(pos)) {
-			Vector2 ps = convertPointToScreen(pos);
-			float w = (float)(s.texture->getWidth());
-			float h = (float)(s.texture->getHeight());
-			engine->drawTexture2D(
-				engine->screenToViewport(ps.x - w / 2, ps.y - h / 2, w, h)
-				, s.texture);
+		if (s.id == 100030) {
+			s.id = s.id;
+		}
+		MapGISPoiInfo poiInfo;
+		if (s.texture.isNull()) {
+			if (m_poiInfo.get(s.id, &poiInfo)) {
+
+				String text = poiInfo.name;
+				s._type = (MAP_GIS_POI_TYPE)(poiInfo.type);
+				s.initPoi();
+				
+				if (s.showMinLevel <= (sl_int32)(tile->location.level)) {
+					if (s._type != MAP_GIS_POI_TYPE::POITypeNone && text.length() > 0) {
+						if (text.length() > 50) {
+							text = text.substring(0, 50);
+						}
+						font->setSize(s.fontSize * screenRatio * 1.5f);
+						Sizei size = font->getStringExtent(text);
+						Ref<Image> image = Image::create(size.width + 5, size.height + 5);
+						if (image.isNotNull()) {
+							font->drawString(image, 1, size.height + 1, text, Color::Black);
+							font->drawString(image, 2, size.height + 2, text, s.clr);
+							Ref<Texture> texture = Texture::create(image);
+							if (texture.isNotNull()) {
+								s.texture = texture;
+							}
+						}
+					}
+				}
+			}
+		}
+		if (s.texture.isNotNull()) {
+			MapTileLocation location = getTileLocationFromLatLon(tile->location.level, s.location);
+			float altitude = m_tilesDEM->getAltitudeHierarchically(location);
+			Vector3 pos = MapEarth::getCartesianPosition(GeoLocation(s.location, altitude));
+			if (m_viewFrustum.containsPoint(pos)) {
+				Vector2 ps = convertPointToScreen(pos);
+				float w = (float)(s.texture->getWidth());
+				float h = (float)(s.texture->getHeight());
+				engine->drawTexture2D(
+					engine->screenToViewport(ps.x - w / 2, ps.y - h / 2, w, h)
+					, s.texture);
+			}
 		}
 	}
 }
 
 void MapEarthRenderer::_renderMarker(RenderEngine* engine, MapMarker* marker)
 {
-	sl_real screenRatio = m_viewportWidth / 1280;
+	sl_real screenRatio = (sl_real)m_viewportWidth / 1280;
 	Vector3 pos = MapEarth::getCartesianPosition(getLocationFromLatLon(marker->location.getLatLon()));
 	if (_checkPointVisible(pos)) {
 		Vector2 ps = convertPointToScreen(pos);
@@ -186,6 +224,7 @@ void MapEarthRenderer::_renderMarker(RenderEngine* engine, MapMarker* marker)
 				Sizei size = marker->textFont->getStringExtent(text);
 				Ref<Image> image = Image::create(size.width + 5, size.height + 5);
 				if (image.isNotNull()) {
+					marker->textFont->drawString(image, 1, size.height + 1, text, Color::Black);
 					marker->textFont->drawString(image, 2, size.height + 2, text, marker->textColor);
 					Ref<Texture> texture = Texture::create(image);
 					if (texture.isNotNull()) {

@@ -53,7 +53,7 @@ public:
 	}
 	SLIB_INLINE void setPoiInformation(Map<sl_int64, MapGISPoiInfo> poiInfo)
 	{
-		m_tilesGISPoi->setPoiInformation(poiInfo);
+		m_poiInfo = poiInfo;
 	}
 	SLIB_INLINE Ref<FreeType> getFontForPOI()
 	{
@@ -143,6 +143,7 @@ protected:
 
 	List<MapTileLocationi> m_listRenderedTiles;
 
+	Map<sl_int64, MapGISPoiInfo> m_poiInfo;
 protected:
 	Ref<MapCamera> m_camera;
 

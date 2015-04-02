@@ -60,6 +60,7 @@ protected:
 protected:
 	Ref<MapDEMTileManager> getDEMTiles();
 
+	void _zoomTo(double alt);
 	void _zoom(double ratio);
 
 private:
@@ -82,6 +83,12 @@ private:
 	Matrix4 m_transformMouseDown;
 	sl_bool m_flagMouseExitMoving;
 	sl_bool m_flagMouseDown;
+
+	Point m_pointTouchStart1;
+	Point m_pointTouchStart2;
+	double m_zoomTouchStart;
+	sl_real m_rotateTouchStart;
+	sl_bool m_flagTouchRotateStarted;
 
 	sl_bool m_flagCompassHighlight;
 	sl_real m_compassMouseDown;

@@ -126,10 +126,7 @@ Ref<MapGISPoiTile> MapGISPoiTileManager::getTile(const MapTileLocationi& locatio
 
 Ref<MapGISPoiTile> MapGISPoiTileManager::loadTile(const MapTileLocationi& location)
 {
-	Ref<FreeType> font = getFontForPOI();
-	if (font.isNull()) {
-		return Ref<MapGISPoiTile>::null();
-	}
+	
 	Ref<MapGISPoiTile> tile;
 	m_tiles.get(location, &tile);
 	if (tile.isNotNull()) {
@@ -140,10 +137,13 @@ Ref<MapGISPoiTile> MapGISPoiTileManager::loadTile(const MapTileLocationi& locati
 			return Ref<MapGISPoiTile>::null();
 		}
 	}
-	sl_real screenRatio = getViewportSize().width / 1280;
 	Ref<MapDataLoader> loader = getDataLoader();
 	if (loader.isNotNull()) {
+		if (location.level == 5 && location.y == 113 && location.x >269) {
+			int i = 1;
+		}
 		List<MapGISPoiData> pois = m_dataLoader.loadTile(loader, SLIB_MAP_GIS_POI_TILE_TYPE, location);
+		pois.add(m_dataLoader.loadTile(loader, SLIB_MAP_GIS_SPECIAL_POI_TILE_TYPE, location));
 		tile = new MapGISPoiTile();
 		if (tile.isNotNull()) {
 			tile->location = location;
@@ -154,26 +154,8 @@ Ref<MapGISPoiTile> MapGISPoiTileManager::loadTile(const MapTileLocationi& locati
 				for (sl_size i = 0; i < list.count(); i++) {
 					MapGISPoi p;
 					p.location = list[i].location;
-					p.type = list[i].type;
-					if (list[i].showMinLevel <= (sl_int32)(location.level)) {
-						String text = list[i].name;
-						if (text.length() > 50) {
-							text = text.substring(0, 50);
-						}
-						font->setSize(list[i].fontSize * screenRatio);
-						Sizei size = font->getStringExtent(text);
-						Ref<Image> image = Image::create(size.width + 5, size.height + 5);
-						if (image.isNotNull()) {
-							font->drawString(image, 1, size.height + 1, text, Color::Black);
-							font->drawString(image, 2, size.height + 2, text, list[i].clr);
-							Ref<Texture> texture = Texture::create(image);
-							if (texture.isNotNull()) {
-								p.texture = texture;
-								tile->pois.add(p);
-							}
-						}
-					}
-					
+					p.id = list[i].id;
+					tile->pois.add(p);
 				}
 			}
 			m_tiles.put(location, tile);

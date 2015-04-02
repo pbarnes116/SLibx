@@ -62,11 +62,19 @@ public:
 	}
 };
 
-struct MapGISPoi
+class MapGISPoi
 {
+public:
 	LatLon location;
-	MAP_GIS_POI_TYPE type;
+	sl_int64 id;
 	Ref<Texture> texture;
+
+
+	MAP_GIS_POI_TYPE _type;
+	sl_int32 showMinLevel;
+	sl_uint32 fontSize;
+	Color clr;
+	void initPoi();
 };
 class MapGISPoiTile : public Referable
 {
@@ -99,11 +107,6 @@ public:
 	Ref<MapGISPoiTile> getTile(const MapTileLocationi& location);
 	Ref<MapGISPoiTile> loadTile(const MapTileLocationi& location);
 	void freeOldTiles();
-
-	SLIB_INLINE void setPoiInformation(Map<sl_int64, MapGISPoiInfo> poiInfo)
-	{
-		m_dataLoader.setPoiInformation(poiInfo);
-	}
 
 };
 SLIB_MAP_NAMESPACE_END

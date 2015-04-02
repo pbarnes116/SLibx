@@ -1,5 +1,5 @@
 ﻿#include "mapview.h"
-
+#include "../../slib/core/log.h"
 #define STATUS_WIDTH 1024
 #define STATUS_HEIGHT 30
 
@@ -220,7 +220,9 @@ sl_bool MapView::onMouseEvent(MouseEvent& event)
 						dy /= m_viewportHeight;
 						double dt = (double)((Time::now() - m_timeMouseDown).getMillisecondsCount());
 
-						sl_real time = 500;
+						sl_real time = 100;
+						dx *= 1.5;
+						dy *= 1.5;
 						if (event.action == MouseEvent::actionLeftButtonUp
 							|| event.action == MouseEvent::actionTouchUp) {
 							if (dt < 400) {
@@ -241,9 +243,16 @@ sl_bool MapView::onMouseEvent(MouseEvent& event)
 
 				if (flagTouch2) {
 					m_flagMouseExitMoving = sl_true;
-					if (flagTouch2 && m_flagTouchBefore2) {
+					if (!m_flagTouchBefore2) {
+						getCamera()->clearMotions();
+						m_rotateTouchStart = getCamera()->getRotationZ();
+						m_zoomTouchStart = getCamera()->getEyeLocation().altitude;
+						m_pointTouchStart1 = pt;
+						m_pointTouchStart2 = pt2;
+						m_flagTouchRotateStarted = sl_false;
+					} else {
 
-						Vector2 v1 = m_pointMouseBefore2 - m_pointMouseBefore;
+						Vector2 v1 = m_pointTouchStart2 - m_pointTouchStart1;
 						Vector2 v2 = pt2 - pt;
 
 						sl_real len1 = v1.getLength();
@@ -251,13 +260,22 @@ sl_bool MapView::onMouseEvent(MouseEvent& event)
 
 						if (len1 > 10 && len2 > 10) {
 
-							_zoom(len1 / len2);
-
 							sl_real a = Math::getDegreeFromRadian(Transform2::getRotationAngleFromDirToDir(v1, v2));
+							sl_real r = m_rotateTouchStart;
+							sl_real d = Math::abs(Math::normalizeDegreeDistance(a));
+							if (d > 10 || m_flagTouchRotateStarted) {
+								r -= a;
+								getCamera()->setTargetRotationZ(r);
+								m_flagTouchRotateStarted = sl_true;
+							} else {
+								if (len1 > len2) {
+									_zoomTo(m_zoomTouchStart * len1 / len2 * 2);
+								}
 
-							sl_real r = getCamera()->getRotationZ();
-							r -= a;
-							getCamera()->setTargetRotationZ(r);
+								if (len1 < len2) {
+									_zoomTo(m_zoomTouchStart * len1 / len2 / 2);
+								}
+							}
 						}
 					}
 				}
@@ -319,9 +337,9 @@ sl_bool MapView::onMouseWheelEvent(MouseWheelEvent& event)
 		return sl_false;
 	}
 	if (event.delta > 0) {
-		_zoom(0.8f);
+		_zoom(0.5f);
 	} else {
-		_zoom(1.25f);
+		_zoom(2.f);
 	}
 	requestRender();
 	return sl_true;
@@ -329,11 +347,18 @@ sl_bool MapView::onMouseWheelEvent(MouseWheelEvent& event)
 
 void MapView::_zoom(double ratio)
 {
+	GeoLocation le = getCamera()->getEyeLocation();
+	double h = le.altitude * ratio;
+	_zoomTo(h);
+}
+
+void MapView::_zoomTo(double alt)
+{
 	double _min = 20;
 	double _max = 12000000;
-	if (ratio > 0) {
+	if (alt > 0) {
 		GeoLocation le = getCamera()->getEyeLocation();
-		double h = le.altitude * ratio;
+		double h = alt;
 		if (h < _min) {
 			h = _min;
 		}
@@ -341,8 +366,7 @@ void MapView::_zoom(double ratio)
 			h = _max;
 		}
 		le.altitude = h;
-		getCamera()->setEyeLocation(le);
-		getCamera()->stopMoving();
+		getCamera()->startMoving(le, 500);
 	}
 }
 

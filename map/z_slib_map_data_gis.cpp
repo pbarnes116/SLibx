@@ -1,5 +1,5 @@
 ﻿#include "data_gis.h"
-
+#include "earth_renderer.h"
 #include "../../slib/core/io.h"
 
 #include "data_config.h"
@@ -19,20 +19,13 @@ List<MapGISPoiData> MapGISPoi_DataLoader::loadTile(Ref<MapDataLoader> data, Stri
 	for (sl_int32 poiIndex = 0; poiIndex < poiCount; poiIndex++) {
 		MapGISPoiData poi;
 		poi.id = reader.readInt64CVLI();
-		poi.type = (MAP_GIS_POI_TYPE)reader.readInt32CVLI();
+		MAP_GIS_POI_TYPE type = (MAP_GIS_POI_TYPE)reader.readInt32CVLI();
 		poi.location.latitude = reader.readDouble();
 		poi.location.longitude = reader.readDouble();
 
-		MapGISPoiInfo poiInfo;
-		if (poiInformation.get(poi.id, &poiInfo)) {
-			poi.name = poiInfo.name;			
-			poi.type = (MAP_GIS_POI_TYPE)(poiInfo.type);
-			poi.initPoi();
-			if (poi.type != MAP_GIS_POI_TYPE::POITypeNone && poi.id > 0 && poi.name.length() > 0) {
-				ret.add(poi);
-			}
+		if (poi.id > 0) {
+			ret.add(poi);
 		}
-		
 	}
 	return ret;
 }
@@ -78,32 +71,36 @@ Map< sl_int32, Ref<MapGISShapeData> > MapGISLine_DataLoader::loadTile(Ref<MapDat
 	return ret;
 }
 
-void MapGISPoiData::initPoi()
+void MapGISPoi::initPoi()
 {
+	MAP_GIS_POI_TYPE type = _type;
 	if (type != POITypeNone) {
-		showMinLevel = 14;
+		showMinLevel = 15;
 		clr = Color::LightGoldenrodYellow;
-		fontSize = 15;
-		if (type == PlaceCountry || type == PlaceState) {
+		fontSize = 13;
+		if (type == PlaceCountry) {
+			showMinLevel = 5;
+			clr = Color::Red;
+			fontSize = 26;
+		} else if (type == PlaceState) {
 			showMinLevel = 6;
 			clr = Color::Yellow;
-			fontSize = 30;
+			fontSize = 24;
 		} else if (type == PlaceCity) {
 			showMinLevel = 7;
 			clr = Color::YellowGreen;
-			fontSize = 24;
+			fontSize = 20;
 		} else if (type == PlaceTown) {
 			showMinLevel = 11;
 			clr = Color::Orange;
-			fontSize = 20;
+			fontSize = 18;
 		} else if (type == PlaceVilliage) {
-			showMinLevel = 12;
+			showMinLevel = 13;
 			clr = Color::Orange;
 			fontSize = 15;
 		}
 	} else {
-		showMinLevel = 14;
-
+		showMinLevel = 16;
 	}
 
 }

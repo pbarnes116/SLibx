@@ -92,7 +92,7 @@ sl_real MapEarthRenderer::getAltitudeFromLatLon(const LatLon& latLon, sl_bool fl
 
 GeoLocation MapEarthRenderer::getLocationFromLatLon(const LatLon& latLon, sl_bool flagReadDEMAlways)
 {
-	return GeoLocation(latLon, getAltitudeFromLatLon(latLon));
+	return GeoLocation(latLon, getAltitudeFromLatLon(latLon, flagReadDEMAlways));
 }
 
 SLIB_MAP_NAMESPACE_END

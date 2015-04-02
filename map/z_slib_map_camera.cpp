@@ -56,15 +56,23 @@ Matrix4lf MapCameraLocation::getViewMatrix() const
 
 sl_real MapCameraLocation::getMaxTilt() const
 {
-	Vector3lf eye = MapEarth::getCartesianPosition(m_location);
-	double lenEye = eye.getLength();
-	double R = MapEarth::getRadius();
-	if (lenEye < R) {
-		lenEye = R;
+	double m1 = 350000, m2 = 10000;
+	if (m_location.altitude > m1) {
+		return 0;
+	} else {
+		Vector3lf eye = MapEarth::getCartesianPosition(m_location);
+		double lenEye = eye.getLength();
+		double R = MapEarth::getRadius();
+		if (lenEye < R) {
+			lenEye = R;
+		}
+		double sinAlpha = (R - 1) / lenEye;
+		double alpha = Math::getDegreeFromRadian(Math::arcsin(sinAlpha));
+		if (m_location.altitude < m2) {
+			alpha = alpha * (m1 - m_location.altitude) / (m1 - m2);
+		}
+		return (sl_real)alpha;
 	}
-	double sinAlpha = (R - 1) / lenEye;
-	double alpha = Math::getDegreeFromRadian(Math::arcsin(sinAlpha));
-	return (sl_real)alpha;
 }
 
 
@@ -122,7 +130,7 @@ void MapCamera::startMoving(const GeoLocation& location, sl_real duration)
 	m_listMovingTargets.add(target);
 	m_indexMovingTargets = 0;
 	m_flagMoving = sl_true;
-	startMoving(makeBufferedMovingTargets(getEyeLocation(), location, duration, 10, 0.8f, 0.3f));
+	startMoving(makeBufferedMovingTargets(getEyeLocation(), location, duration, 4, 0.7f, 0.3f));
 }
 
 void MapCamera::startMoving(const LatLon& location, sl_real durationMillis)

@@ -29,7 +29,7 @@ enum MAP_GIS_POI_TYPE {
 	, PlaceTown = 107
 	, PlaceVilliage = 106		
 	, PlaceExtra = 101
-	, PlaceEnd = 110
+	, PlaceEnd = 115
 
 	, Historic =  120
 	, Military = 130
@@ -47,14 +47,9 @@ enum MAP_GIS_POI_TYPE {
 struct MapGISPoiData
 {
 	sl_int64 id;
-	MAP_GIS_POI_TYPE type;
 	LatLon location;
 	String name;
 
-	sl_int32 showMinLevel;
-	sl_uint32 fontSize;
-	Color clr;
-	void initPoi();
 };
 
 struct MapGISLineData
@@ -101,13 +96,7 @@ struct MapGISPoiInfo
 class MapGISPoi_DataLoader : public Referable
 {
 public:
-	void setPoiInformation(Map<sl_int64, MapGISPoiInfo> _poiInformation)
-	{
-		this->poiInformation = _poiInformation;
-	}
 	List<MapGISPoiData> loadTile(Ref<MapDataLoader> data, String type, const MapTileLocation& location);
-private:
-	Map<sl_int64, MapGISPoiInfo> poiInformation;
 };
 
 class MapGISLine_DataLoader: public Referable
