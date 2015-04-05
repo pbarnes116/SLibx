@@ -27,6 +27,7 @@ MapView::MapView()
 
 	setCompassSize(150);
 	setCompassPosition(Point(75, 75));
+	setCompassVisible(sl_true);
 }
 
 MapView::~MapView()
@@ -127,7 +128,7 @@ void MapView::onFrame(RenderEngine* engine)
 	}
 
 	// render compass
-	{
+	if (isCompassVisible()) {
 		Ref<Texture> texture;
 		Rectangle rect;
 		if (m_flagCompassHighlight) {
@@ -177,7 +178,7 @@ sl_bool MapView::onMouseEvent(MouseEvent& event)
 		getCamera()->clearMotions();
 
 		sl_real lenCompass = (pt - getCompassPosition()).getLength();
-		if (lenCompass < getCompassSize() / 2 && lenCompass > getCompassSize() / 8) {
+		if (isCompassVisible() && lenCompass < getCompassSize() / 2 && lenCompass > getCompassSize() / 8) {
 			m_flagCompassHighlight = sl_true;
 			m_compassMouseDown = getCamera()->getRotationZ();
 		} else {
@@ -370,6 +371,12 @@ void MapView::_zoomTo(double alt)
 	}
 }
 
+void MapView::startMovingToLookAt(const LatLon& loc)
+{
+	sl_real altitude = m_earthRenderer.getAltitudeFromLatLon(loc, sl_true);
+	getCamera()->startMovingToLookAt(GeoLocation(loc, altitude + 100));
+}
+
 String MapView::formatLatitude(double f)
 {
 	String ret;
@@ -449,6 +456,21 @@ void MapView::putMarker(String key, Ref<MapMarker> marker)
 void MapView::removeMarker(String key)
 {
 	m_earthRenderer.markers.remove(key);
+}
+
+Ref<MapIcon> MapView::getIcon(String key)
+{
+	return m_earthRenderer.icons.getValue(key, Ref<MapIcon>::null());
+}
+
+void MapView::putIcon(String key, Ref<MapIcon> icon)
+{
+	m_earthRenderer.icons.put(key, icon);
+}
+
+void MapView::removeIcon(String key)
+{
+	m_earthRenderer.icons.remove(key);
 }
 
 Ref<MapPolygon> MapView::getPolygon(String key)

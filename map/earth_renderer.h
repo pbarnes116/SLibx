@@ -98,6 +98,7 @@ public:
 
 public:
 	Map< String, Ref<MapMarker> > markers;
+	Map< String, Ref<MapIcon> > icons;
 	Map< String, Ref<MapPolygon> > polygons;
 
 protected:
@@ -196,6 +197,8 @@ protected:
 
 	void _renderMarkers(RenderEngine* engine);
 	void _renderMarker(RenderEngine* engine, MapMarker* marker);
+	void _renderIcons(RenderEngine* engine);
+	void _renderIcon(RenderEngine* engine, MapIcon* marker);
 	void _renderPolygons(RenderEngine* engine);
 	void _renderPolygon(RenderEngine* engine, MapPolygon* polygon);
 };

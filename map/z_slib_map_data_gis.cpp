@@ -78,6 +78,11 @@ void MapGISPoi::initPoi()
 		showMinLevel = 15;
 		clr = Color::LightGoldenrodYellow;
 		fontSize = 13;
+		if (type == NaturalLake || type == NaturalMountain || type == NaturalRiver) {
+			showMinLevel = 5;
+			clr = Color::White;
+			fontSize = 16;
+		}
 		if (type == PlaceCountry) {
 			showMinLevel = 5;
 			clr = Color::Red;

@@ -123,13 +123,6 @@ void MapCamera::startMoving()
 void MapCamera::startMoving(const GeoLocation& location, sl_real duration)
 {
 	MutexLocker lock(getLocker());
-	MapCameraMovingTarget target;
-	target.location = location;
-	target.duration = duration;
-	m_listMovingTargets.clear();
-	m_listMovingTargets.add(target);
-	m_indexMovingTargets = 0;
-	m_flagMoving = sl_true;
 	startMoving(makeBufferedMovingTargets(getEyeLocation(), location, duration, 4, 0.7f, 0.3f));
 }
 
@@ -144,6 +137,32 @@ void MapCamera::startMoving(const List<MapCameraMovingTarget>& targets)
 	m_listMovingTargets = targets;
 	m_indexMovingTargets = 0;
 	m_flagMoving = sl_true;
+}
+
+void MapCamera::startMovingToLookAt(const GeoLocation& location)
+{
+	MutexLocker lock(getLocker());
+	setTargetTilt(0);
+	Vector3lf pos1 = MapEarth::getCartesianPosition(getEyeLocation());
+	Vector3lf pos2 = MapEarth::getCartesianPosition(location);
+	double len = (pos2 - pos1).getLength();
+	GeoLocation eye = getEyeLocation();
+	double a = (eye.altitude + location.altitude) / 2;
+	if (len > a * 2) {
+		List<MapCameraMovingTarget> targets;
+		GeoLocation midLoc;
+		midLoc.longitude = (location.longitude + eye.longitude) / 2;
+		midLoc.latitude = (location.latitude + eye.latitude) / 2;
+		midLoc.altitude = a + len / 3;
+		MapCameraMovingTarget target;
+		target.duration = 1000;
+		target.location = midLoc;
+		targets.add(target);
+		targets.add(makeBufferedMovingTargets(midLoc, location, 2000, 4, 0.7f, 0.3f));
+		startMoving(targets);
+	} else {
+		startMoving(location, 3000);
+	}
 }
 
 List<MapCameraMovingTarget> MapCamera::makeBufferedMovingTargets(

@@ -35,6 +35,22 @@ public:
 	}
 };
 
+
+class MapIcon : public Referable
+{
+public:
+	String key;
+	GeoLocation location;
+	Size iconSize;
+	sl_real rotationAngle;
+	Ref<Texture> iconTexture;
+	Rectangle iconTextureRectangle; // texture whole coordinate
+	
+	sl_bool flagVisible;
+
+};
+
+
 class MapPolygon : public Referable
 {
 public:

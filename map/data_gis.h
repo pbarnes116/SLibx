@@ -42,6 +42,9 @@ enum MAP_GIS_POI_TYPE {
 	, Parking = 203
 	, FillingStation = 204
 
+	, NaturalMountain = 300
+	, NaturalRiver = 301
+	, NaturalLake = 302
 };
 
 struct MapGISPoiData

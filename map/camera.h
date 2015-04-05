@@ -118,6 +118,7 @@ public:
 	void startMoving(const GeoLocation& location, sl_real durationMillis);
 	void startMoving(const LatLon& location, sl_real durationMillis);
 	void startMoving(const List<MapCameraMovingTarget>& targets);
+	void startMovingToLookAt(const GeoLocation& location);
 	void resumeMoving();
 	void stopMoving();
 

@@ -41,9 +41,15 @@ public:
 	void putMarker(String key, Ref<MapMarker> marker);
 	void removeMarker(String key);
 
+	Ref<MapIcon> getIcon(String key);
+	void putIcon(String key, Ref<MapIcon> icon);
+	void removeIcon(String key);
+
 	Ref<MapPolygon> getPolygon(String key);
 	void putPolygon(String key, Ref<MapPolygon> polygon);
 	void removePolygon(String key);
+
+	void startMovingToLookAt(const LatLon& loc);
 
 protected:
 	virtual void onFrame(RenderEngine* engine);
@@ -103,6 +109,7 @@ public:
 	SLIB_PROPERTY_INLINE(Rectangle, CompassHighlightTextureRectangle);
 	SLIB_PROPERTY_INLINE(Point, CompassPosition);
 	SLIB_PROPERTY_INLINE(sl_real, CompassSize);
+	SLIB_BOOLEAN_PROPERTY_INLINE(CompassVisible);
 
 };
 SLIB_MAP_NAMESPACE_END

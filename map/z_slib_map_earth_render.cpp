@@ -24,15 +24,6 @@ void MapEarthRenderer::render(RenderEngine* engine)
 		_renderBuildings(engine);
 	}
 
-	{
-		engine->setBlending(sl_true);
-		engine->setDepthTest(sl_false);
-		_renderMarkers(engine);
-		_renderPolygons(engine);
-		engine->setBlending(sl_false);
-		engine->setDepthTest(sl_true);
-	}
-
 	if (isShowGISPoi()) {
 		engine->setBlending(sl_true);
 		engine->setDepthTest(sl_false);
@@ -41,6 +32,15 @@ void MapEarthRenderer::render(RenderEngine* engine)
 		engine->setDepthTest(sl_true);
 	}
 
+	{
+		engine->setBlending(sl_true);
+		engine->setDepthTest(sl_false);
+		_renderPolygons(engine);
+		_renderMarkers(engine);
+		_renderIcons(engine);
+		engine->setBlending(sl_false);
+		engine->setDepthTest(sl_true);
+	}
 }
 
 void MapEarthRenderer::_renderTile(RenderEngine* engine, _Tile* tile)
@@ -154,9 +154,6 @@ void MapEarthRenderer::_renderGISPoi(RenderEngine* engine, MapGISPoiTile* tile)
 	sl_real screenRatio = (sl_real)m_viewportWidth / 1280;
 	for (sl_size i = 0; i < list.count(); i++) {
 		MapGISPoi& s = list[i];
-		if (s.id == 100030) {
-			s.id = s.id;
-		}
 		MapGISPoiInfo poiInfo;
 		if (s.texture.isNull()) {
 			if (m_poiInfo.get(s.id, &poiInfo)) {
@@ -170,7 +167,7 @@ void MapEarthRenderer::_renderGISPoi(RenderEngine* engine, MapGISPoiTile* tile)
 						if (text.length() > 50) {
 							text = text.substring(0, 50);
 						}
-						font->setSize(s.fontSize * screenRatio * 1.5f);
+						font->setSize((sl_uint32)(s.fontSize * screenRatio * 1.5f));
 						Sizei size = font->getStringExtent(text);
 						Ref<Image> image = Image::create(size.width + 5, size.height + 5);
 						if (image.isNotNull()) {
@@ -220,7 +217,7 @@ void MapEarthRenderer::_renderMarker(RenderEngine* engine, MapMarker* marker)
 				if (text.length() > 50) {
 					text = text.substring(0, 50);
 				}
-				marker->textFont->setSize(marker->textFontSize * screenRatio);
+				marker->textFont->setSize((sl_uint32)(marker->textFontSize * screenRatio));
 				Sizei size = marker->textFont->getStringExtent(text);
 				Ref<Image> image = Image::create(size.width + 5, size.height + 5);
 				if (image.isNotNull()) {
@@ -243,6 +240,23 @@ void MapEarthRenderer::_renderMarker(RenderEngine* engine, MapMarker* marker)
 			}
 		}
 	}	
+}
+
+void MapEarthRenderer::_renderIcon(RenderEngine* engine, MapIcon* icon)
+{
+	Vector3 pos = MapEarth::getCartesianPosition(getLocationFromLatLon(icon->location.getLatLon()));
+	if (_checkPointVisible(pos)) {
+		Vector2 ps = convertPointToScreen(pos);
+		if (icon->iconTexture.isNotNull()) {
+			Matrix3 transform = Transform2::getTranslationMatrix(-0.5f, -0.5f)
+				* Transform2::getScalingMatrix(icon->iconSize.x, icon->iconSize.y)
+				* Transform2::getRotationMatrix(Math::getRadianFromDegree(icon->rotationAngle))
+				* Transform2::getTranslationMatrix(ps.x, ps.y)
+				* Transform2::getScalingMatrix(2.0f / m_viewportWidth, -2.0f / m_viewportHeight)
+				* Transform2::getTranslationMatrix(-1, 1);
+			engine->drawTexture2D(transform, icon->iconTexture, icon->iconTextureRectangle);
+		}
+	}
 }
 
 void MapEarthRenderer::_renderPolygon(RenderEngine* engine, MapPolygon* polygon)
@@ -635,6 +649,19 @@ void MapEarthRenderer::_renderMarkers(RenderEngine* engine)
 			Ref<MapMarker> marker = list[i];
 			if (marker.isNotNull() && marker->flagVisible) {
 				_renderMarker(engine, marker);
+			}
+		}
+	}
+}
+
+void MapEarthRenderer::_renderIcons(RenderEngine* engine)
+{
+	{
+		ListLocker< Ref<MapIcon> > list(icons.values());
+		for (sl_size i = 0; i < list.count(); i++) {
+			Ref<MapIcon> icon = list[i];
+			if (icon.isNotNull() && icon->flagVisible) {
+				_renderIcon(engine, icon);
 			}
 		}
 	}
