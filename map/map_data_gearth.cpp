@@ -278,11 +278,11 @@ public:
 						before2 = before1;
 						before1 = index;
 						index = (sl_uint32)(maxIndex - offsetIndex);
-						indices[i] = index;
+						indices[i] = (sl_uint16)index;
 						if (before2 != before1 && before1 != index && before2 != index) {
-							listTriangle.add(before2);
-							listTriangle.add(before1);
-							listTriangle.add(index);
+							listTriangle.add((sl_uint16)before2);
+							listTriangle.add((sl_uint16)before1);
+							listTriangle.add((sl_uint16)index);
 							ic++;
 						}
 						if (offsetIndex == 0) {
@@ -391,7 +391,7 @@ public:
 							return sl_null;
 						}
 						a = (a + m) & 255;
-						alphas[i] = a;
+						alphas[i] = (sl_uint8)a;
 					}
 				}
 				break;

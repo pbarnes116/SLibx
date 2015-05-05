@@ -204,7 +204,7 @@ Ref<Texture> MapBuildingTileManager::loadDetailedTexture(String key, sl_uint32 i
 			VW_Building_Mesh mesh;
 			if (rb->object->meshes.getItem(index, &mesh)) {
 
-				Memory mem = loader->loadData(rb->info->dataType, rb->info->location, SLIB_MAP_BUILDING_PACKAGE_DIMENSION, _SLT("/") + mesh.textureFileName);
+				Memory mem = loader->loadData(rb->info->dataType, rb->info->location, SLIB_MAP_BUILDING_PACKAGE_DIMENSION, "/" + mesh.textureFileName);
 				if (mem.isNotEmpty()) {
 					Ref<Texture> texture = Texture::loadFromMemory(mem);
 					bt = new _BuildingTexture;
@@ -231,7 +231,7 @@ void MapBuildingTileManager::requestDetailedTexture(String key, sl_uint32 index)
 
 String MapBuildingTileManager::_getDetailedTextureKey(String key, sl_uint32 index)
 {
-	return key + _SLT("_") + index;
+	return key + "_" + index;
 }
 
 void MapBuildingTileManager::freeOldDetailedTextures()

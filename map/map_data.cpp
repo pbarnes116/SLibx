@@ -42,13 +42,13 @@ Memory MapData_GenericFileLoader::loadData(const String& type, const MapTileLoca
 		} else {
 			subPath = String::null();
 		}
-		Memory mem = pkgReader.read(getBasePath() + _SLT("/") + type, location, subPath);
+		Memory mem = pkgReader.read(getBasePath() + "/" + type, location, subPath);
 		if (mem.isNotEmpty()) {
 			return mem;
 		}
  	}
 
-	String prefix = getBasePath() + _SLT("/") + type + _SLT("/");
+	String prefix = getBasePath() + "/" + type + "/";
 	String packagePath;
 	String filePath;
 	// generic style path
@@ -74,11 +74,11 @@ Memory MapData_GenericFileLoader::loadData(const String& type, const MapTileLoca
 
 Memory MapData_GenericFileLoader::_readData(const String& packagePath, const String& filePath)
 {
-	String path = packagePath + _SLT("/") + filePath;
+	String path = packagePath + "/" + filePath;
 	if (File::exists(path)) {
 		return File::readAllBytes(path);
 	} else {
-		path = packagePath + _SLT(".slp");
+		path = packagePath + ".slp";
 		if (File::exists(path)) {
 			SecureFilePackage package;
 			SecureFilePackage::OpenParam param;

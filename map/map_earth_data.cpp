@@ -19,7 +19,7 @@ void MapEarthRenderer::_runThreadData()
 			_runThreadDataStep();
 		}
 		Time now2 = Time::now();
-		sl_uint32 dt = (sl_uint32)(Math::clamp((now2- now).getMillisecondsCount(), _SI64(0), _SI64(1000)));
+		sl_uint32 dt = (sl_uint32)(Math::clamp((now2- now).getMillisecondsCount(), SLIB_INT64(0), SLIB_INT64(1000)));
 		if (dt < 20u) {
 			Thread::sleep(20u - dt);
 		}
@@ -35,7 +35,7 @@ void MapEarthRenderer::_runThreadDataEx()
 			_runThreadDataGISStep();
 		}
 		Time now2 = Time::now();
-		sl_uint32 dt = (sl_uint32)(Math::clamp((now2 - now).getMillisecondsCount(), _SI64(0), _SI64(1000)));
+		sl_uint32 dt = (sl_uint32)(Math::clamp((now2 - now).getMillisecondsCount(), SLIB_INT64(0), SLIB_INT64(1000)));
 		if (dt < 20u) {
 			Thread::sleep(20u - dt);
 		}

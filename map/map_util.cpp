@@ -17,7 +17,7 @@ String MapTilePath::makeGenericStylePath(const MapTileLocationi& location, Strin
 {
 	String packagePath;
 	packagePath += location.level;
-	packagePath += _SLT("/");
+	packagePath += "/";
 	packagePath += location.y;
 	String filePath;
 	filePath += location.x;
@@ -27,14 +27,14 @@ String MapTilePath::makeGenericStylePath(const MapTileLocationi& location, Strin
 	if (_filePath) {
 		*_filePath = filePath;
 	}
-	return packagePath + _SLT("/") + filePath;
+	return packagePath + "/" + filePath;
 }
 
 String MapTilePath::makeVWStylePath(const MapTileLocationi& location, String* _packagePath, String* _filePath)
 {
 	String packagePath;
 	packagePath += location.level;
-	packagePath += _SLT("/");
+	packagePath += "/";
 	String y;
 	if (location.level <= 11) {
 		y = String::fromUint32(location.y, 10, 4);
@@ -43,7 +43,7 @@ String MapTilePath::makeVWStylePath(const MapTileLocationi& location, String* _p
 	}
 	packagePath += y;
 	String filePath = y;
-	filePath += _SLT("_");
+	filePath += "_";
 	if (location.level <= 10) {
 		filePath += String::fromUint32(location.x, 10, 4);
 	} else {
@@ -55,7 +55,7 @@ String MapTilePath::makeVWStylePath(const MapTileLocationi& location, String* _p
 	if (_filePath) {
 		*_filePath = filePath;
 	}
-	return packagePath + _SLT("/") + filePath;
+	return packagePath + "/" + filePath;
 }
 
 SLIB_MAP_NAMESPACE_END

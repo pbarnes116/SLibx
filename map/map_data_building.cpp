@@ -12,7 +12,7 @@ Ref<VW_Building_Object> VW_Building::readObject(Ref<MapDataLoader> data, VW_Buil
 	if (info->version != 0x03000001 && info->version != 0x03000002) {
 		return ret;
 	}
-	Memory mem = data->loadData(info->dataType, info->location, SLIB_MAP_BUILDING_PACKAGE_DIMENSION, _SLT("/") + info->objectFileName);
+	Memory mem = data->loadData(info->dataType, info->location, SLIB_MAP_BUILDING_PACKAGE_DIMENSION, "/" + info->objectFileName);
 	if (mem.isEmpty()) {
 		return ret;
 	}

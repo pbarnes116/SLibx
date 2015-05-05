@@ -50,7 +50,7 @@ Map< sl_int32, Ref<MapGISShapeData> > MapGISLine_DataLoader::loadTile(Ref<MapDat
 		line.start.longitude = reader.readDouble();
 		line.end.latitude = reader.readDouble();
 		line.end.longitude = reader.readDouble();
-		line.name = wayNames.getValue(line.id, _SLT(""));
+		line.name = wayNames.getValue(line.id, String::null());
 
 		if (shapeType > 0 && line.id > 0) {
 			Ref<MapGISShapeData> shape = ret.getValue(shapeType, sl_null);

@@ -388,14 +388,14 @@ String MapView::formatLatitude(double f)
 {
 	String ret;
 	if (f > 0) {
-		ret = _SLT("N");
+		ret = "N";
 	} else {
-		ret = _SLT("S");
+		ret = "S";
 		f = -f;
 	}
-	ret += (sl_int32)(Math::floor(f)) + String(_SLT("°"));
-	ret += String::fromInt32((sl_int32)(Math::floor(f * 60)) % 60, 10, 2) + _SLT("ʹ");
-	ret += String::fromDouble((sl_real)((sl_int32)(Math::floor(f * 360000)) % 6000) / 100.0, 2, sl_true, 2) + _SLT("ʺ");
+	ret += (sl_int32)(Math::floor(f)) + String(SLIB_UNICODE("°"));
+	ret += String::fromInt32((sl_int32)(Math::floor(f * 60)) % 60, 10, 2) + SLIB_UNICODE("ʹ");
+	ret += String::fromDouble((sl_real)((sl_int32)(Math::floor(f * 360000)) % 6000) / 100.0, 2, sl_true, 2) + SLIB_UNICODE("ʺ");
 	return ret;
 }
 
@@ -403,25 +403,25 @@ String MapView::formatLongitude(double f)
 {
 	String ret;
 	if (f > 0) {
-		ret = _SLT("E");
+		ret = "E";
 	} else {
-		ret = _SLT("W");
+		ret = "W";
 		f = -f;
 	}
-	ret += (sl_int32)(Math::floor(f)) + String(_SLT("°"));
-	ret += String::fromInt32((sl_int32)(Math::floor(f * 60)) % 60, 10, 2) + _SLT("ʹ");
-	ret += String::fromDouble((sl_real)((sl_int32)(Math::floor(f * 360000)) % 6000) / 100.0, 2, sl_true, 2) + _SLT("ʺ");
+	ret += (sl_int32)(Math::floor(f)) + String(SLIB_UNICODE("°"));
+	ret += String::fromInt32((sl_int32)(Math::floor(f * 60)) % 60, 10, 2) + SLIB_UNICODE("ʹ");
+	ret += String::fromDouble((sl_real)((sl_int32)(Math::floor(f * 360000)) % 6000) / 100.0, 2, sl_true, 2) + SLIB_UNICODE("ʺ");
 	return ret;
 }
 
 String MapView::formatRotationZ(double f)
 {
-	return (sl_int32)(Math::floor(f)) + String(_SLT("°"));
+	return (sl_int32)(Math::floor(f)) + String(SLIB_UNICODE("°"));
 }
 
 String MapView::formatTilt(double f)
 {
-	return (sl_int32)(Math::floor(f)) + String(_SLT("°"));
+	return (sl_int32)(Math::floor(f)) + String(SLIB_UNICODE("°"));
 }
 
 String MapView::formatAltitude(double f)
@@ -433,10 +433,10 @@ String MapView::formatAltitude(double f)
 	}
 	if (f >= 1000) {
 		ret += (sl_uint32)(f / 1000);
-		ret += _SLT("km");
+		ret += "km";
 	} else {
 		ret += (sl_uint32)(f);
-		ret += _SLT("m");
+		ret += "m";
 	}
 	return ret;
 }
@@ -444,9 +444,9 @@ String MapView::formatAltitude(double f)
 String MapView::getStatusText()
 {
 	GeoLocation loc = getCamera()->getEyeLocation();
-	String status = formatLatitude(loc.latitude) + _SLT(", ") + formatLongitude(loc.longitude) 
-		+ _SLT(", ") + formatAltitude(loc.altitude)
-		+ _SLT(", ") + formatRotationZ(getCamera()->getRotationZ()) + _SLT(", ") + formatTilt(getCamera()->getTilt());
+	String status = formatLatitude(loc.latitude) + ", " + formatLongitude(loc.longitude) 
+		+ ", " + formatAltitude(loc.altitude)
+		+ ", " + formatRotationZ(getCamera()->getRotationZ()) + ", " + formatTilt(getCamera()->getTilt());
 	return status;
 }
 

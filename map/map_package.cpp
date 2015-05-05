@@ -3,17 +3,16 @@
 
 #define PACKAGE_ITEM_IDENTIFY	0xFEFF0823
 #define PACKAGE_HEADER_SIZE		32
-#define PACKAGE_IDENTIFY		_SLT("SMAP-PACKAGE V1.0")
+#define PACKAGE_IDENTIFY		"SMAP-PACKAGE V1.0"
 
 SLIB_MAP_NAMESPACE_START
 
 void MapPackage::create(const String& filePath)
 {
-	m_pkgFile->setPath(filePath);
-	String dirPath = File::getParentDirectoryPath(m_pkgFile->getPath());
-	File dir(dirPath);
-	dir.createDirectories();
-	if (m_pkgFile->openForWrite()) {
+	String dirPath = File::getParentDirectoryPath(filePath);
+	File::createDirectories(dirPath);
+	m_pkgFile = File::openForWrite(filePath);
+	if (m_pkgFile.isNotNull()) {
 		Memory header = getHeader();
 		sl_int32 offsetTableSize = sizeof(sl_int32)* m_nTilesXNum * m_nTilesYNum;
 		SLIB_SCOPED_ARRAY(sl_int32, offsetTable, offsetTableSize);
@@ -31,9 +30,8 @@ Memory MapPackage::getHeader()
 	MemoryWriter writer(ret);
 
 	Base::zeroMemory(ret.getBuf(), ret.getSize());
-	String packageIdentify = PACKAGE_IDENTIFY;
-	Utf8StringBuffer buffer = packageIdentify.getUtf8();
-	writer.write(buffer.sz, buffer.len);
+	String8 packageIdentify = PACKAGE_IDENTIFY;
+	writer.write(packageIdentify.getBuf(), packageIdentify.getLength());
 	writer.writeInt32CVLI(m_nTilesXNum);
 	writer.writeInt32CVLI(m_nTilesYNum);
 	return ret;
@@ -54,20 +52,17 @@ sl_bool MapPackage::checkHeader()
 sl_bool MapPackage::open(const String& filePath, sl_bool flagReadOnly)
 {
 	close();
-	m_pkgFile = new File();
+
 	if (!File::exists(filePath) && !flagReadOnly) {
 		create(filePath);
-		m_pkgFile->close();
 	}
-	sl_bool flagOpen;
 	if (flagReadOnly) {
-		flagOpen = m_pkgFile->open(filePath, File::modeRead);
-	}
-	else {
-		flagOpen = m_pkgFile->open(filePath, File::modeReadWriteNoTruncate);
+		m_pkgFile = File::open(filePath, File::modeRead);
+	} else {
+		m_pkgFile = File::open(filePath, File::modeReadWriteNoTruncate);
 	}
 	
-	if (flagOpen && checkHeader()) {
+	if (m_pkgFile.isNotNull() && checkHeader()) {
 		m_flagOpen = sl_true;
 		return sl_true;
 	}
@@ -109,22 +104,22 @@ Memory MapPackage::getItem(sl_int32 itemOffset)
 	return ret;
 }
 
-static SLIB_INLINE void writeString(MemoryWriter& writer, const String& str) {
-	Utf8StringBuffer buffer = str.getUtf8();
-	writer.writeUint32CVLI(buffer.len);
-	if (buffer.len > 0) {
-		writer.write(buffer.sz, buffer.len);
+static SLIB_INLINE void writeString(MemoryWriter& writer, const String& _str) {
+	String8 str = _str;
+	writer.writeUint32CVLI(str.getLength());
+	if (str.getLength() > 0) {
+		writer.write(str.getBuf(), str.getLength());
 	}
 }
 
 static SLIB_INLINE String readString(MemoryReader& reader)
 {
 	sl_uint32 nameLen = reader.readUint32CVLI();
-	String ret = _SLT("");
+	String ret;
 	if (nameLen > 0){
-		slib::ScopedArray<sl_uint8> strName(nameLen);
-		reader.read(strName + 0, nameLen);
-		ret = String::fromUtf8((sl_str8)(strName + 0), nameLen);
+		SLIB_SCOPED_ARRAY(char, strName, nameLen);
+		reader.read(strName, nameLen);
+		ret = String::fromUtf8(strName, nameLen);
 	}
 	return ret;
 }
@@ -164,7 +159,7 @@ Map<String, Memory> MapPackage::getDataFromItem(const Memory& encData)
 		sl_int32 itemNextOffset = reader.readInt32CVLI();
 		sl_int32 itemCount = reader.readInt32CVLI();
 		for (sl_int32 i = 0; i < itemCount; i++) {
-			String key = _SLT("");
+			String key;
 			Memory itemData = readItemData(reader, key);
 			if (itemData.isNotEmpty()) {
 				ret.put(key, itemData);
@@ -248,7 +243,7 @@ Memory MapPackage::read(sl_int32 offsetX, sl_int32 offsetY, const String& subNam
 Memory MapPackage::read(const String& dirPath, const MapTileLocationi& loc, const String& subName)
 {	
 	sl_int32 offsetX, offsetY;
-	String path = dirPath + _SLT("/") + getPackageFilePathAndOffset(loc, offsetX, offsetY);
+	String path = dirPath + "/" + getPackageFilePathAndOffset(loc, offsetX, offsetY);
 	Memory ret;
 	if (open(path, sl_true)) {
 		ret = read(offsetX, offsetY, subName);
@@ -260,7 +255,7 @@ Memory MapPackage::read(const String& dirPath, const MapTileLocationi& loc, cons
 sl_bool MapPackage::write(const String& dirPath, const MapTileLocationi& loc, const Map<String, Memory>& itemData)
 {
 	sl_int32 offsetX, offsetY;
-	String path = dirPath + _SLT("/") +getPackageFilePathAndOffset(loc, offsetX, offsetY);
+	String path = dirPath + "/" +getPackageFilePathAndOffset(loc, offsetX, offsetY);
 	sl_bool ret = sl_false;
 	if (open(path, sl_false)) {
 		ret = write(offsetX, offsetY, itemData);
@@ -279,10 +274,10 @@ String MapPackage::getPackageFilePathAndOffset(const MapTileLocationi& location,
 	outX = location.x % m_nTilesXNum;
 	outY = location.y % m_nTilesYNum;
 
-	String filePath = String::fromInt32(packageX) + _SLT(".pkg");
-	String pkgPath = String::fromInt32(location.level) + _SLT("/") + String::fromInt32(packageY);
+	String filePath = String::fromInt32(packageX) + ".pkg";
+	String pkgPath = String::fromInt32(location.level) + "/" + String::fromInt32(packageY);
 	
-	return pkgPath + _SLT("/") + filePath;
+	return pkgPath + "/" + filePath;
 }
 
 SLIB_MAP_NAMESPACE_END

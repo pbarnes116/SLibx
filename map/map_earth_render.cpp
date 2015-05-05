@@ -86,7 +86,7 @@ void MapEarthRenderer::_renderBuilding(RenderEngine* engine, MapBuilding* buildi
 	ListLocker<VW_Building_Mesh> meshes(building->object->meshes);
 	for (sl_size i = 0; i < meshes.count(); i++) {
 		VW_Building_Mesh& mesh = meshes[i];
-		Ref<Texture> bt = m_tilesBuilding->getDetailedTexture(building->info->key, i);
+		Ref<Texture> bt = m_tilesBuilding->getDetailedTexture(building->info->key, (sl_uint32)i);
 		if (bt.isNotNull()) {
 			m_programBuilding->setTexture(bt);
 		} else {
@@ -282,7 +282,7 @@ void MapEarthRenderer::_renderPolygon(RenderEngine* engine, MapPolygon* polygon)
 	GLES2::setLineWidth(polygon->width);
 	m_programLine->setDiffuseColor(polygon->color);
 	Ref<VertexBuffer> vb = VertexBuffer::create(pos, n*sizeof(Vector3));
-	engine->draw(m_programLine, n, vb, Primitive::typeLineStrip);
+	engine->draw(m_programLine, (sl_uint32)n, vb, Primitive::typeLineStrip);
 	GLES2::setLineWidth(1);
 }
 
@@ -604,8 +604,8 @@ void MapEarthRenderer::_renderBuildings(RenderEngine* engine)
 					if (it < maxt) {
 						if (!flagRequestTexture) {
 							String key = list[i].object->info->key;
-							if (m_tilesBuilding->getDetailedTexture(key, k).isNull()) {
-								m_tilesBuilding->requestDetailedTexture(key, k);
+							if (m_tilesBuilding->getDetailedTexture(key, (sl_uint32)k).isNull()) {
+								m_tilesBuilding->requestDetailedTexture(key, (sl_uint32)k);
 								flagRequestTexture = sl_true;
 								break;
 							}
@@ -715,7 +715,7 @@ public:
 		if (type == RenderEngine::OPENGL_ES2) {
 			MapInfo_GLES2* info = (MapInfo_GLES2*)_info;
 			sl_uint32 program = info->program_GLES;
-			info->attrAltitude = GLES2::getAttributeLocation(program, _SLT("a_Altitude"));
+			info->attrAltitude = GLES2::getAttributeLocation(program, "a_Altitude");
 			return sl_true;
 		}
 #endif
