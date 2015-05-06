@@ -154,6 +154,8 @@ void MapView::onFrame(RenderEngine* engine)
 				* Transform2::getTranslationMatrix(getCompassPosition())
 				* Transform2::getScalingMatrix(2.0f / viewportWidth, - 2.0f / viewportHeight)
 				* Transform2::getTranslationMatrix(-1, 1);
+			engine->setDepthTest(sl_false);
+			engine->setBlending(sl_true);
 			engine->drawTexture2D(transform, texture, rect);
 		}
 	}
