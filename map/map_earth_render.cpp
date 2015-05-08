@@ -590,7 +590,7 @@ void MapEarthRenderer::_renderBuildings(RenderEngine* engine)
 			}
 		}
 	}
-	buildings = buildings.sort<SortBuilding, sl_real>(sl_true);
+	buildings = buildings.sortBy<SortBuilding, sl_real>(sl_true);
 	buildings.setCount(Math::min(m_tilesBuilding->getMaxBuildingsCount(), (sl_uint32)(buildings.count())));
 	{
 		sl_bool flagRequestTexture = sl_false;

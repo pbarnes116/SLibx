@@ -136,7 +136,7 @@ void MapEarthRenderer::_runThreadDataBuildingStep()
 		}
 		// select objects
 		{
-			infos = infos.sort<_SortBuildingInfo, sl_real>(sl_true);
+			infos = infos.sortBy<_SortBuildingInfo, sl_real>(sl_true);
 			infos.setCount(Math::min(10, (sl_int32)(infos.count())));
 		}
 		if (Thread::isStoppingCurrent()) {

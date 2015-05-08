@@ -55,7 +55,7 @@ void MapRenderTileManager::freeOldTiles()
 			}
 		}
 	}
-	tiles = tiles.sort<SortTile, Time>(sl_false);
+	tiles = tiles.sortBy<SortTile, Time>(sl_false);
 	{
 		ListLocker< Ref<MapRenderTile> > t(tiles);
 		for (sl_size i = tileLimit; i < t.count(); i++) {

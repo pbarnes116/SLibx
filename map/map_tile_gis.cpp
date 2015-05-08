@@ -95,7 +95,7 @@ void MapGISLineTileManager::freeOldTiles()
 			}
 		}
 	}
-	tiles = tiles.sort<SortTile, Time>(sl_false);
+	tiles = tiles.sortBy<SortTile, Time>(sl_false);
 	{
 		ListLocker< Ref<MapGISLineTile> > t(tiles);
 		for (sl_size i = tileLimit; i < t.count(); i++) {
@@ -233,7 +233,7 @@ void MapGISPoiTileManager::freeOldTiles()
 			}
 		}
 	}
-	tiles = tiles.sort<SortTile, Time>(sl_false);
+	tiles = tiles.sortBy<SortTile, Time>(sl_false);
 	{
 		ListLocker< Ref<MapGISPoiTile> > t(tiles);
 		for (sl_size i = tileLimit; i < t.count(); i++) {

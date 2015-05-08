@@ -79,7 +79,7 @@ void MapBuildingTileManager::freeOldTiles()
 			}
 		}
 	}
-	tiles = tiles.sort<SortTile, Time>(sl_false);
+	tiles = tiles.sortBy<SortTile, Time>(sl_false);
 	{
 		ListLocker< Ref<MapBuildingTile> > t(tiles);
 		for (sl_size i = tileLimit; i < t.count(); i++) {
@@ -154,7 +154,7 @@ void MapBuildingTileManager::freeOldBuildings()
 			}
 		}
 	}
-	buildings = buildings.sort<SortBuilding, Time>(sl_false);
+	buildings = buildings.sortBy<SortBuilding, Time>(sl_false);
 	{
 		ListLocker< Ref<MapBuilding> > t(buildings);
 		for (sl_size i = tileLimit; i < t.count(); i++) {
@@ -262,7 +262,7 @@ void MapBuildingTileManager::freeOldDetailedTextures()
 			}
 		}
 	}
-	buildings = buildings.sort<SortTexture, Time>(sl_false);
+	buildings = buildings.sortBy<SortTexture, Time>(sl_false);
 	{
 		ListLocker< Ref<_BuildingTexture> > t(buildings);
 		for (sl_size i = tileLimit; i < t.count(); i++) {
