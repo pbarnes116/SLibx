@@ -59,7 +59,7 @@ sl_bool MapPackage::open(const String& filePath, sl_bool flagReadOnly)
 	if (flagReadOnly) {
 		m_pkgFile = File::open(filePath, File::modeRead);
 	} else {
-		m_pkgFile = File::open(filePath, File::modeReadWriteNoTruncate);
+		m_pkgFile = File::open(filePath, File::modeRandomAccess);
 	}
 	
 	if (m_pkgFile.isNotNull() && checkHeader()) {
