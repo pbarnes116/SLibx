@@ -2,7 +2,7 @@
 
 #include "../../../inc/slib/core/io.h"
 
-SLIB_MAP_NAMESPACE_START
+SLIB_MAP_NAMESPACE_BEGIN
 
 class _GEarthTileFile
 {

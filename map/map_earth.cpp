@@ -1,6 +1,6 @@
 #include "../../../inc/slibx/map/earth.h"
 
-SLIB_MAP_NAMESPACE_START
+SLIB_MAP_NAMESPACE_BEGIN
 
 const SphericalGlobe& MapEarth::getGlobe()
 {

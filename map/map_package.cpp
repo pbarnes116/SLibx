@@ -5,7 +5,7 @@
 #define PACKAGE_HEADER_SIZE		32
 #define PACKAGE_IDENTIFY		"SMAP-PACKAGE V1.0"
 
-SLIB_MAP_NAMESPACE_START
+SLIB_MAP_NAMESPACE_BEGIN
 
 void MapPackage::create(const String& filePath)
 {

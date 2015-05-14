@@ -1,7 +1,7 @@
 #include "../../../inc/slibx/map/camera.h"
 #include "../../../inc/slibx/map/earth.h"
 
-SLIB_MAP_NAMESPACE_START
+SLIB_MAP_NAMESPACE_BEGIN
 
 void MapCameraLocation::setEyeLocation(const GeoLocation& eye)
 {

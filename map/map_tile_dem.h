@@ -11,7 +11,7 @@
 #include "../../../inc/slib/core/map.h"
 #include "../../../inc/slib/core/time.h"
 
-SLIB_MAP_NAMESPACE_START
+SLIB_MAP_NAMESPACE_BEGIN
 
 class MapDEMTile : public Referable
 {

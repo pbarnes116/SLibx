@@ -4,7 +4,7 @@
 
 #include "map_data_config.h"
 
-SLIB_MAP_NAMESPACE_START
+SLIB_MAP_NAMESPACE_BEGIN
 
 List<MapGISPoiData> MapGISPoi_DataLoader::loadTile(Ref<MapDataLoader> data, String type, const MapTileLocation& location)
 {

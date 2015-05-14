@@ -5,7 +5,7 @@
 #include "../../../inc/slib/crypto/sha2.h"
 #include "../../../inc/slib/crypto/aes.h"
 
-SLIB_SFILE_NAMESPACE_START
+SLIB_SFILE_NAMESPACE_BEGIN
 
 #define FILE_PACKAGE_SIGNATURE 0x4B504C53   /*SLPK*/
 

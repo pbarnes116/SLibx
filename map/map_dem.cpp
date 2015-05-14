@@ -3,7 +3,7 @@
 #include "../../../inc/slib/core/io.h"
 #include "../../../inc/slib/render/program.h"
 
-SLIB_MAP_NAMESPACE_START
+SLIB_MAP_NAMESPACE_BEGIN
 sl_bool DEM::initialize(sl_uint32 _N)
 {
 	Array<float> _array = Array<float>::create(_N * _N);

@@ -6,7 +6,7 @@
 #include "map_tile_picture.h"
 #include "map_tile_dem.h"
 
-SLIB_MAP_NAMESPACE_START
+SLIB_MAP_NAMESPACE_BEGIN
 
 class MapRenderTile : public Referable
 {

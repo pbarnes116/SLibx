@@ -4,7 +4,7 @@
 
 #include "map_data_config.h"
 
-SLIB_MAP_NAMESPACE_START
+SLIB_MAP_NAMESPACE_BEGIN
 
 Ref<VW_Building_Object> VW_Building::readObject(Ref<MapDataLoader> data, VW_Building_ObjectInfo* info)
 {

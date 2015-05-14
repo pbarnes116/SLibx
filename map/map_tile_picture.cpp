@@ -2,7 +2,7 @@
 #include "map_tile_config.h"
 #include "map_data_config.h"
 
-SLIB_MAP_NAMESPACE_START
+SLIB_MAP_NAMESPACE_BEGIN
 
 MapPictureTileManager::MapPictureTileManager()
 {

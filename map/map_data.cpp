@@ -4,7 +4,7 @@
 #include "../../../inc/slibx/sfile/secure_file_pack.h"
 #include "../../../inc/slib/core/file.h"
 
-SLIB_MAP_NAMESPACE_START
+SLIB_MAP_NAMESPACE_BEGIN
 
 Memory MapDataLoaderList::loadData(const String& type, const MapTileLocationi& location, sl_uint32 packageDimension, const String& subPath)
 {

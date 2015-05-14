@@ -14,7 +14,7 @@
 #include "../../../inc/slib/core/time.h"
 #include "../../../inc/slib/image/freetype.h"
 
-SLIB_MAP_NAMESPACE_START
+SLIB_MAP_NAMESPACE_BEGIN
 
 struct MapGISShape
 {

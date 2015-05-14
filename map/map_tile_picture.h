@@ -10,7 +10,7 @@
 #include "../../../inc/slib/core/time.h"
 #include "../../../inc/slib/render/texture.h"
 
-SLIB_MAP_NAMESPACE_START
+SLIB_MAP_NAMESPACE_BEGIN
 
 class MapPictureTile : public Referable
 {

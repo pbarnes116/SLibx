@@ -1,7 +1,7 @@
 #include "../../../inc/slibx/map/util.h"
 #include "../../../inc/slib/core/hashtable.h"
 
-SLIB_MAP_NAMESPACE_START
+SLIB_MAP_NAMESPACE_BEGIN
 
 sl_uint32 hashCode(const MapTileLocationi& location)
 {

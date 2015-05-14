@@ -1,7 +1,7 @@
 #include "map_tile_render.h"
 #include "map_tile_config.h"
 
-SLIB_MAP_NAMESPACE_START
+SLIB_MAP_NAMESPACE_BEGIN
 
 MapRenderTileManager::MapRenderTileManager()
 {

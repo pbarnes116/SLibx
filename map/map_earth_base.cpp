@@ -2,7 +2,7 @@
 
 #include "../../../inc/slib/render/opengl.h"
 
-SLIB_MAP_NAMESPACE_START
+SLIB_MAP_NAMESPACE_BEGIN
 
 MapEarthRenderer::MapEarthRenderer()
 {
