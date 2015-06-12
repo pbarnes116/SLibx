@@ -34,12 +34,12 @@ Matrix4lf MapCameraLocation::getVerticalViewMatrix() const
 
 	// look at
 	{
-		matView = Transform3lf::getRotationYMatrix(Math::getRadianFromDegree(m_location.longitude));
-		matView *= Transform3lf::getRotationXMatrix(Math::getRadianFromDegree(-m_location.latitude));
+		matView = Transform3lf::getRotationYMatrix(Math::getRadianFromDegrees(m_location.longitude));
+		matView *= Transform3lf::getRotationXMatrix(Math::getRadianFromDegrees(-m_location.latitude));
 		matView *= Transform3lf::getTranslationMatrix(0, 0, lenEye);
 	}
 	if (m_rotationZ != 0) {
-		matView *= Transform3lf::getRotationZMatrix(Math::getRadianFromDegree(m_rotationZ));
+		matView *= Transform3lf::getRotationZMatrix(Math::getRadianFromDegrees(m_rotationZ));
 	}
 	return matView;
 }
@@ -49,7 +49,7 @@ Matrix4lf MapCameraLocation::getViewMatrix() const
 	Matrix4lf matView = getVerticalViewMatrix();
 	double t = getTilt();
 	if (t > 0) {
-		matView *= Transform3lf::getRotationXMatrix(Math::getRadianFromDegree(t));
+		matView *= Transform3lf::getRotationXMatrix(Math::getRadianFromDegrees(t));
 	}
 	return matView;
 }
@@ -67,7 +67,7 @@ sl_real MapCameraLocation::getMaxTilt() const
 			lenEye = R;
 		}
 		double sinAlpha = (R - 1) / lenEye;
-		double alpha = Math::getDegreeFromRadian(Math::arcsin(sinAlpha));
+		double alpha = Math::getDegreesFromRadian(Math::arcsin(sinAlpha));
 		if (m_location.altitude < m2) {
 			alpha = alpha * (m1 - m_location.altitude) / (m1 - m2);
 		}

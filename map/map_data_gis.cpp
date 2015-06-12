@@ -10,7 +10,7 @@ List<MapGISPoiData> MapGISPoi_DataLoader::loadTile(Ref<MapDataLoader> data, Stri
 {
 	List<MapGISPoiData> ret;
 	Memory mem = data->loadData(type, location, SLIB_MAP_GIS_PACKAGE_DIMENSION, SLIB_MAP_GIS_POI_TILE_EXT);
-	if (mem.isEmpty()) {
+	if (mem.isNull()) {
 		return ret;
 	}
 	MemoryReader reader(mem);
@@ -34,7 +34,7 @@ Map< sl_int32, Ref<MapGISShapeData> > MapGISLine_DataLoader::loadTile(Ref<MapDat
 {
 	Map< sl_int32, Ref<MapGISShapeData> > ret;
 	Memory mem = data->loadData(type, location, SLIB_MAP_GIS_PACKAGE_DIMENSION, SLIB_MAP_GIS_LINE_TILE_EXT);
-	if (mem.isEmpty()) {
+	if (mem.isNull()) {
 		return ret;
 	}
 

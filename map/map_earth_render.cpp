@@ -106,7 +106,7 @@ void MapEarthRenderer::_renderGISLine(RenderEngine* engine, MapGISLineTile* tile
 		sl_uint32 n = (sl_uint32)(lines.count());
 		if (n > 0) {
 			m_programLine->setDiffuseColor(s.color);
-			GLES2::setLineWidth(s.width);
+			engine->setLineWidth(s.width);
 			Ref<VertexBuffer> vb;
 			if (s.vb.isNotNull() && dem == s.demTileRef) {
 				vb = s.vb;
@@ -250,7 +250,7 @@ void MapEarthRenderer::_renderIcon(RenderEngine* engine, MapIcon* icon)
 		if (icon->iconTexture.isNotNull()) {
 			Matrix3 transform = Transform2::getTranslationMatrix(-0.5f, -0.5f)
 				* Transform2::getScalingMatrix(icon->iconSize.x, icon->iconSize.y)
-				* Transform2::getRotationMatrix(Math::getRadianFromDegree(icon->rotationAngle))
+				* Transform2::getRotationMatrix(Math::getRadianFromDegrees(icon->rotationAngle))
 				* Transform2::getTranslationMatrix(ps.x, ps.y)
 				* Transform2::getScalingMatrix(2.0f / m_viewportWidth, -2.0f / m_viewportHeight)
 				* Transform2::getTranslationMatrix(-1, 1);
@@ -279,11 +279,11 @@ void MapEarthRenderer::_renderPolygon(RenderEngine* engine, MapPolygon* polygon)
 	if (!flagVisible) {
 		return;
 	}
-	GLES2::setLineWidth(polygon->width);
+	engine->setLineWidth(polygon->width);
 	m_programLine->setDiffuseColor(polygon->color);
 	Ref<VertexBuffer> vb = VertexBuffer::create(pos, n*sizeof(Vector3));
 	engine->draw(m_programLine, (sl_uint32)n, vb, Primitive::typeLineStrip);
-	GLES2::setLineWidth(1);
+	engine->setLineWidth(1);
 }
 
 void MapEarthRenderer::_prepareRendering(RenderEngine* engine)
@@ -687,7 +687,7 @@ public:
 	_MapEarth_RenderProgram_SurfaceTile() {}
 	~_MapEarth_RenderProgram_SurfaceTile() {}
 
-	class MapInfo_GLES2 : public Info_GLES2
+	class MapInfo_GL : public Info_GL
 	{
 	public:
 		sl_int32 attrAltitude;	// float
@@ -699,94 +699,86 @@ public:
 	{
 		Ref<RenderProgramInfo> ret;
 		RenderEngine::EngineType type = engine->getEngineType();
-		if (type == RenderEngine::OPENGL_ES2) {
-			ret = new MapInfo_GLES2;
+		if (type == RenderEngine::OPENGL_ES || type == RenderEngine::OPENGL) {
+			ret = new MapInfo_GL;
 		}
 		return ret;
 	}
 
-	sl_bool onInit(RenderEngine* engine, RenderProgramInfo* _info)
+	sl_bool onInit(RenderEngine* _engine, RenderProgramInfo* _info)
 	{
-		RenderProgram3D::onInit(engine, _info);
+		RenderProgram3D::onInit(_engine, _info);
 
-		RenderEngine::EngineType type = engine->getEngineType();
-
-#ifdef SLIB_RENDER_SUPPORT_OPENGL_ES2
-		if (type == RenderEngine::OPENGL_ES2) {
-			MapInfo_GLES2* info = (MapInfo_GLES2*)_info;
-			sl_uint32 program = info->program_GLES;
-			info->attrAltitude = GLES2::getAttributeLocation(program, "a_Altitude");
+		RenderEngine::EngineType type = _engine->getEngineType();
+		if (type == RenderEngine::OPENGL_ES || type == RenderEngine::OPENGL) {
+			GLRenderEngine* engine = (GLRenderEngine*)_engine;
+			MapInfo_GL* info = (MapInfo_GL*)_info;
+			sl_uint32 program = info->program_GL;
+			info->attrAltitude = engine->getAttributeLocation(program, "a_Altitude");
 			return sl_true;
 		}
-#endif
 		return sl_false;
 	}
 
-	sl_bool onPreRender(RenderEngine* engine, RenderProgramInfo* _info, Primitive* primitive)
+	sl_bool onPreRender(RenderEngine* _engine, RenderProgramInfo* _info, Primitive* primitive)
 	{
-		RenderEngine::EngineType type = engine->getEngineType();
-#ifdef SLIB_RENDER_SUPPORT_OPENGL_ES2
-		if (type == RenderEngine::OPENGL_ES2) {
-			MapInfo_GLES2* info = (MapInfo_GLES2*)_info;
-			SLIB_RENDER_GLES2_SET_VERTEX_FLOAT_ARRAY_ATTRIBUTE(info->attrPosition, DEM_Vertex, position);
-			SLIB_RENDER_GLES2_SET_VERTEX_FLOAT_ARRAY_ATTRIBUTE(info->attrTexCoord, DEM_Vertex, texCoord);
-			SLIB_RENDER_GLES2_SET_VERTEX_FLOAT_ARRAY_ATTRIBUTE(info->attrAltitude, DEM_Vertex, altitude);
+		RenderEngine::EngineType type = _engine->getEngineType();
+		if (type == RenderEngine::OPENGL_ES || type == RenderEngine::OPENGL) {
+			GLRenderEngine* engine = (GLRenderEngine*)_engine;
+			MapInfo_GL* info = (MapInfo_GL*)_info;
+			SLIB_RENDER_GL_SET_VERTEX_FLOAT_ARRAY_ATTRIBUTE(engine, info->attrPosition, DEM_Vertex, position);
+			SLIB_RENDER_GL_SET_VERTEX_FLOAT_ARRAY_ATTRIBUTE(engine, info->attrTexCoord, DEM_Vertex, texCoord);
+			SLIB_RENDER_GL_SET_VERTEX_FLOAT_ARRAY_ATTRIBUTE(engine, info->attrAltitude, DEM_Vertex, altitude);
 			return sl_true;
 		}
-#endif
 		return sl_false;
 	}
 
-	void onPostRender(RenderEngine* engine, RenderProgramInfo* _info, Primitive* primitive)
+	void onPostRender(RenderEngine* _engine, RenderProgramInfo* _info, Primitive* primitive)
 	{
-		RenderEngine::EngineType type = engine->getEngineType();
-#ifdef SLIB_RENDER_SUPPORT_OPENGL_ES2
-		if (type == RenderEngine::OPENGL_ES2) {
-			MapInfo_GLES2* info = (MapInfo_GLES2*)_info;
-			GLES2::disableVertexArrayAttribute(info->attrPosition);
-			GLES2::disableVertexArrayAttribute(info->attrTexCoord);
-			GLES2::disableVertexArrayAttribute(info->attrAltitude);
+		RenderEngine::EngineType type = _engine->getEngineType();
+		if (type == RenderEngine::OPENGL_ES || type == RenderEngine::OPENGL) {
+			GLRenderEngine* engine = (GLRenderEngine*)_engine;
+			MapInfo_GL* info = (MapInfo_GL*)_info;
+			engine->disableVertexArrayAttribute(info->attrPosition);
+			engine->disableVertexArrayAttribute(info->attrTexCoord);
+			engine->disableVertexArrayAttribute(info->attrAltitude);
 		}
-#endif
 	}
 
-	String getVertexShader_GLES2(RenderEngine* engine)
+	String getGLSLVertexShader(RenderEngine* engine)
 	{
 		String source;
-#ifdef SLIB_RENDER_SUPPORT_OPENGL_ES2
 		source = SLIB_STRINGIFY(
 			precision highp float;
-		uniform mat4 u_Transform;
-		attribute vec3 a_Position;
-		attribute vec2 a_TexCoord;
-		attribute float a_Altitude;
-		varying vec2 v_TexCoord;
-		varying float v_Altitude;
-		void main() {
-			vec4 P = vec4(a_Position, 1.0) * u_Transform;
-			gl_Position = P;
-			v_TexCoord = a_TexCoord;
-			v_Altitude = a_Altitude;
-		}
+			uniform mat4 u_Transform;
+			attribute vec3 a_Position;
+			attribute vec2 a_TexCoord;
+			attribute float a_Altitude;
+			varying vec2 v_TexCoord;
+			varying float v_Altitude;
+			void main() {
+				vec4 P = vec4(a_Position, 1.0) * u_Transform;
+				gl_Position = P;
+				v_TexCoord = a_TexCoord;
+				v_Altitude = a_Altitude;
+			}
 		);
-#endif
 		return source;
 	}
 
-	String getFragmentShader_GLES2(RenderEngine* engine)
+	String getGLSLFragmentShader(RenderEngine* engine)
 	{
 		String source;
-#ifdef SLIB_RENDER_SUPPORT_OPENGL_ES2
 		source = SLIB_STRINGIFY(
 			precision highp float;
-		uniform sampler2D u_Texture;
-		varying vec2 v_TexCoord;
-		void main() {
-			vec4 colorTexture = texture2D(u_Texture, v_TexCoord);
-			gl_FragColor = colorTexture;
-		}
+			uniform sampler2D u_Texture;
+			varying vec2 v_TexCoord;
+			void main() {
+				vec4 colorTexture = texture2D(u_Texture, v_TexCoord);
+				gl_FragColor = colorTexture;
+			}
 		);
-#endif
 		return source;
 	}
 };
@@ -797,18 +789,16 @@ public:
 	_MapEarth_RenderProgram_SurfaceTile_TestTextureColor() {}
 	~_MapEarth_RenderProgram_SurfaceTile_TestTextureColor() {}
 
-	String getFragmentShader_GLES2(RenderEngine* engine)
+	String getGLSLFragmentShader(RenderEngine* engine)
 	{
 		String source;
-#ifdef SLIB_RENDER_SUPPORT_OPENGL_ES2
 		source = SLIB_STRINGIFY(
 			precision highp float;
-		varying vec2 v_TexCoord;
-		void main() {
-			gl_FragColor = vec4(v_TexCoord.x, v_TexCoord.y, 0.0, 1.0);
-		}
+			varying vec2 v_TexCoord;
+			void main() {
+				gl_FragColor = vec4(v_TexCoord.x, v_TexCoord.y, 0.0, 1.0);
+			}
 		);
-#endif
 		return source;
 	}
 };

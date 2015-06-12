@@ -189,7 +189,7 @@ public:
 				break;
 			}
 		}
-		if (texture.data.isEmpty()) {
+		if (texture.data.isNull()) {
 			return sl_false;
 		}
 		return sl_true;
@@ -297,7 +297,7 @@ public:
 			case 6: // texture
 				{
 					Memory buf = input.readSection();
-					if (buf.isEmpty()) {
+					if (buf.isNull()) {
 						return sl_null;
 					}
 					if (!loadTexture(mesh->texture, buf)) {
@@ -422,7 +422,7 @@ public:
 			case 11: // normal buffer
 				if (m_flagUseNormal) {
 					mesh->normalBuffer = input.readSection();
-					if (mesh->normalBuffer.isEmpty()) {
+					if (mesh->normalBuffer.isNull()) {
 						return sl_null;
 					}
 				} else {
@@ -521,7 +521,7 @@ public:
 			case 2:
 				{
 					Memory buf = input.readSection();
-					if (buf.isEmpty()) {
+					if (buf.isNull()) {
 						return sl_false;
 					}
 					Ref<GMesh> mesh = loadMesh(buf);
@@ -544,7 +544,7 @@ public:
 			case 6:
 				{
 					Memory buf = input.readSection();
-					if (buf.isEmpty()) {
+					if (buf.isNull()) {
 						return sl_false;
 					}
 					Ref<GMesh> mesh = loadMesh(buf);
@@ -558,7 +558,7 @@ public:
 			case 7:
 				{
 					Memory buf = input.readSection();
-					if (buf.isEmpty()) {
+					if (buf.isNull()) {
 						return sl_false;
 					}
 					Ref<GMesh> mesh = loadMesh(buf);

@@ -148,12 +148,12 @@ Map<String, Memory> MapPackage::getDataFromItem(const Memory& encData)
 {
 	Map<String, Memory> ret;
 	Memory item;
-	if (encData.isNotEmpty()) {
+	if (encData.isNotNull()) {
 		Memory decData = Memory::create(encData.getSize() + 256);
 		sl_size decSize = m_encryption.decrypt_CBC_PKCS7Padding(encData.getBuf(), encData.getSize(), decData.getBuf());
 		item = Memory(decData.getBuf(), decSize);
 	}
-	if (item.isNotEmpty()) {
+	if (item.isNotNull()) {
 		MemoryReader reader(item);
 		sl_int64 itemUpdateTime = reader.readInt64CVLI();
 		sl_int32 itemNextOffset = reader.readInt32CVLI();
@@ -161,7 +161,7 @@ Map<String, Memory> MapPackage::getDataFromItem(const Memory& encData)
 		for (sl_int32 i = 0; i < itemCount; i++) {
 			String key;
 			Memory itemData = readItemData(reader, key);
-			if (itemData.isNotEmpty()) {
+			if (itemData.isNotNull()) {
 				ret.put(key, itemData);
 			}
 		}

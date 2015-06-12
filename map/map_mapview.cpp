@@ -150,7 +150,7 @@ void MapView::onFrame(RenderEngine* engine)
 			sl_real sizeCompass = getCompassSize();
 			Matrix3 transform = Transform2::getTranslationMatrix(-0.5f, -0.5f)
 				* Transform2::getScalingMatrix(sizeCompass, sizeCompass)
-				* Transform2::getRotationMatrix(-Math::getRadianFromDegree(getCamera()->getRotationZ()))
+				* Transform2::getRotationMatrix(-Math::getRadianFromDegrees(getCamera()->getRotationZ()))
 				* Transform2::getTranslationMatrix(getCompassPosition())
 				* Transform2::getScalingMatrix(2.0f / viewportWidth, - 2.0f / viewportHeight)
 				* Transform2::getTranslationMatrix(-1, 1);
@@ -162,27 +162,27 @@ void MapView::onFrame(RenderEngine* engine)
 
 }
 
-sl_bool MapView::onMouseEvent(MouseEvent& event)
+void MapView::onMouseEvent(UIEvent* event)
 {
 	if (!m_flagInit) {
-		return sl_false;
+		return;
 	}
 
 	Ref<MapCamera> camera = getCamera();
 	if (camera.isNull()) {
-		return sl_false;
+		return;
 	}
 
-	Point pt(event.x, event.y);
+	Point pt = event->getPoint();
 	Point pt2;
 	sl_bool flagTouch2 = sl_false;
-	if (event.points.count() >= 2) {
-		pt2.x = event.points[1].x;
-		pt2.y = event.points[1].y;
+	if (event->getTouchPointsCount() >= 2) {
+		pt2 = event->getTouchPoint(1).point;
 		flagTouch2 = sl_true;
 	}
 
-	if (event.action == MouseEvent::actionLeftButtonDown || event.action == MouseEvent::actionTouchDown) {
+	UIEvent::Action action = event->getAction();
+	if (action == UIEvent::actionLeftButtonDown || action == UIEvent::actionTouchBegin) {
 
 		getCamera()->clearMotions();
 
@@ -202,10 +202,11 @@ sl_bool MapView::onMouseEvent(MouseEvent& event)
 		setFocus();
 
 	} else if (
-		event.action == MouseEvent::actionLeftButtonDrag
-		|| event.action == MouseEvent::actionTouchMove
-		|| event.action == MouseEvent::actionLeftButtonUp
-		|| event.action == MouseEvent::actionTouchUp
+		action == UIEvent::actionLeftButtonDrag
+		|| action == UIEvent::actionTouchMove
+		|| action == UIEvent::actionLeftButtonUp
+		|| action == UIEvent::actionTouchEnd
+		|| action == UIEvent::actionTouchCancel
 		) {
 
 		if (m_flagMouseDown) {
@@ -213,7 +214,7 @@ sl_bool MapView::onMouseEvent(MouseEvent& event)
 
 				Vector2 v = pt - getCompassPosition();
 				if (v.length2p() > 30) {
-					sl_real r = -Math::getDegreeFromRadian(Transform2::getRotationAngleFromDirToDir(Vector2(0, -1), v));
+					sl_real r = -Math::getDegreesFromRadian(Transform2::getRotationAngleFromDirToDir(Vector2(0, -1), v));
 					getCamera()->setTargetRotationZ(r);
 				}
 
@@ -233,8 +234,9 @@ sl_bool MapView::onMouseEvent(MouseEvent& event)
 						sl_real time = 100;
 						dx *= 1.5;
 						dy *= 1.5;
-						if (event.action == MouseEvent::actionLeftButtonUp
-							|| event.action == MouseEvent::actionTouchUp) {
+						if (action == UIEvent::actionLeftButtonUp
+							|| action == UIEvent::actionTouchEnd
+							|| action == UIEvent::actionTouchCancel) {
 							if (dt < 400) {
 								time = 4000;
 								dx *= 8;
@@ -270,7 +272,7 @@ sl_bool MapView::onMouseEvent(MouseEvent& event)
 
 						if (len1 > 10 && len2 > 10) {
 
-							sl_real a = Math::getDegreeFromRadian(Transform2::getRotationAngleFromDirToDir(v1, v2));
+							sl_real a = Math::getDegreesFromRadian(Transform2::getRotationAngleFromDirToDir(v1, v2));
 							sl_real r = m_rotateTouchStart;
 							sl_real d = Math::abs(Math::normalizeDegreeDistance(a));
 							if (d > 10 || m_flagTouchRotateStarted) {
@@ -292,8 +294,9 @@ sl_bool MapView::onMouseEvent(MouseEvent& event)
 			}
 		}
 
-		if (event.action == MouseEvent::actionLeftButtonUp
-			|| event.action == MouseEvent::actionTouchUp) {
+		if (action == UIEvent::actionLeftButtonUp
+			|| action == UIEvent::actionTouchEnd
+			|| action == UIEvent::actionTouchCancel) {
 
 			if (m_flagCompassHighlight) {
 
@@ -314,12 +317,12 @@ sl_bool MapView::onMouseEvent(MouseEvent& event)
 			m_flagMouseDown = sl_false;
 		}
 
-	} else if (event.action == MouseEvent::actionRightButtonDown) {
+	} else if (action == UIEvent::actionRightButtonDown) {
 		
 		getCamera()->clearMotions();
 		setFocus();
 
-	} else if (event.action == MouseEvent::actionRightButtonDrag) {
+	} else if (action == UIEvent::actionRightButtonDrag) {
 
 		sl_real dx = pt.x - m_pointMouseBefore.x;
 		sl_real dy = pt.y - m_pointMouseBefore.y;
@@ -337,22 +340,19 @@ sl_bool MapView::onMouseEvent(MouseEvent& event)
 	m_pointMouseBefore = pt;
 	m_pointMouseBefore2 = pt2;
 	m_flagTouchBefore2 = flagTouch2;
-
-	return sl_true;
 }
 
-sl_bool MapView::onMouseWheelEvent(MouseWheelEvent& event)
+void MapView::onMouseWheelEvent(UIEvent* event)
 {
 	if (!m_flagInit) {
-		return sl_false;
+		return;
 	}
-	if (event.delta > 0) {
+	if (event->getDelta() > 0) {
 		_zoom(0.5f);
 	} else {
 		_zoom(2.f);
 	}
 	requestRender();
-	return sl_true;
 }
 
 void MapView::_zoom(double ratio)
