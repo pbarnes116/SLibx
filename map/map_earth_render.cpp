@@ -750,7 +750,6 @@ public:
 	{
 		String source;
 		source = SLIB_STRINGIFY(
-			precision highp float;
 			uniform mat4 u_Transform;
 			attribute vec3 a_Position;
 			attribute vec2 a_TexCoord;
@@ -771,7 +770,6 @@ public:
 	{
 		String source;
 		source = SLIB_STRINGIFY(
-			precision highp float;
 			uniform sampler2D u_Texture;
 			varying vec2 v_TexCoord;
 			void main() {
@@ -793,7 +791,6 @@ public:
 	{
 		String source;
 		source = SLIB_STRINGIFY(
-			precision highp float;
 			varying vec2 v_TexCoord;
 			void main() {
 				gl_FragColor = vec4(v_TexCoord.x, v_TexCoord.y, 0.0, 1.0);
