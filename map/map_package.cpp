@@ -1,5 +1,7 @@
 #include "../../../inc/slibx/map/package.h"
+
 #include "../../../inc/slib/core/io.h"
+#include "../../../inc/slib/core/pointer.h"
 
 #define PACKAGE_ITEM_IDENTIFY	0xFEFF0823
 #define PACKAGE_HEADER_SIZE		32
