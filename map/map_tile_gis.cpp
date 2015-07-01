@@ -116,7 +116,7 @@ void MapGISPoi::initPoi()
 	MAP_GIS_POI_TYPE type = _type;
 	if (type != POITypeNone) {
 		showMinLevel = 15;
-		clr = Color::LightGoldenrodYellow;
+		clr = Color::White;
 		fontSize = 13;
 		if (type == NaturalLake || type == NaturalMountain || type == NaturalRiver) {
 			showMinLevel = 5;
@@ -134,14 +134,14 @@ void MapGISPoi::initPoi()
 		} else if (type == PlaceCity) {
 			showMinLevel = 7;
 			clr = Color::YellowGreen;
-			fontSize = 20;
-		} else if (type == PlaceTown) {
-			showMinLevel = 11;
-			clr = Color::Orange;
 			fontSize = 18;
+		} else if (type == PlaceTown) {
+			showMinLevel = 10;
+			clr = Color::LightCyan;
+			fontSize = 15;
 		} else if (type == PlaceVilliage) {
 			showMinLevel = 13;
-			clr = Color::Orange;
+			clr = Color::White;
 			fontSize = 15;
 		}
 	} else {
@@ -183,6 +183,7 @@ Ref<MapGISPoiTile> MapGISPoiTileManager::loadTile(const MapTileLocationi& locati
 		}
 		List<MapGISPoiData> pois = m_dataLoader.loadTile(loader, SLIB_MAP_GIS_POI_TILE_TYPE, location);
 		pois.add(m_dataLoader.loadTile(loader, SLIB_MAP_GIS_SPECIAL_POI_TILE_TYPE, location));
+		pois.add(m_dataLoader.loadTile(loader, SLIB_MAP_GIS_NK_POI_TILE_TYPE, location));
 		tile = new MapGISPoiTile();
 		if (tile.isNotNull()) {
 			tile->location = location;

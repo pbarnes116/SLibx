@@ -1,6 +1,6 @@
 #include "../../../inc/slibx/map/package.h"
 #include "../../../inc/slib/core/io.h"
-
+#include "../../../inc/slib/core/pointer.h"
 #define PACKAGE_ITEM_IDENTIFY	0xFEFF0823
 #define PACKAGE_HEADER_SIZE		32
 #define PACKAGE_IDENTIFY		"SMAP-PACKAGE V1.0"
@@ -205,7 +205,7 @@ sl_bool MapPackage::write(sl_int32 offsetX, sl_int32 offsetY, const Map<String, 
 		sl_int32 tblOffset = getTableOffset(offsetX, offsetY);
 
 		m_pkgFile->seek(tblOffset, File::positionBegin);
-		if (!m_pkgFile->readInt32(&itemPosition)) {
+		if (!m_pkgFile->writeInt32(itemPosition)) {
 			return sl_false;
 		}
 

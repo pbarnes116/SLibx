@@ -19,6 +19,7 @@
 #define SLIB_MAP_GIS_LINE_TILE_TYPE "gis/line"
 #define SLIB_MAP_GIS_POI_TILE_TYPE "gis/poi"
 #define SLIB_MAP_GIS_SPECIAL_POI_TILE_TYPE "gis/poi-special"
+#define SLIB_MAP_GIS_NK_POI_TILE_TYPE "gis/poi-nk"
 #define SLIB_MAP_BUILDING_TILE_TYPE "real3d/facility_build"
 #define SLIB_MAP_BUILDING_WORLD_TILE_TYPE "real3d/facility_build_world"
 #define SLIB_MAP_BRIDGE_TILE_TYPE "real3d/facility_bridge"
