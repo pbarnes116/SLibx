@@ -169,10 +169,10 @@ void MapEarthRenderer::_renderGISPoi(RenderEngine* engine, MapGISPoiTile* tile)
 						}
 						font->setSize((sl_uint32)(s.fontSize * screenRatio * 1.5f));
 						Sizei size = font->getStringExtent(text);
-						Ref<Image> image = Image::create(size.width + 5, size.height + 5);
+						Ref<Image> image = Image::create(size.width + 6, size.height + 8);
 						if (image.isNotNull()) {
-							font->drawString(image, 1, size.height + 1, text, Color::Black);
-							font->drawString(image, 2, size.height + 2, text, s.clr);
+							font->strokeString(image, 3, size.height + 2, text, Color::Black, 2);
+							font->drawString(image, 3, size.height + 2, text, s.clr);
 							Ref<Texture> texture = Texture::create(image);
 							if (texture.isNotNull()) {
 								s.texture = texture;
