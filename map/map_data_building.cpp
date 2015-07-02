@@ -168,97 +168,104 @@ List< Ref<VW_Building_ObjectInfo> > VW_Building::readTile(Ref<MapDataLoader> dat
 	sl_uint32 countObjects;
 	if (reader.readUint32(&countObjects)) {
 		for (sl_uint32 i = 0; i < countObjects; i++) {
-			sl_uint32 version;
-			if (!reader.readUint32(&version, sl_true)) {
-				return ret;
-			}
-			sl_uint8 objectType;
-			if (!reader.readUint8(&objectType)) {
-				return ret;
-			}
-			sl_uint8 lenKey;
-			if (!reader.readUint8(&lenKey)) {
-				return ret;
-			}
-			char aKey[256];
-			if (reader.read(aKey, (sl_uint32)lenKey) != lenKey) {
-				return ret;
-			}
+			Ref<VW_Building_ObjectInfo> building;
+			do {
+				sl_uint32 version;
+				if (!reader.readUint32(&version, sl_true)) {
+					break;
+				}
+				sl_uint8 objectType;
+				if (!reader.readUint8(&objectType)) {
+					break;
+				}
+				sl_uint8 lenKey;
+				if (!reader.readUint8(&lenKey)) {
+					break;
+				}
+				char aKey[256];
+				if (reader.read(aKey, (sl_uint32)lenKey) != lenKey) {
+					break;
+				}
 
-			double longitude, latitude;
-			float altitude;
-			if (!reader.readDouble(&longitude)) {
-				return ret;
-			}
-			if (!reader.readDouble(&latitude)) {
-				return ret;
-			}
-			if (!reader.readFloat(&altitude)) {
-				return ret;
-			}
+				double longitude, latitude;
+				float altitude;
+				if (!reader.readDouble(&longitude)) {
+					break;
+				}
+				if (!reader.readDouble(&latitude)) {
+					break;
+				}
+				if (!reader.readFloat(&altitude)) {
+					break;
+				}
 
-			// bound
-			Boxlf bound;
-			if (!reader.readDouble(&(bound.x1))) {
-				return ret;
-			}
-			if (!reader.readDouble(&(bound.y1))) {
-				return ret;
-			}
-			if (!reader.readDouble(&(bound.z1))) {
-				return ret;
-			}
-			if (!reader.readDouble(&(bound.x2))) {
-				return ret;
-			}
-			if (!reader.readDouble(&(bound.y2))) {
-				return ret;
-			}
-			if (!reader.readDouble(&(bound.z2))) {
-				return ret;
-			}
-			sl_uint8 nTextureLevels;
-			if (!reader.readUint8(&nTextureLevels)) {
-				return ret;
-			}
-			sl_uint8 lenFileName;
-			if (!reader.readUint8(&lenFileName)) {
-				return ret;
-			}
-			char aFileName[256];
-			if (reader.read(aFileName, (sl_uint32)lenFileName) != lenFileName) {
-				return ret;
-			}
+				// bound
+				Boxlf bound;
+				if (!reader.readDouble(&(bound.x1))) {
+					break;
+				}
+				if (!reader.readDouble(&(bound.y1))) {
+					break;
+				}
+				if (!reader.readDouble(&(bound.z1))) {
+					break;
+				}
+				if (!reader.readDouble(&(bound.x2))) {
+					break;
+				}
+				if (!reader.readDouble(&(bound.y2))) {
+					break;
+				}
+				if (!reader.readDouble(&(bound.z2))) {
+					break;
+				}
+				sl_uint8 nTextureLevels;
+				if (!reader.readUint8(&nTextureLevels)) {
+					break;
+				}
+				sl_uint8 lenFileName;
+				if (!reader.readUint8(&lenFileName)) {
+					break;
+				}
+				char aFileName[256];
+				if (reader.read(aFileName, (sl_uint32)lenFileName) != lenFileName) {
+					break;
+				}
 
-			sl_uint8 lenImageFileName;
-			if (!reader.readUint8(&lenImageFileName)) {
-				return ret;
-			}
-			char aImageFileName[256];
-			if (reader.read(aImageFileName, (sl_uint32)lenImageFileName) != lenImageFileName) {
-				return ret;
-			}
+				sl_uint8 lenImageFileName;
+				if (!reader.readUint8(&lenImageFileName)) {
+					break;
+				}
+				char aImageFileName[256];
+				if (reader.read(aImageFileName, (sl_uint32)lenImageFileName) != lenImageFileName) {
+					break;
+				}
 
-			SLIB_NEW_REF(VW_Building_ObjectInfo, building);
-			if (building) {
-				building->flagBridge = flagBridge;
-				building->dataType = dataType;
-				building->location = location;
+				building = new VW_Building_ObjectInfo;
+				if (building) {
+					building->flagBridge = flagBridge;
+					building->dataType = dataType;
+					building->location = location;
 
-				building->version = version;
-				building->objectType = objectType;
-				building->key = String::fromUtf8(aKey, lenKey);
-				building->longitude = longitude;
-				building->latitude = latitude;
-				building->altitude = altitude;
-				building->bound.setStart(convertVWPosition(bound.getStart()));
-				building->bound.setEnd(convertVWPosition(bound.getEnd()));
-				building->nTextureLevels = nTextureLevels;
+					building->version = version;
+					building->objectType = objectType;
+					building->key = String::fromUtf8(aKey, lenKey);
+					building->longitude = longitude;
+					building->latitude = latitude;
+					building->altitude = altitude;
+					building->bound.setStart(convertVWPosition(bound.getStart()));
+					building->bound.setEnd(convertVWPosition(bound.getEnd()));
+					building->nTextureLevels = nTextureLevels;
 
-				building->objectFileName = String::fromUtf8(aFileName, lenFileName);
-				building->imageFileName = String::fromUtf8(aImageFileName, lenImageFileName);
+					building->objectFileName = String::fromUtf8(aFileName, lenFileName);
+					building->imageFileName = String::fromUtf8(aImageFileName, lenImageFileName);
+				}
+			} while (0);
 
+			if (building.isNotNull()) {
 				ret.add(building);
+			} else {
+				return ret;
 			}
 		}
 	}
