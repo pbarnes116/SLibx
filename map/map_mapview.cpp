@@ -187,7 +187,7 @@ void MapView::onMouseEvent(UIEvent* event)
 		getCamera()->clearMotions();
 
 		sl_real lenCompass = (pt - getCompassPosition()).getLength();
-		if (isCompassVisible() && lenCompass < getCompassSize() / 2 && lenCompass > getCompassSize() / 8) {
+		if (isCompassVisible() && lenCompass < getCompassSize() * 0.35f && lenCompass > getCompassSize() / 8) {
 			m_flagCompassHighlight = sl_true;
 			m_compassMouseDown = getCamera()->getRotationZ();
 		} else {
