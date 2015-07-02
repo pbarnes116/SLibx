@@ -6,6 +6,15 @@
 
 SLIB_MAP_NAMESPACE_BEGIN
 
+class MapGISPoiData_Sort
+{
+public:
+	SLIB_INLINE static MAP_GIS_POI_TYPE key(MapGISPoiData& tile)
+	{
+		return tile.type;
+	}
+};
+
 List<MapGISPoiData> MapGISPoi_DataLoader::loadTile(Ref<MapDataLoader> data, String type, const MapTileLocation& location)
 {
 	List<MapGISPoiData> ret;
@@ -22,11 +31,12 @@ List<MapGISPoiData> MapGISPoi_DataLoader::loadTile(Ref<MapDataLoader> data, Stri
 		MAP_GIS_POI_TYPE type = (MAP_GIS_POI_TYPE)reader.readInt32CVLI();
 		poi.location.latitude = reader.readDouble();
 		poi.location.longitude = reader.readDouble();
-
+		poi.type = type;
 		if (poi.id > 0) {
 			ret.add(poi);
 		}
 	}
+	//ret = ret.sortBy<MapGISPoiData_Sort, MAP_GIS_POI_TYPE>(sl_false);
 	return ret;
 }
 

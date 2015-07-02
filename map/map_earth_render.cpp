@@ -219,10 +219,10 @@ void MapEarthRenderer::_renderMarker(RenderEngine* engine, MapMarker* marker)
 				}
 				marker->textFont->setSize((sl_uint32)(marker->textFontSize * screenRatio));
 				Sizei size = marker->textFont->getStringExtent(text);
-				Ref<Image> image = Image::create(size.width + 5, size.height + 5);
+				Ref<Image> image = Image::create(size.width + 8, size.height + 8);
 				if (image.isNotNull()) {
-					marker->textFont->drawString(image, 1, size.height + 1, text, Color::Black);
-					marker->textFont->drawString(image, 2, size.height + 2, text, marker->textColor);
+					marker->textFont->strokeString(image, 3, size.height + 2, text, Color::Black, 2);
+					marker->textFont->drawString(image, 3, size.height + 2, text, marker->textColor);
 					Ref<Texture> texture = Texture::create(image);
 					if (texture.isNotNull()) {
 						marker->_textureText = texture;
