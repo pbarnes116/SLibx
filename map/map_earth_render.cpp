@@ -4,6 +4,9 @@
 
 SLIB_MAP_NAMESPACE_BEGIN
 
+#define MAX_LEVEL 25
+#define MAX_RENDER_POIS 1000
+
 void MapEarthRenderer::render(RenderEngine* engine)
 {
 	if (!m_flagInitialized) {
@@ -99,17 +102,17 @@ void MapEarthRenderer::_renderBuilding(RenderEngine* engine, MapBuilding* buildi
 void MapEarthRenderer::_renderGISLine(RenderEngine* engine, MapGISLineTile* tile)
 {
 	Ref<MapDEMTile> dem = m_tilesDEM->getTileHierarchically(tile->location, sl_null);
-	ListLocker<MapGISShape> list(tile->shapes);
+	ListLocker< Ref<MapGISShape> > list(tile->shapes);
 	for (sl_size i = 0; i < list.count(); i++) {
-		MapGISShape& s = list[i];
-		ListLocker<MapGISLineData> lines(s.lines);
+		Ref<MapGISShape>& s = list[i];
+		ListLocker<MapGISLineData> lines(s->lines);
 		sl_uint32 n = (sl_uint32)(lines.count());
 		if (n > 0) {
-			m_programLine->setDiffuseColor(s.color);
-			engine->setLineWidth(s.width);
+			m_programLine->setDiffuseColor(s->color);
+			engine->setLineWidth(s->width);
 			Ref<VertexBuffer> vb;
-			if (s.vb.isNotNull() && dem == s.demTileRef) {
-				vb = s.vb;
+			if (s->vb.isNotNull() && dem == s->demTileRef) {
+				vb = s->vb;
 			} else {
 				SLIB_SCOPED_ARRAY(Vector3, pos, n * 2);
 				for (sl_uint32 i = 0; i < n; i++) {
@@ -133,9 +136,9 @@ void MapEarthRenderer::_renderGISLine(RenderEngine* engine, MapGISLineTile* tile
 						pos[i * 2 + 1] = MapEarth::getCartesianPosition(GeoLocation(lines[i].end, altitude));
 					}
 				}
-				s.demTileRef = dem;
-				s.vb = VertexBuffer::create(pos, n * 2 * sizeof(Vector3));
-				vb = s.vb;
+				s->demTileRef = dem;
+				s->vb = VertexBuffer::create(pos, n * 2 * sizeof(Vector3));
+				vb = s->vb;
 			}
 			if (vb.isNotNull()) {
 				engine->draw(m_programLine, n * 2, vb, Primitive::typeLines);
@@ -144,56 +147,39 @@ void MapEarthRenderer::_renderGISLine(RenderEngine* engine, MapGISLineTile* tile
 	}
 }
 
-void MapEarthRenderer::_renderGISPoi(RenderEngine* engine, MapGISPoiTile* tile)
+void MapEarthRenderer::_renderGISPoi(RenderEngine* engine, MapGISPoi* poi, const Ref<FreeType>& font)
 {
-	ListLocker<MapGISPoi> list(tile->pois); 
-	Ref<FreeType> font = getFontForPOI();
-	if (font.isNull()) {
-		return;
-	}
 	sl_real screenRatio = (sl_real)m_viewportWidth / 1280;
-	for (sl_size i = 0; i < list.count(); i++) {
-		MapGISPoi& s = list[i];
-		MapGISPoiInfo poiInfo;
-		if (s.texture.isNull()) {
-			if (m_poiInfo.get(s.id, &poiInfo)) {
 
-				String text = poiInfo.name;
-				s._type = (MAP_GIS_POI_TYPE)(poiInfo.type);
-				s.initPoi();
-				
-				if (s.showMinLevel <= (sl_int32)(tile->location.level)) {
-					if (s._type != MAP_GIS_POI_TYPE::POITypeNone && text.length() > 0) {
-						if (text.length() > 50) {
-							text = text.substring(0, 50);
-						}
-						font->setSize((sl_uint32)(s.fontSize * screenRatio * 1.5f));
-						Sizei size = font->getStringExtent(text);
-						Ref<Image> image = Image::create(size.width + 6, size.height + 8);
-						if (image.isNotNull()) {
-							font->strokeString(image, 3, size.height + 2, text, Color::Black, 2);
-							font->drawString(image, 3, size.height + 2, text, s.clr);
-							Ref<Texture> texture = Texture::create(image);
-							if (texture.isNotNull()) {
-								s.texture = texture;
-							}
-						}
-					}
-				}
+	MapGISPoi& s = *poi;
+	if (s.texture.isNull()) {
+		String text = s.text;
+		if (text.length() > 50) {
+			text = text.substring(0, 50);
+		}
+		font->setSize((sl_uint32)(s.fontSize * screenRatio * 1.5f));
+		Sizei size = font->getStringExtent(text);
+		Ref<Image> image = Image::create(size.width + 6, size.height + 8);
+		if (image.isNotNull()) {
+			font->strokeString(image, 3, size.height + 2, text, Color::Black, 2);
+			font->drawString(image, 3, size.height + 2, text, s.clr);
+			Ref<Texture> texture = Texture::create(image);
+			if (texture.isNotNull()) {
+				s.texture = texture;
 			}
 		}
-		if (s.texture.isNotNull()) {
-			MapTileLocation location = getTileLocationFromLatLon(tile->location.level, s.location);
-			float altitude = m_tilesDEM->getAltitudeHierarchically(location);
-			Vector3 pos = MapEarth::getCartesianPosition(GeoLocation(s.location, altitude));
-			if (m_viewFrustum.containsPoint(pos)) {
-				Vector2 ps = convertPointToScreen(pos);
-				float w = (float)(s.texture->getWidth());
-				float h = (float)(s.texture->getHeight());
-				engine->drawTexture2D(
-					engine->screenToViewport(ps.x - w / 2, ps.y - h / 2, w, h)
-					, s.texture);
-			}
+	}
+	if (s.texture.isNotNull()) {
+		MapTileLocation location = getTileLocationFromLatLon(s.level, s.location);
+		float altitude = m_tilesDEM->getAltitudeHierarchically(location);
+		Vector3 pos = MapEarth::getCartesianPosition(GeoLocation(s.location, altitude));
+		if (m_viewFrustum.containsPoint(pos)) {
+			Vector2 ps = convertPointToScreen(pos);
+			float w = (float)(s.texture->getWidth());
+			float h = (float)(s.texture->getHeight());
+			engine->drawTexture2D(
+				engine->screenToViewport(ps.x - w / 2, ps.y - h / 2, w, h)
+				, s.texture);
 		}
 	}
 }
@@ -632,11 +618,38 @@ void MapEarthRenderer::_renderGISLines(RenderEngine* engine)
 
 void MapEarthRenderer::_renderGISPois(RenderEngine* engine)
 {
-	ListLocker<MapTileLocationi> list(m_listRenderedTiles.duplicate());
-	for (sl_size i = 0; i < list.count(); i++) {
-		Ref<MapGISPoiTile> tile = m_tilesGISPoi->getTile(list[i]);
-		if (tile.isNotNull()) {
-			_renderGISPoi(engine, tile);
+	Ref<FreeType> font = getFontForPOI();
+	if (font.isNull()) {
+		return;
+	}
+	List< Ref<MapGISPoi> > pois[MAX_LEVEL];
+	{
+		ListLocker<MapTileLocationi> list(m_listRenderedTiles.duplicate());
+		for (sl_size i = 0; i < list.count(); i++) {
+			Ref<MapGISPoiTile> tile = m_tilesGISPoi->getTile(list[i]);
+			if (tile.isNotNull()) {
+				ListLocker< Ref<MapGISPoi> > list(tile->pois);
+				for (sl_size k = 0; k < list.count(); k++) {
+					Ref<MapGISPoi> poi = list[k];
+					poi->init(m_poiInfo);
+					if (poi->type != MapGISPoiData::typeNone && poi->text.isNotEmpty() && poi->showMinLevel <= (sl_int32)(poi->level)) {
+						if (poi->showMinLevel < MAX_LEVEL) {
+							pois[poi->showMinLevel].add(poi);
+						}
+					}
+				}
+			}
+		}
+	}
+	int n = 0;
+	for (sl_int32 m = MAX_LEVEL - 1; m >= 0; m--) {
+		ListLocker< Ref<MapGISPoi> > list(pois[m]);
+		for (sl_size i = 0; i < list.count(); i++) {
+			_renderGISPoi(engine, list[i], font);
+			n++;
+			if (n > MAX_RENDER_POIS) {
+				return;
+			}
 		}
 	}
 }

@@ -19,7 +19,7 @@ List<MapGISPoiData> MapGISPoi_DataLoader::loadTile(Ref<MapDataLoader> data, Stri
 	for (sl_int32 poiIndex = 0; poiIndex < poiCount; poiIndex++) {
 		MapGISPoiData poi;
 		poi.id = reader.readInt64CVLI();
-		MAP_GIS_POI_TYPE type = (MAP_GIS_POI_TYPE)reader.readInt32CVLI();
+		MapGISPoiData::Type type = (MapGISPoiData::Type)(reader.readInt32CVLI());
 		poi.location.latitude = reader.readDouble();
 		poi.location.longitude = reader.readDouble();
 		poi.type = type;

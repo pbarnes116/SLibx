@@ -50,11 +50,13 @@ Ref<MapGISLineTile> MapGISLineTileManager::loadTile(const MapTileLocationi& loca
 					Ref<MapGISShapeData> s = ls[i];
 					if (s.isNotNull()) {
 						if (s->showMinLevel <= location.level) {							
-							MapGISShape o;
-							o.color = s->clr;
-							o.width = s->width * screenRatio;
-							o.lines = s->lines;
-							tile->shapes.add(o);
+							Ref<MapGISShape> o = new MapGISShape;
+							if (o.isNotNull()) {
+								o->color = s->clr;
+								o->width = s->width * screenRatio;
+								o->lines = s->lines;
+								tile->shapes.add(o);
+							}
 						}
 					}
 				}
@@ -111,35 +113,44 @@ MapGISPoiTileManager::MapGISPoiTileManager()
 	setMaxTilesCount(SLIB_MAP_MAX_GIS_POI_TILES_COUNT);
 }
 
-void MapGISPoi::initPoi()
+void MapGISPoi::init(Map<sl_int64, MapGISPoiInfo>& info)
 {
-	MAP_GIS_POI_TYPE type = _type;
-	if (type != POITypeNone) {
+	if (_flagInit) {
+		return;
+	}
+	_flagInit = sl_true;
+	MapGISPoiInfo poiInfo;
+	if (!(info.get(id, &poiInfo))) {
+		return;
+	}
+	type = (MapGISPoiData::Type)(poiInfo.type);
+	text = poiInfo.name;
+	if (type != MapGISPoiData::typeNone) {
 		showMinLevel = 15;
 		clr = Color::White;
 		fontSize = 13;
-		if (type == NaturalLake || type == NaturalMountain || type == NaturalRiver) {
+		if (type == MapGISPoiData::typeNaturalLake || type == MapGISPoiData::typeNaturalMountain || type == MapGISPoiData::typeNaturalRiver) {
 			showMinLevel = 5;
 			clr = Color::White;
 			fontSize = 16;
 		}
-		if (type == PlaceCountry) {
-			showMinLevel = 5;
+		if (type == MapGISPoiData::typePlaceCountry) {
+			showMinLevel = 4;
 			clr = Color::Red;
 			fontSize = 26;
-		} else if (type == PlaceState) {
-			showMinLevel = 6;
+		} else if (type == MapGISPoiData::typePlaceState) {
+			showMinLevel = 5;
 			clr = Color::Yellow;
 			fontSize = 24;
-		} else if (type == PlaceCity) {
+		} else if (type == MapGISPoiData::typePlaceCity) {
 			showMinLevel = 7;
 			clr = Color::YellowGreen;
 			fontSize = 18;
-		} else if (type == PlaceTown) {
+		} else if (type == MapGISPoiData::typePlaceTown) {
 			showMinLevel = 10;
 			clr = Color::LightCyan;
 			fontSize = 15;
-		} else if (type == PlaceVilliage) {
+		} else if (type == MapGISPoiData::typePlaceVilliage) {
 			showMinLevel = 13;
 			clr = Color::White;
 			fontSize = 15;
@@ -192,10 +203,13 @@ Ref<MapGISPoiTile> MapGISPoiTileManager::loadTile(const MapTileLocationi& locati
 			{
 				ListLocker<MapGISPoiData> list(pois);
 				for (sl_size i = 0; i < list.count(); i++) {
-					MapGISPoi p;
-					p.location = list[i].location;
-					p.id = list[i].id;
-					tile->pois.add(p);
+					Ref<MapGISPoi> p = new MapGISPoi;
+					if (p.isNotNull()) {
+						p->location = list[i].location;
+						p->level = location.level;
+						p->id = list[i].id;
+						tile->pois.add(p);
+					}
 				}
 			}
 			m_tiles.put(location, tile);

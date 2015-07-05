@@ -16,8 +16,9 @@
 
 SLIB_MAP_NAMESPACE_BEGIN
 
-struct MapGISShape
+class MapGISShape : public Referable
 {
+public:
 	Color color;
 	sl_real width;
 	List<MapGISLineData> lines;
@@ -32,7 +33,7 @@ class MapGISLineTile : public Referable
 public:
 	MapTileLocationi location;
 	sl_bool flagLoaded;
-	List<MapGISShape> shapes;
+	List< Ref<MapGISShape> > shapes;
 	Time timeLastAccess;
 };
 
@@ -63,25 +64,38 @@ public:
 	}
 };
 
-class MapGISPoi
+class MapGISPoi : public Referable
 {
 public:
+	SLIB_INLINE MapGISPoi()
+	{
+		_flagInit = sl_false;
+	}
+
+public:
 	LatLon location;
+	sl_uint32 level;
 	sl_int64 id;
 	Ref<Texture> texture;
 
-	MAP_GIS_POI_TYPE _type;
+	String text;
+	MapGISPoiData::Type type;
+
 	sl_int32 showMinLevel;
 	sl_uint32 fontSize;
 	Color clr;
-	void initPoi();
+
+	void init(Map<sl_int64, MapGISPoiInfo>& info);
+
+private:
+	sl_bool _flagInit;
 };
 class MapGISPoiTile : public Referable
 {
 public:
 	MapTileLocationi location;
 	sl_bool flagLoaded;
-	List<MapGISPoi> pois;
+	List< Ref<MapGISPoi> > pois;
 	Time timeLastAccess;
 };
 

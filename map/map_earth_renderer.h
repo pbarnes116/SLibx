@@ -192,7 +192,7 @@ protected:
 	void _renderGISLine(RenderEngine* engine, MapGISLineTile* line);
 
 	void _renderGISPois(RenderEngine* engine);
-	void _renderGISPoi(RenderEngine* engine, MapGISPoiTile* poi);
+	void _renderGISPoi(RenderEngine* engine, MapGISPoi* poi, const Ref<FreeType>& font);
 
 	void _renderMarkers(RenderEngine* engine);
 	void _renderMarker(RenderEngine* engine, MapMarker* marker);
