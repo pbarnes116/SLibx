@@ -140,15 +140,6 @@ Ref<MapDEMTile> MapDEMTileManager::loadTileHierarchically(const MapTileLocationi
 
 void MapDEMTileManager::freeOldTiles()
 {
-	class SortTile
-	{
-	public:
-		SLIB_INLINE static Time key(Ref<MapDEMTile>& tile)
-		{
-			return tile->timeLastAccess;
-		}
-	};
-
 	sl_int64 timeLimit = getTileLifeMillseconds();
 	sl_uint32 tileLimit = getMaxTilesCount();
 	Time now = Time::now();
@@ -169,7 +160,15 @@ void MapDEMTileManager::freeOldTiles()
 			}
 		}
 	}
-	tiles = tiles.sortBy<SortTile, Time>(sl_false);
+	class _Compare
+	{
+	public:
+		SLIB_INLINE static int compare(const Ref<MapDEMTile>& a, const Ref<MapDEMTile>& b)
+		{
+			return Compare<Time>::compare(b->timeLastAccess, a->timeLastAccess);
+		}
+	};
+	tiles.sortBy<_Compare>();
 	{
 		ListLocker< Ref<MapDEMTile> > t(tiles);
 		for (sl_size i = tileLimit; i < t.count(); i++) {

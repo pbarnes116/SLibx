@@ -27,7 +27,6 @@ List<MapGISPoiData> MapGISPoi_DataLoader::loadTile(Ref<MapDataLoader> data, Stri
 			ret.add(poi);
 		}
 	}
-	//ret = ret.sortBy<MapGISPoiData_Sort, MAP_GIS_POI_TYPE>(sl_false);
 	return ret;
 }
 

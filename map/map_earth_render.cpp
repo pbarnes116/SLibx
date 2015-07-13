@@ -548,14 +548,6 @@ void MapEarthRenderer::_renderBuildings(RenderEngine* engine)
 		Ref<MapBuilding> object;
 		sl_real distance;
 	};
-	struct SortBuilding
-	{
-	public:
-		SLIB_INLINE static sl_real key(_Building& b)
-		{
-			return b.distance;
-		}
-	};
 	Vector3 eye = m_positionEye;
 	List<_Building> buildings;
 	{
@@ -576,7 +568,15 @@ void MapEarthRenderer::_renderBuildings(RenderEngine* engine)
 			}
 		}
 	}
-	buildings = buildings.sortBy<SortBuilding, sl_real>(sl_true);
+	class _Compare
+	{
+	public:
+		SLIB_INLINE static int compare(const _Building& a, const _Building& b)
+		{
+			return Compare<sl_real>::compare(a.distance, b.distance);
+		}
+	};
+	buildings.sortBy<_Compare>();
 	buildings.setCount(Math::min(m_tilesBuilding->getMaxBuildingsCount(), (sl_uint32)(buildings.count())));
 	{
 		sl_bool flagRequestTexture = sl_false;

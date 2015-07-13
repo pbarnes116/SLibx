@@ -164,15 +164,6 @@ Ref<MapPictureTile> MapPictureTileManager::loadTileHierarchically(const MapTileL
 
 void MapPictureTileManager::freeOldTiles()
 {
-	class SortTile
-	{
-	public:
-		SLIB_INLINE static Time key(Ref<MapPictureTile>& tile)
-		{
-			return tile->timeLastAccess;
-		}
-	};
-
 	sl_int64 timeLimit = getTileLifeMillseconds();
 	sl_uint32 tileLimit = getMaxTilesCount();
 	Time now = Time::now();
@@ -193,7 +184,16 @@ void MapPictureTileManager::freeOldTiles()
 			}
 		}
 	}
-	tiles = tiles.sortBy<SortTile, Time>(sl_false);
+
+	class _Compare
+	{
+	public:
+		SLIB_INLINE static int compare(const Ref<MapPictureTile>& a, const Ref<MapPictureTile>& b)
+		{
+			return Compare<Time>::compare(b->timeLastAccess, a->timeLastAccess);
+		}
+	};
+	tiles.sortBy<_Compare>();
 	{
 		ListLocker< Ref<MapPictureTile> > t(tiles);
 		for (sl_size i = tileLimit; i < t.count(); i++) {

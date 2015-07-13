@@ -64,7 +64,7 @@ sl_bool SecureFilePackage::createFromFiles(String filePath, const CreateParam& p
 	}
 
 	if (!flagSorted) {
-		listSourceFilePaths = listSourceFilePaths.sort(sl_true);
+		listSourceFilePaths.sort(sl_true);
 	}
 
 	sl_uint8 password[32];

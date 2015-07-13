@@ -68,17 +68,12 @@ Ref<MapGISLineTile> MapGISLineTileManager::loadTile(const MapTileLocationi& loca
 	return Ref<MapGISLineTile>::null();
 }
 
+class _MapGISLineTileManager_Compare
+{
+
+};
 void MapGISLineTileManager::freeOldTiles()
 {
-	class SortTile
-	{
-	public:
-		SLIB_INLINE static Time key(Ref<MapGISLineTile>& tile)
-		{
-			return tile->timeLastAccess;
-		}
-	};
-
 	sl_int64 timeLimit = getTileLifeMillseconds();
 	sl_uint32 tileLimit = getMaxTilesCount();
 	Time now = Time::now();
@@ -97,7 +92,15 @@ void MapGISLineTileManager::freeOldTiles()
 			}
 		}
 	}
-	tiles = tiles.sortBy<SortTile, Time>(sl_false);
+	class _Compare
+	{
+	public:
+		SLIB_INLINE static int compare(const Ref<MapGISLineTile>& a, const Ref<MapGISLineTile>& b)
+		{
+			return Compare<Time>::compare(b->timeLastAccess, a->timeLastAccess);
+		}
+	};
+	tiles.sortBy<_Compare>();
 	{
 		ListLocker< Ref<MapGISLineTile> > t(tiles);
 		for (sl_size i = tileLimit; i < t.count(); i++) {
@@ -221,15 +224,6 @@ Ref<MapGISPoiTile> MapGISPoiTileManager::loadTile(const MapTileLocationi& locati
 
 void MapGISPoiTileManager::freeOldTiles()
 {
-	class SortTile
-	{
-	public:
-		SLIB_INLINE static Time key(Ref<MapGISPoiTile>& tile)
-		{
-			return tile->timeLastAccess;
-		}
-	};
-
 	sl_int64 timeLimit = getTileLifeMillseconds();
 	sl_uint32 tileLimit = getMaxTilesCount();
 	Time now = Time::now();
@@ -247,8 +241,16 @@ void MapGISPoiTileManager::freeOldTiles()
 				}
 			}
 		}
-	}
-	tiles = tiles.sortBy<SortTile, Time>(sl_false);
+	}	
+	class _Compare
+	{
+	public:
+		SLIB_INLINE static int compare(const Ref<MapGISPoiTile>& a, const Ref<MapGISPoiTile>& b)
+		{
+			return Compare<Time>::compare(b->timeLastAccess, a->timeLastAccess);
+		}
+	};
+	tiles.sortBy<_Compare>();
 	{
 		ListLocker< Ref<MapGISPoiTile> > t(tiles);
 		for (sl_size i = tileLimit; i < t.count(); i++) {

@@ -52,15 +52,6 @@ Ref<MapBuildingTile> MapBuildingTileManager::loadTile(const MapTileLocationi& lo
 
 void MapBuildingTileManager::freeOldTiles()
 {
-	class SortTile
-	{
-	public:
-		SLIB_INLINE static Time key(Ref<MapBuildingTile>& tile)
-		{
-			return tile->timeLastAccess;
-		}
-	};
-
 	sl_int64 timeLimit = getTileLifeMillseconds();
 	sl_uint32 tileLimit = getMaxTilesCount();
 	Time now = Time::now();
@@ -79,7 +70,15 @@ void MapBuildingTileManager::freeOldTiles()
 			}
 		}
 	}
-	tiles = tiles.sortBy<SortTile, Time>(sl_false);
+	class _Compare
+	{
+	public:
+		SLIB_INLINE static int compare(const Ref<MapBuildingTile>& a, const Ref<MapBuildingTile>& b)
+		{
+			return Compare<Time>::compare(b->timeLastAccess, a->timeLastAccess);
+		}
+	};
+	tiles.sortBy<_Compare>();
 	{
 		ListLocker< Ref<MapBuildingTile> > t(tiles);
 		for (sl_size i = tileLimit; i < t.count(); i++) {
@@ -127,15 +126,6 @@ Ref<MapBuilding> MapBuildingTileManager::loadBuilding(VW_Building_ObjectInfo* in
 
 void MapBuildingTileManager::freeOldBuildings()
 {
-	class SortBuilding
-	{
-	public:
-		SLIB_INLINE static Time key(Ref<MapBuilding>& tile)
-		{
-			return tile->timeLastAccess;
-		}
-	};
-
 	sl_int64 timeLimit = getTileLifeMillseconds();
 	sl_uint32 tileLimit = getMaxBuildingsCount() * 2;
 	Time now = Time::now();
@@ -154,7 +144,15 @@ void MapBuildingTileManager::freeOldBuildings()
 			}
 		}
 	}
-	buildings = buildings.sortBy<SortBuilding, Time>(sl_false);
+	class _Compare
+	{
+	public:
+		SLIB_INLINE static int compare(const Ref<MapBuilding>& a, const Ref<MapBuilding>& b)
+		{
+			return Compare<Time>::compare(b->timeLastAccess, a->timeLastAccess);
+		}
+	};
+	buildings.sortBy<_Compare>();
 	{
 		ListLocker< Ref<MapBuilding> > t(buildings);
 		for (sl_size i = tileLimit; i < t.count(); i++) {
@@ -236,14 +234,6 @@ String MapBuildingTileManager::_getDetailedTextureKey(String key, sl_uint32 inde
 
 void MapBuildingTileManager::freeOldDetailedTextures()
 {
-	class SortTexture
-	{
-	public:
-		SLIB_INLINE static Time key(Ref<_BuildingTexture>& tile)
-		{
-			return tile->timeLastAccess;
-		}
-	};
 	sl_int64 timeLimit = getTileLifeMillseconds();
 	sl_uint32 tileLimit = getMaxDetailedBuildingsCount() * 2;
 	Time now = Time::now();
@@ -262,7 +252,15 @@ void MapBuildingTileManager::freeOldDetailedTextures()
 			}
 		}
 	}
-	buildings = buildings.sortBy<SortTexture, Time>(sl_false);
+	class _Compare
+	{
+	public:
+		SLIB_INLINE static int compare(const Ref<_BuildingTexture>& a, const Ref<_BuildingTexture>& b)
+		{
+			return Compare<Time>::compare(b->timeLastAccess, a->timeLastAccess);
+		}
+	};
+	buildings.sortBy<_Compare>();
 	{
 		ListLocker< Ref<_BuildingTexture> > t(buildings);
 		for (sl_size i = tileLimit; i < t.count(); i++) {

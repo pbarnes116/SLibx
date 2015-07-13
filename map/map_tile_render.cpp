@@ -28,15 +28,6 @@ void MapRenderTileManager::saveTile(const MapTileLocationi& location, const Ref<
 
 void MapRenderTileManager::freeOldTiles()
 {
-	class SortTile
-	{
-	public:
-		SLIB_INLINE static Time key(Ref<MapRenderTile>& tile)
-		{
-			return tile->timeLastAccess;
-		}
-	};
-	
 	sl_int64 timeLimit = getTileLifeMillseconds();
 	sl_uint32 tileLimit = getMaxTilesCount();
 	Time now = Time::now();
@@ -55,7 +46,15 @@ void MapRenderTileManager::freeOldTiles()
 			}
 		}
 	}
-	tiles = tiles.sortBy<SortTile, Time>(sl_false);
+	class _Compare
+	{
+	public:
+		SLIB_INLINE static int compare(const Ref<MapRenderTile>& a, const Ref<MapRenderTile>& b)
+		{
+			return Compare<Time>::compare(b->timeLastAccess, a->timeLastAccess);
+		}
+	};
+	tiles.sortBy<_Compare>();
 	{
 		ListLocker< Ref<MapRenderTile> > t(tiles);
 		for (sl_size i = tileLimit; i < t.count(); i++) {

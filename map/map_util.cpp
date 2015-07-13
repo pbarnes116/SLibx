@@ -2,17 +2,6 @@
 #include "../../../inc/slib/core/hashtable.h"
 
 SLIB_MAP_NAMESPACE_BEGIN
-
-sl_uint32 hashCode(const MapTileLocationi& location)
-{
-	sl_uint64 c = location.level;
-	c <<= 30;
-	c ^= location.y;
-	c <<= 30;
-	c ^= location.x;
-	return hashCode(c);
-}
-
 String MapTilePath::makeGenericStylePath(const MapTileLocationi& location, String* _packagePath, String* _filePath)
 {
 	String packagePath;

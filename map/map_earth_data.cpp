@@ -79,14 +79,7 @@ void MapEarthRenderer::_runThreadDataBuildingStep()
 		Ref<VW_Building_ObjectInfo> info;
 		sl_real distance;
 	};
-	struct _SortBuildingInfo
-	{
-	public:
-		SLIB_INLINE static sl_real key(_BuildingInfo& info)
-		{
-			return info.distance;
-		}
-	};
+	
 	if (isShowBuilding()) {
 
 		Vector3 eye = m_positionEye;
@@ -136,7 +129,15 @@ void MapEarthRenderer::_runThreadDataBuildingStep()
 		}
 		// select objects
 		{
-			infos = infos.sortBy<_SortBuildingInfo, sl_real>(sl_true);
+			class _Compare
+			{
+			public:
+				SLIB_INLINE static int compare(const _BuildingInfo& a, const _BuildingInfo& b)
+				{
+					return Compare<sl_real>::compare(a.distance, b.distance);
+				}
+			};
+			infos.sortBy<_Compare>();
 			infos.setCount(Math::min(10, (sl_int32)(infos.count())));
 		}
 		if (Thread::isStoppingCurrent()) {
