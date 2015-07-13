@@ -74,7 +74,7 @@ Ref<DbIp> DbIp::create(const void* _data, sl_size _size)
 			}
 			pos++;
 			IPAddress ip;
-			resultParse = ip.parse(sz, pos, len);
+			resultParse = IPAddress::parse(&ip, sz, pos, len);
 			if (resultParse == SLIB_PARSE_ERROR) {
 				break;
 			}
@@ -99,14 +99,14 @@ Ref<DbIp> DbIp::create(const void* _data, sl_size _size)
 			pos++;
 			if (ip.isIPv4()) {
 				IPv4Address ip4;
-				resultParse = ip4.parse(sz, pos, len);
+				resultParse = IPv4Address::parse(&ip4, sz, pos, len);
 				if (resultParse == SLIB_PARSE_ERROR) {
 					break;
 				}
 				item4.end = ip4.toInt();
 			} else {
 				IPv6Address ip6;
-				resultParse = ip6.parse(sz, pos, len);
+				resultParse = IPv6Address::parse(&ip6, sz, pos, len);
 				if (resultParse == SLIB_PARSE_ERROR) {
 					break;
 				}
