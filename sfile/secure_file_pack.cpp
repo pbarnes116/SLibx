@@ -129,8 +129,8 @@ sl_bool SecureFilePackage::createFromFiles(String filePath, const CreateParam& p
 		return sl_false;
 	}
 
-	AES256 enc;
-	enc.setKey(password);
+	AES enc;
+	enc.setKey(password, 32);
 #define FILE_READ_BUFFER_SIZE (1024*256)
 	sl_uint8* block = (sl_uint8*)(Base::createMemory(FILE_READ_BUFFER_SIZE));
 	for (sl_size i = 0; i < nFiles; i++) {
@@ -356,8 +356,8 @@ List<SecureFilePackage::FileDesc> SecureFilePackage::getFiles()
 		return list;
 	}
 
-	AES256 dec;
-	dec.setKey(m_password);
+	AES dec;
+	dec.setKey(m_password, 32);
 
 	if (m_flagPassword) {
 		dec.decryptBlocks(&indexHeader, &indexHeader, sizeof(indexHeader));
@@ -414,8 +414,8 @@ sl_bool SecureFilePackage::findFile(String fileName, FileDesc* output)
 		return sl_false;
 	}
 
-	AES256 dec;
-	dec.setKey(m_password);
+	AES dec;
+	dec.setKey(m_password, 32);
 
 	if (m_flagPassword) {
 		dec.decryptBlocks(&indexHeader, &indexHeader, sizeof(indexHeader));
@@ -497,8 +497,8 @@ Memory SecureFilePackage::readFile(sl_int64 position, String* pFileName)
 		return ret;
 	}
 
-	AES256 dec;
-	dec.setKey(m_password);
+	AES dec;
+	dec.setKey(m_password, 32);
 
 	file->seek(position);
 	_SECURE_FILE_CONTENT_HEADER contentHeader;
