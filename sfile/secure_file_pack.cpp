@@ -71,7 +71,7 @@ sl_bool SecureFilePackage::createFromFiles(String filePath, const CreateParam& p
 	String strPassword = param.password;
 	sl_bool flagPassword = sl_false;
 	if (strPassword.getLength() > 0) {
-		SHA2::hash256(strPassword, password);
+		SHA256::hash(strPassword, password);
 		flagPassword = sl_true;
 	}
 
@@ -83,7 +83,7 @@ sl_bool SecureFilePackage::createFromFiles(String filePath, const CreateParam& p
 	header.password_empty = 1;
 	if (flagPassword) {
 		header.password_empty = 0;
-		SHA2::hash256(password, 32, header.password_hash);
+		SHA256::hash(password, 32, header.password_hash);
 	}
 	if (file->write(&header, sizeof(header)) != sizeof(header)) {
 		SLIB_LOG_ERROR(TAG, "Writing header error");
@@ -291,7 +291,7 @@ SecureFilePackage::ErrorCode SecureFilePackage::open(String filePath, const Open
 	sl_uint8 password[32];
 	if (strPassword.getLength() > 0) {
 		flagPassword = sl_true;
-		SHA2::hash256(strPassword, password);
+		SHA256::hash(strPassword, password);
 	}
 
 	_SECURE_FILE_PACKAGE_HEADER header;
@@ -311,7 +311,7 @@ SecureFilePackage::ErrorCode SecureFilePackage::open(String filePath, const Open
 			return errorPasswordMismatch;
 		}
 		sl_uint8 password_hash[32];
-		SHA2::hash256(password, 32, password_hash);
+		SHA256::hash(password, 32, password_hash);
 		if (Base::compareMemory(password_hash, header.password_hash, 32) != 0) {
 			file->close();
 			return errorPasswordMismatch;
