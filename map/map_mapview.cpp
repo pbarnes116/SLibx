@@ -347,9 +347,10 @@ void MapView::onMouseWheelEvent(UIEvent* event)
 	if (!m_flagInit) {
 		return;
 	}
-	if (event->getDelta() > 0) {
+	sl_real delta = event->getDelta();
+	if (delta > 0) {
 		_zoom(0.5f);
-	} else {
+	} else if (delta < 0) {
 		_zoom(2.f);
 	}
 	requestRender();
