@@ -242,7 +242,7 @@ List< Ref<VW_Building_ObjectInfo> > VW_Building::readTile(Ref<MapDataLoader> dat
 				}
 
 				building = new VW_Building_ObjectInfo;
-				if (building) {
+				if (building.isNotNull()) {
 					building->flagBridge = flagBridge;
 					building->dataType = dataType;
 					building->location = location;

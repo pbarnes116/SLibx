@@ -147,7 +147,7 @@ void MapEarthRenderer::_runThreadDataBuildingStep()
 		{
 			ListLocker<_BuildingInfo> list(infos);
 			for (sl_size i = 0; i < list.count(); i++) {
-				m_tilesBuilding->loadBuilding(list[i].info);
+				m_tilesBuilding->loadBuilding(list[i].info.get());
 			}
 		}
 		if (Thread::isStoppingCurrent()) {

@@ -206,7 +206,7 @@ public:
 		sl_uint32 stack_bound[100];
 		sl_uint32 stack_bound_index = 0;
 	
-		GMesh* mesh = _mesh;
+		GMesh* mesh = _mesh.get();
 		while (1) {
 			sl_uint32 type = 0, typeTail = 0;
 			if (!readType(input, type, typeTail)) {

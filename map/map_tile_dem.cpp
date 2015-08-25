@@ -199,7 +199,7 @@ float MapDEMTileManager::getAltitude(const MapTileLocation& location)
 	Ref<MapDEMTile> dem;
 	dem = getTile(MapTileLocationi(level, iy, ix));
 	if (dem.isNotNull()) {
-		return getAltitudeFromDEM(fx, 1 - fy, dem);
+		return getAltitudeFromDEM(fx, 1 - fy, dem.get());
 	}
 	return 0;
 }
@@ -217,7 +217,7 @@ float MapDEMTileManager::getAltitudeHierarchically(const MapTileLocation& locati
 		Ref<MapDEMTile> dem;
 		dem = getTile(MapTileLocationi(level, iy, ix));
 		if (dem.isNotNull()) {
-			return getAltitudeFromDEM(fx, 1 - fy, dem);
+			return getAltitudeFromDEM(fx, 1 - fy, dem.get());
 		}
 		level--;
 		y /= 2;
@@ -238,7 +238,7 @@ float MapDEMTileManager::readAltitude(const MapTileLocation& location)
 	Ref<MapDEMTile> dem;
 	dem = loadTile(MapTileLocationi(level, iy, ix));
 	if (dem.isNotNull()) {
-		return getAltitudeFromDEM(fx, 1 - fy, dem);
+		return getAltitudeFromDEM(fx, 1 - fy, dem.get());
 	}
 	return 0;
 }
@@ -256,7 +256,7 @@ float MapDEMTileManager::readAltitudeHierarchically(const MapTileLocation& locat
 		Ref<MapDEMTile> dem;
 		dem = loadTile(MapTileLocationi(level, iy, ix));
 		if (dem.isNotNull()) {
-			return getAltitudeFromDEM(fx, 1 - fy, dem);
+			return getAltitudeFromDEM(fx, 1 - fy, dem.get());
 		}
 		level--;
 		y /= 2;

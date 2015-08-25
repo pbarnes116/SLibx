@@ -126,13 +126,13 @@ void MapEarthRenderer::_renderGISLine(RenderEngine* engine, MapGISLineTile* tile
 						altitude = MapDEMTileManager::getAltitudeFromDEM(
 							(sl_real)(location.x - dem->location.x)
 							, 1 - (sl_real)(location.y - dem->location.y)
-							, dem);
+							, dem.get());
 						pos[i * 2] = MapEarth::getCartesianPosition(GeoLocation(lines[i].start, altitude));
 						location = getTileLocationFromLatLon(dem->location.level, lines[i].end);
 						altitude = MapDEMTileManager::getAltitudeFromDEM(
 							(sl_real)(location.x - dem->location.x)
 							, 1 - (sl_real)(location.y - dem->location.y)
-							, dem);
+							, dem.get());
 						pos[i * 2 + 1] = MapEarth::getCartesianPosition(GeoLocation(lines[i].end, altitude));
 					}
 				}
@@ -334,8 +334,8 @@ void MapEarthRenderer::_renderTiles(RenderEngine* engine)
 			ListLocker< Ref<_Tile> > current(listCurrent);
 			for (sl_size i = 0; i < current.count(); i++) {
 				Ref<_Tile> tile = current[i];
-				if (_checkTileVisible(tile)) {
-					if (flagExpand && _checkTileExpandable(tile)) {
+				if (_checkTileVisible(tile.get())) {
+					if (flagExpand && _checkTileExpandable(tile.get())) {
 						listExpand.add(tile);
 					} else {
 						listRender.add(tile);
@@ -373,7 +373,7 @@ void MapEarthRenderer::_renderTiles(RenderEngine* engine)
 			if (tile->location.level > nLevelMax) {
 				nLevelMax = tile->location.level;
 			}
-			_renderTile(engine, tile);
+			_renderTile(engine, tile.get());
 			listRenderedTiles.add(tile->location);
 		}
 	}
@@ -411,28 +411,28 @@ Ref<MapEarthRenderer::_Tile> MapEarthRenderer::_getTile(const MapTileLocationi& 
 		loc.longitude = rectangle.bottomLeft.longitude;
 		loc.altitude = 0;
 		tile->positions[0] = MapEarth::getCartesianPosition(loc);
-		loc.altitude = MapDEMTileManager::getAltitudeFromDEM(rectangleDEM.left, rectangleDEM.bottom, tileDEM);
+		loc.altitude = MapDEMTileManager::getAltitudeFromDEM(rectangleDEM.left, rectangleDEM.bottom, tileDEM.get());
 		tile->positionsWithDEM[0] = MapEarth::getCartesianPosition(loc);
 		// bottom-right
 		loc.latitude = rectangle.bottomLeft.latitude;
 		loc.longitude = rectangle.topRight.longitude;
 		loc.altitude = 0;
 		tile->positions[1] = MapEarth::getCartesianPosition(loc);
-		loc.altitude = MapDEMTileManager::getAltitudeFromDEM(rectangleDEM.right, rectangleDEM.bottom, tileDEM);
+		loc.altitude = MapDEMTileManager::getAltitudeFromDEM(rectangleDEM.right, rectangleDEM.bottom, tileDEM.get());
 		tile->positionsWithDEM[1] = MapEarth::getCartesianPosition(loc);
 		// top-left
 		loc.latitude = rectangle.topRight.latitude;
 		loc.longitude = rectangle.bottomLeft.longitude;
 		loc.altitude = 0;
 		tile->positions[2] = MapEarth::getCartesianPosition(loc);
-		loc.altitude = MapDEMTileManager::getAltitudeFromDEM(rectangleDEM.left, rectangleDEM.top, tileDEM);
+		loc.altitude = MapDEMTileManager::getAltitudeFromDEM(rectangleDEM.left, rectangleDEM.top, tileDEM.get());
 		tile->positionsWithDEM[2] = MapEarth::getCartesianPosition(loc);
 		// top-right
 		loc.latitude = rectangle.topRight.latitude;
 		loc.longitude = rectangle.topRight.longitude;
 		loc.altitude = 0;
 		tile->positions[3] = MapEarth::getCartesianPosition(loc);
-		loc.altitude = MapDEMTileManager::getAltitudeFromDEM(rectangleDEM.right, rectangleDEM.top, tileDEM);
+		loc.altitude = MapDEMTileManager::getAltitudeFromDEM(rectangleDEM.right, rectangleDEM.top, tileDEM.get());
 		tile->positionsWithDEM[3] = MapEarth::getCartesianPosition(loc);
 		// center
 		loc.latitude = (rectangle.bottomLeft.latitude + rectangle.topRight.latitude) / 2;
@@ -600,7 +600,7 @@ void MapEarthRenderer::_renderBuildings(RenderEngine* engine)
 					}
 				}
 			}
-			_renderBuilding(engine, list[i].object);
+			_renderBuilding(engine, list[i].object.get());
 		}
 	}
 }
@@ -611,7 +611,7 @@ void MapEarthRenderer::_renderGISLines(RenderEngine* engine)
 	for (sl_size i = 0; i < list.count(); i++) {
 		Ref<MapGISLineTile> tile = m_tilesGISLine->getTile(list[i]);
 		if (tile.isNotNull()) {
-			_renderGISLine(engine, tile);
+			_renderGISLine(engine, tile.get());
 		}
 	}
 }
@@ -645,7 +645,7 @@ void MapEarthRenderer::_renderGISPois(RenderEngine* engine)
 	for (sl_int32 m = MAX_LEVEL - 1; m >= 0; m--) {
 		ListLocker< Ref<MapGISPoi> > list(pois[m]);
 		for (sl_size i = 0; i < list.count(); i++) {
-			_renderGISPoi(engine, list[i], font);
+			_renderGISPoi(engine, list[i].get(), font);
 			n++;
 			if (n > MAX_RENDER_POIS) {
 				return;
@@ -661,7 +661,7 @@ void MapEarthRenderer::_renderMarkers(RenderEngine* engine)
 		for (sl_size i = 0; i < list.count(); i++) {
 			Ref<MapMarker> marker = list[i];
 			if (marker.isNotNull() && marker->flagVisible) {
-				_renderMarker(engine, marker);
+				_renderMarker(engine, marker.get());
 			}
 		}
 	}
@@ -674,7 +674,7 @@ void MapEarthRenderer::_renderIcons(RenderEngine* engine)
 		for (sl_size i = 0; i < list.count(); i++) {
 			Ref<MapIcon> icon = list[i];
 			if (icon.isNotNull() && icon->flagVisible) {
-				_renderIcon(engine, icon);
+				_renderIcon(engine, icon.get());
 			}
 		}
 	}
@@ -687,7 +687,7 @@ void MapEarthRenderer::_renderPolygons(RenderEngine* engine)
 		for (sl_size i = 0; i < list.count(); i++) {
 			Ref<MapPolygon> polygon = list[i];
 			if (polygon.isNotNull()) {
-				_renderPolygon(engine, polygon);
+				_renderPolygon(engine, polygon.get());
 			}
 		}
 	}
