@@ -192,9 +192,6 @@ Ref<MapGISPoiTile> MapGISPoiTileManager::loadTile(const MapTileLocationi& locati
 	}
 	Ref<MapDataLoader> loader = getDataLoader();
 	if (loader.isNotNull()) {
-		if (location.level == 5 && location.y == 113 && location.x >269) {
-			int i = 1;
-		}
 		List<MapGISPoiData> pois = m_dataLoader.loadTile(loader, SLIB_MAP_GIS_POI_TILE_TYPE, location);
 		pois.add(m_dataLoader.loadTile(loader, SLIB_MAP_GIS_SPECIAL_POI_TILE_TYPE, location));
 		pois.add(m_dataLoader.loadTile(loader, SLIB_MAP_GIS_NK_POI_TILE_TYPE, location));

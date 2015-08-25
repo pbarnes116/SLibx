@@ -156,7 +156,9 @@ Map<String, Memory> MapPackage::getDataFromItem(const Memory& encData)
 	if (item.isNotNull()) {
 		MemoryReader reader(item);
 		sl_int64 itemUpdateTime = reader.readInt64CVLI();
+		SLIB_UNUSED(itemUpdateTime);
 		sl_int32 itemNextOffset = reader.readInt32CVLI();
+		SLIB_UNUSED(itemNextOffset);
 		sl_int32 itemCount = reader.readInt32CVLI();
 		for (sl_int32 i = 0; i < itemCount; i++) {
 			String key;
@@ -230,7 +232,6 @@ sl_bool MapPackage::write(sl_int32 offsetX, sl_int32 offsetY, const Map<String, 
 Memory MapPackage::read(sl_int32 offsetX, sl_int32 offsetY, const String& subName)
 {
 	Memory ret;
-	sl_int32 currentVersion = 0;
 	sl_int32 itemOffset = getItemOffset(offsetX, offsetY);
 	if (itemOffset != -1) {
 		Map<String, Memory> items = getDataFromItem(getItem(itemOffset));
@@ -267,7 +268,6 @@ sl_bool MapPackage::write(const String& dirPath, const MapTileLocationi& loc, co
 String MapPackage::getPackageFilePathAndOffset(const MapTileLocationi& location, sl_int32& outX, sl_int32& outY)
 {
 	String zoomFolderPath = "";
-	sl_int32 tilesNum = 1;
 
 	sl_int32 packageX = location.x / m_nTilesXNum;
 	sl_int32 packageY = location.y / m_nTilesYNum;

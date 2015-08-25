@@ -76,7 +76,7 @@ Ref<MapPictureTile> MapPictureTileManager::loadTile(const MapTileLocationi& loca
 	}
 	Ref<MapDataLoader> loader = getDataLoader();
 	if (loader.isNotNull()) {
-		Image::FileType type;
+		Image::FileType type = Image::fileTypeUnknown;
 		Ref<Image> image;
 		// first load x picture
 		{

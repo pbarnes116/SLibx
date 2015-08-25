@@ -16,6 +16,7 @@ List<MapGISPoiData> MapGISPoi_DataLoader::loadTile(Ref<MapDataLoader> data, Stri
 	MemoryReader reader(mem);
 	sl_int32 poiCount = reader.readInt32CVLI();
 	sl_int64 timeStamp = reader.readInt64CVLI();
+	SLIB_UNUSED(timeStamp);
 	for (sl_int32 poiIndex = 0; poiIndex < poiCount; poiIndex++) {
 		MapGISPoiData poi;
 		poi.id = reader.readInt64CVLI();
@@ -41,6 +42,7 @@ Map< sl_int32, Ref<MapGISShapeData> > MapGISLine_DataLoader::loadTile(Ref<MapDat
 	MemoryReader reader(mem);
 	sl_int32 poiCount = reader.readInt32CVLI();
 	sl_int64 timeStamp = reader.readInt64CVLI();
+	SLIB_UNUSED(timeStamp);
 	for (sl_int32 poiIndex = 0; poiIndex < poiCount; poiIndex++) {
 		MapGISLineData line;
 

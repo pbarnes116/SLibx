@@ -612,19 +612,19 @@ sl_bool GEarthTile::load(const void* data, sl_size size)
 		float m00 = (float)_m[0];
 		float m01 = (float)_m[1];
 		float m02 = (float)_m[2];
-		float m03 = (float)_m[3];
+		//float m03 = (float)_m[3];
 		float m10 = (float)_m[4];
 		float m11 = (float)_m[5];
 		float m12 = (float)_m[6];
-		float m13 = (float)_m[7];
+		//float m13 = (float)_m[7];
 		float m20 = (float)_m[8];
 		float m21 = (float)_m[9];
 		float m22 = (float)_m[10];
-		float m23 = (float)_m[11];
+		//float m23 = (float)_m[11];
 		float m30 = (float)_m[12];
 		float m31 = (float)_m[13];
 		float m32 = (float)_m[14];
-		float m33 = (float)_m[15];
+		//float m33 = (float)_m[15];
 		List< Ref<_GEarthTileFile::GMesh> > gmeshes(file.m_listMesh);
 		for (sl_size k = 0; k < gmeshes.count(); k++) {
 			Mesh mesh;
