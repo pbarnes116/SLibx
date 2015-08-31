@@ -13,7 +13,7 @@ Memory MapDataLoaderList::loadData(const String& type, const MapTileLocationi& l
 		Ref<MapDataLoader> loader = loaders[i];
 		if (loader.isNotNull()) {
 			Memory ret = loader->loadData(type, location, packageDimension, subPath);
-			if (ret.isNotNull()) {
+			if (ret.isNotEmpty()) {
 				return ret;
 			}
 		}
@@ -43,7 +43,7 @@ Memory MapData_GenericFileLoader::loadData(const String& type, const MapTileLoca
 			subPath = String::null();
 		}
 		Memory mem = pkgReader.read(getBasePath() + "/" + type, location, subPath);
-		if (mem.isNotNull()) {
+		if (mem.isNotEmpty()) {
 			return mem;
 		}
  	}
@@ -56,7 +56,7 @@ Memory MapData_GenericFileLoader::loadData(const String& type, const MapTileLoca
 		MapTilePath::makeGenericStylePath(location, &packagePath, &filePath);
 		filePath += _subPath;
 		Memory ret = _readData(prefix + packagePath, filePath);
-		if (ret.isNotNull()) {
+		if (ret.isNotEmpty()) {
 			return ret;
 		}
 	}
@@ -65,7 +65,7 @@ Memory MapData_GenericFileLoader::loadData(const String& type, const MapTileLoca
 		MapTilePath::makeVWStylePath(location, &packagePath, &filePath);
 		filePath += _subPath;
 		Memory ret = _readData(prefix + packagePath, filePath);
-		if (ret.isNotNull()) {
+		if (ret.isNotEmpty()) {
 			return ret;
 		}
 	}

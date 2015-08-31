@@ -543,7 +543,7 @@ Memory SecureFilePackage::readFile(sl_int64 position, String* pFileName)
 
 	int fileSize = (int)(contentHeader.size - contentHeader.sizeHeader);
 	ret = Memory::create(fileSize);
-	if (ret.isNull()) {
+	if (ret.isEmpty()) {
 		file->close();
 		return ret;
 	}
@@ -590,7 +590,7 @@ sl_bool SecureFilePackage::extract(String pathTargetDirectory, Progress* progres
 		if (desc.type == indexTypeFile) {
 			String filePath;
 			Memory memory = readFile(desc.position, &filePath);
-			if (!memory.isNull()) {
+			if (memory.isNotEmpty()) {
 				String path = pathTargetDirectory + "/" + filePath;
 				File::createDirectories(File::getParentDirectoryPath(path));
 				File::writeAllBytes(path, memory.getBuf(), memory.getSize());

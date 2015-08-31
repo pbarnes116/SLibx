@@ -203,7 +203,7 @@ Ref<Texture> MapBuildingTileManager::loadDetailedTexture(String key, sl_uint32 i
 			if (rb->object->meshes.getItem(index, &mesh)) {
 
 				Memory mem = loader->loadData(rb->info->dataType, rb->info->location, SLIB_MAP_BUILDING_PACKAGE_DIMENSION, "/" + mesh.textureFileName);
-				if (mem.isNotNull()) {
+				if (mem.isNotEmpty()) {
 					Ref<Texture> texture = Texture::loadFromMemory(mem);
 					bt = new _BuildingTexture;
 					if (bt.isNotNull()) {

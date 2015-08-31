@@ -170,7 +170,7 @@ Ref<DbIp> DbIp::create(const String& pathToCSVFile)
 {
 	Ref<DbIp> ret;
 	Memory mem = File::readAllBytes(pathToCSVFile);
-	if (mem.isNotNull()) {
+	if (mem.isNotEmpty()) {
 		ret = DbIp::create(mem.getBuf(), mem.getSize());
 	}
 	return ret;

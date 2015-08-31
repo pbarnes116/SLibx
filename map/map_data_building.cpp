@@ -13,7 +13,7 @@ Ref<VW_Building_Object> VW_Building::readObject(Ref<MapDataLoader> data, VW_Buil
 		return ret;
 	}
 	Memory mem = data->loadData(info->dataType, info->location, SLIB_MAP_BUILDING_PACKAGE_DIMENSION, "/" + info->objectFileName);
-	if (mem.isNull()) {
+	if (mem.isEmpty()) {
 		return ret;
 	}
 	MemoryReader reader(mem);
@@ -141,7 +141,7 @@ List< Ref<VW_Building_ObjectInfo> > VW_Building::readTile(Ref<MapDataLoader> dat
 	List< Ref<VW_Building_ObjectInfo> > ret;
 
 	Memory mem = data->loadData(dataType, location, SLIB_MAP_BUILDING_PACKAGE_DIMENSION, SLIB_MAP_BUILDING_TILE_EXT);
-	if (mem.isNull()) {
+	if (mem.isEmpty()) {
 		return ret;
 	}
 

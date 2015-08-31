@@ -148,12 +148,12 @@ Map<String, Memory> MapPackage::getDataFromItem(const Memory& encData)
 {
 	Map<String, Memory> ret;
 	Memory item;
-	if (encData.isNotNull()) {
+	if (encData.isNotEmpty()) {
 		Memory decData = Memory::create(encData.getSize() + 256);
 		sl_size decSize = m_encryption.decrypt_CBC_PKCS7Padding(encData.getBuf(), encData.getSize(), decData.getBuf());
 		item = Memory(decData.getBuf(), decSize);
 	}
-	if (item.isNotNull()) {
+	if (item.isNotEmpty()) {
 		MemoryReader reader(item);
 		sl_int64 itemUpdateTime = reader.readInt64CVLI();
 		SLIB_UNUSED(itemUpdateTime);
@@ -163,7 +163,7 @@ Map<String, Memory> MapPackage::getDataFromItem(const Memory& encData)
 		for (sl_int32 i = 0; i < itemCount; i++) {
 			String key;
 			Memory itemData = readItemData(reader, key);
-			if (itemData.isNotNull()) {
+			if (itemData.isNotEmpty()) {
 				ret.put(key, itemData);
 			}
 		}
