@@ -1,5 +1,6 @@
 #include "../../../inc/slibx/snet/stunnel_server.h"
 
+#include "../../../inc/slib/network/ethernet.h"
 #include "../../../inc/slib/crypto/zlib.h"
 #include "../../../inc/slib/core/log.h"
 
@@ -40,15 +41,25 @@ sl_bool STunnelServer::initialize(const STunnelServerParam& param)
 				ncp.deviceName = dev.name;
 				ncp.listener = WeakRef<STunnelServer>(this);
 				ncp.sizeBuffer = 1024 * 1024 * 20;
-				m_captureNat = NetCapture::create(ncp);
+				MacAddress natGateway = param.nat_gateway;
+				if (natGateway.isZero()) {
+					ncp.preferedLinkDeviceType = networkLinkDevice_Raw;
+				} else {
+					ncp.preferedLinkDeviceType = networkLinkDevice_Ethernet;
+				}
+#if defined(SLIB_PLATFORM_IS_LINUX)
+				m_captureNat = NetCapture::createRawPacket(ncp);
+#else
+				m_captureNat = NetCapture::createPcap(ncp);
+#endif
 				if (m_captureNat.isNotNull()) {
 					sl_uint32 linkType = m_captureNat->getLinkType();
-					if (linkType == networkDeviceEthernet || linkType == networkDeviceLinux) {
+					if (linkType == networkLinkDevice_Ethernet || linkType == networkLinkDevice_Raw) {
 						m_threadNat = Thread::start(SLIB_CALLBACK_CLASS(STunnelServer, runNAT, this));
 						m_tableNat.setTargetPortBegin(param.nat_port_begin);
 						m_tableNat.setTargetPortEnd(param.nat_port_end);
 						m_addressNatDev = dev.macAddress;
-						m_addressNatGateway = param.nat_gateway;
+						m_addressNatGateway = natGateway;
 						SLIB_LOG(TAG, "NAT started");
 					} else {
 						SLIB_LOG_ERROR(TAG, "NAT device is not ethernet and not linux cooked!");
@@ -128,12 +139,12 @@ void STunnelServer::onCapturePacket(NetCapture* capture, NetCapturePacket* packe
 	IPv4HeaderFormat* ip = 0;
 	sl_uint32 lenIP = 0;
 	sl_uint32 lenFrame = packet->length;
-	if (linkType == networkDeviceEthernet) {
+	if (linkType == networkLinkDevice_Ethernet) {
 		EthernetFrameFormat* frame = (EthernetFrameFormat*)(packet->data);
 		if (lenFrame <= EthernetFrameFormat::getHeaderSize()) {
 			return;
 		}
-		if (frame->getProtocol() != networkProtocolIPv4) {
+		if (frame->getProtocol() != networkLinkProtocol_IPv4) {
 			return;
 		}
 		if (frame->getDestinationAddress() == m_addressNatDev) {
@@ -143,26 +154,20 @@ void STunnelServer::onCapturePacket(NetCapture* capture, NetCapturePacket* packe
 			}
 		}
 	} else {
-		LinuxCookedFrameFormat* frame = (LinuxCookedFrameFormat*)(packet->data);
-		if (lenFrame <= LinuxCookedFrameFormat::getHeaderSize()) {
-			return;
-		}
-		if (frame->getProtocol() != networkProtocolIPv4) {
-			return;
-		}
-		if (IPv4HeaderFormat::check(frame->getContent(), lenFrame - LinuxCookedFrameFormat::getHeaderSize())) {
-			ip = (IPv4HeaderFormat*)(frame->getContent());
+		if (IPv4HeaderFormat::check(packet->data, lenFrame)) {
+			ip = (IPv4HeaderFormat*)(packet->data);
 			lenIP = ip->getTotalSize();
 		}
 	}
 	if (ip && lenIP < PACKET_SIZE) {
 		char data[PACKET_SIZE];
 		Base::copyMemory(data, ip, lenIP);
+		
 		Ptr<Referable> userObject;
 		if (m_tableNat.translateIncomingPacket(data, lenIP, &userObject)) {
 			PtrLocker<STunnelServiceSession> client(Ptr<STunnelServiceSession>::from(userObject));
 			if (client.isNotNull()) {
-				client->sendRawIP(data, lenIP, ip->getProtocol() == IPv4Protocol_TCP);
+				client->sendRawIP(data, lenIP, ip->isTCP());
 			}
 		}
 	}
@@ -181,7 +186,7 @@ void STunnelServer::writeIPToNAT(STunnelServiceSession* session, const void* ip,
 	sl_uint32 lenFrame;
 	sl_uint8* bufIP;
 	sl_uint32 lenIP = size;
-	if (dev->getLinkType() == networkDeviceEthernet) {
+	if (dev->getLinkType() == networkLinkDevice_Ethernet) {
 		MacAddress macGateway = m_addressNatGateway;
 		MacAddress mac = m_addressNatDev;
 		if (mac.isZero()) {
@@ -190,20 +195,14 @@ void STunnelServer::writeIPToNAT(STunnelServiceSession* session, const void* ip,
 		EthernetFrameFormat* frameOut = (EthernetFrameFormat*)bufFrame;
 		frameOut->setSourceAddress(mac);
 		frameOut->setDestinationAddress(macGateway);
-		frameOut->setProtocol(networkProtocolIPv4);
+		frameOut->setProtocol(networkLinkProtocol_IPv4);
 		bufIP = frameOut->getContent();
 		Base::copyMemory(bufIP, ip, lenIP);
-		lenFrame = size + EthernetFrameFormat::getHeaderSize();
+		lenFrame = lenIP + EthernetFrameFormat::getHeaderSize();
 	} else {
-		LinuxCookedFrameFormat* frameOut = (LinuxCookedFrameFormat*)bufFrame;
-		frameOut->setPacketType(LinuxCookedFrameFormat::typeOutGoing);
-		frameOut->setDeviceType(networkDevicePPP);
-		frameOut->setProtocolType(networkProtocolIPv4);
-		frameOut->setAddressLength(0);
-		Base::zeroMemory(frameOut->getAddress(), 8);
-		bufIP = frameOut->getContent();
+		bufIP = (sl_uint8*)bufFrame;
 		Base::copyMemory(bufIP, ip, lenIP);
-		lenFrame = size + LinuxCookedFrameFormat::getHeaderSize();
+		lenFrame = lenIP;
 	}
 	Ptr<Referable> userObject = WeakRef<STunnelServiceSession>(session);
 	if (m_tableNat.translateOutgoingPacket(bufIP, lenIP, &userObject)) {
