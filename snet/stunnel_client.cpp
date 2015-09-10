@@ -12,7 +12,9 @@ STunnelClient::STunnelClient()
 	m_flagWriting = sl_false;
 	m_limitQueueOutputStream = 0;
 	m_limitQueueOutputDatagram = 0;
-	m_timeLastIO = Time::now();
+	m_timeLastReceive = Time::now();
+	m_timeLastSend = m_timeLastReceive;
+	m_timeLastConnecting = m_timeLastReceive;
 }
 
 STunnelClient::~STunnelClient()
@@ -71,6 +73,15 @@ void STunnelClient::sendRawIP(const void* ip, sl_uint32 size, sl_bool flagStream
 	_sendRawIP(ip, size, flagStream);
 }
 
+sl_bool STunnelClient::isConnecting()
+{
+	MutexLocker lock(getLocker());
+	if (m_flagClosed) {
+		return sl_false;
+	}
+	return m_flagConnecting;
+}
+
 sl_bool STunnelClient::isConnected()
 {
 	MutexLocker lock(getLocker());
@@ -95,6 +106,8 @@ void STunnelClient::connect()
 	if (m_stream.isNotNull()) {
 		return;
 	}
+
+	m_timeLastConnecting = Time::now();
 
 	AsyncSecureStreamClientParam ssp;
 	ssp.masterKey = m_masterKey;
@@ -135,7 +148,8 @@ void STunnelClient::onConnectedSecureStream(AsyncSecureStream* securedStream, sl
 	if (flagError) {
 		m_stream.setNull();
 	} else {
-		_updateIOTime();
+		m_timeLastReceive = Time::now();
+		m_timeLastSend = m_timeLastReceive;
 		_read();
 	}
 }
@@ -191,7 +205,7 @@ void STunnelClient::onRead(AsyncStream* stream, void* data, sl_uint32 sizeRead, 
 	if (flagError) {
 		reconnect();
 	} else {
-		_updateIOTime();
+		m_timeLastReceive = Time::now();
 		_read();
 	}
 }
@@ -240,16 +254,10 @@ void STunnelClient::onWrite(AsyncStream* stream, void* data, sl_uint32 sizeWritt
 	if (flagError) {
 		reconnect();
 	} else {
-		_updateIOTime();
+		m_timeLastSend = Time::now();
 		_write();
 	}
 }
-
-void STunnelClient::_updateIOTime()
-{
-	m_timeLastIO = Time::now();
-}
-
 
 #define PACKET_SIZE 2000
 
