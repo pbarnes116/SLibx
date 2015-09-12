@@ -30,7 +30,14 @@ Ref<STunnelServer> STunnelServer::create(const STunnelServerParam& param)
 sl_bool STunnelServer::initialize(const STunnelServerParam& param)
 {
 	m_param = param;
-
+	Ref<AsyncLoop> asyncLoop = param.asyncLoop;
+	if (asyncLoop.isNull()) {
+		asyncLoop = AsyncLoop::getDefault();
+		if (asyncLoop.isNull()) {
+			return sl_false;
+		}
+	}
+	m_asyncLoop = asyncLoop;
 	if (param.nat_enabled) {
 		// initialize NAT device
 		if (param.nat_device.isNotEmpty()) {
@@ -48,7 +55,11 @@ sl_bool STunnelServer::initialize(const STunnelServerParam& param)
 					ncp.preferedLinkDeviceType = networkLinkDevice_Ethernet;
 				}
 #if defined(SLIB_PLATFORM_IS_LINUX)
-				m_captureNat = NetCapture::createRawPacket(ncp);
+				if (param.nat_raw_socket) {
+					m_captureNat = NetCapture::createRawIPv4(ncp);
+				} else {
+					m_captureNat = NetCapture::createRawPacket(ncp);
+				}
 #else
 				m_captureNat = NetCapture::createPcap(ncp);
 #endif
@@ -85,7 +96,7 @@ sl_bool STunnelServer::initialize(const STunnelServerParam& param)
 		AsyncSecureStreamServerParam ssp;
 		ssp.masterKey = param.masterKey;
 		ssp.listener = WeakRef<STunnelServer>(this);
-		m_server = AsyncTcpSecureStreamServer::create(ssp, param.addressBind);
+		m_server = AsyncTcpSecureStreamServer::create(ssp, param.addressBind, asyncLoop);
 		if (m_server.isNotNull()) {
 			SLIB_LOG(TAG, "Server started");
 		} else {
@@ -93,6 +104,9 @@ sl_bool STunnelServer::initialize(const STunnelServerParam& param)
 			return sl_false;
 		}
 	}
+
+	m_fragmentationIncoming.setupExpiringDuration(param.nat_expiring_duration, asyncLoop);
+	m_fragmentationOutgoing.setupExpiringDuration(param.nat_expiring_duration, asyncLoop);
 
 	return sl_true;
 }
@@ -112,6 +126,7 @@ void STunnelServer::release()
 		m_server->close();
 		m_server.setNull();
 	}
+	m_asyncLoop.setNull();
 }
 
 void STunnelServer::runNAT()
@@ -129,9 +144,6 @@ void STunnelServer::runNAT()
 		Thread::sleep(3000);
 	}
 }
-
-
-#define PACKET_SIZE 2000
 
 void STunnelServer::onCapturePacket(NetCapture* capture, NetCapturePacket* packet)
 {
@@ -159,33 +171,36 @@ void STunnelServer::onCapturePacket(NetCapture* capture, NetCapturePacket* packe
 			lenIP = ip->getTotalSize();
 		}
 	}
-	if (ip && lenIP < PACKET_SIZE) {
-		char data[PACKET_SIZE];
-		Base::copyMemory(data, ip, lenIP);
-		
-		Ptr<Referable> userObject;
-		if (m_tableNat.translateIncomingPacket(data, lenIP, &userObject)) {
-			PtrLocker<STunnelServiceSession> client(Ptr<STunnelServiceSession>::from(userObject));
-			if (client.isNotNull()) {
-				client->sendRawIP(data, lenIP, ip->isTCP());
+	if (ip && lenIP > 0) {
+		Memory mem = m_fragmentationIncoming.combineFragment(ip, lenIP);
+		if (mem.isNotEmpty()) {
+			Ptr<Referable> userObject;
+			ip = (IPv4HeaderFormat*)(mem.getBuf());
+			if (m_tableNat.translateIncomingPacket(ip, ip->getContent(), ip->getContentSize(), &userObject)) {
+				PtrLocker<STunnelServiceSession> client(Ptr<STunnelServiceSession>::from(userObject));
+				if (client.isNotNull()) {
+					ListLocker<Memory> fragments(m_fragmentationIncoming.makeFragments(ip, ip->getContent(), ip->getContentSize(), m_param.nat_mtu_incoming));
+					for (sl_size i = 0; i < fragments.count(); i++) {
+						client->sendRawIP(fragments[i].getBuf(), (sl_uint32)(fragments[i].getSize()));
+					}
+				}
 			}
 		}
 	}
 }
 
-void STunnelServer::writeIPToNAT(STunnelServiceSession* session, const void* ip, sl_uint32 size)
+void STunnelServer::writeIPToNAT(STunnelServiceSession* session, const void* ipPacket, sl_uint32 size)
 {
-	if (size > PACKET_SIZE) {
-		return;
+	sl_uint32 mtu = m_param.nat_mtu_outgoing;
+	if (mtu > 1500) {
+		mtu = 1500;
 	}
 	Ref<NetCapture> dev = m_captureNat;
 	if (dev.isNull()) {
 		return;
 	}
-	char bufFrame[PACKET_SIZE + 100];
-	sl_uint32 lenFrame;
-	sl_uint8* bufIP;
-	sl_uint32 lenIP = size;
+	char bufFrame[2000];
+	sl_uint32 lenFrameHeader;
 	if (dev->getLinkType() == networkLinkDevice_Ethernet) {
 		MacAddress macGateway = m_addressNatGateway;
 		MacAddress mac = m_addressNatDev;
@@ -196,17 +211,22 @@ void STunnelServer::writeIPToNAT(STunnelServiceSession* session, const void* ip,
 		frameOut->setSourceAddress(mac);
 		frameOut->setDestinationAddress(macGateway);
 		frameOut->setProtocol(networkLinkProtocol_IPv4);
-		bufIP = frameOut->getContent();
-		Base::copyMemory(bufIP, ip, lenIP);
-		lenFrame = lenIP + EthernetFrameFormat::getHeaderSize();
+		lenFrameHeader = EthernetFrameFormat::getHeaderSize();
 	} else {
-		bufIP = (sl_uint8*)bufFrame;
-		Base::copyMemory(bufIP, ip, lenIP);
-		lenFrame = lenIP;
+		lenFrameHeader = 0;
 	}
-	Ptr<Referable> userObject = WeakRef<STunnelServiceSession>(session);
-	if (m_tableNat.translateOutgoingPacket(bufIP, lenIP, &userObject)) {
-		dev->sendPacket(bufFrame, lenFrame);
+	Memory mem = m_fragmentationOutgoing.combineFragment(ipPacket, size);
+	if (mem.isNotEmpty()) {
+		IPv4HeaderFormat* ip = (IPv4HeaderFormat*)(mem.getBuf());
+		Ptr<Referable> userObject = WeakRef<STunnelServiceSession>(session);
+		if (m_tableNat.translateOutgoingPacket(ip, ip->getContent(), ip->getContentSize(), &userObject)) {
+			ListLocker<Memory> fragments(m_fragmentationOutgoing.makeFragments(ip, ip->getContent(), ip->getContentSize(), m_param.nat_mtu_incoming));
+			for (sl_size i = 0; i < fragments.count(); i++) {
+				sl_uint32 lenIP = (sl_uint32)(fragments[i].getSize());
+				Base::copyMemory(bufFrame + lenFrameHeader, fragments[i].getBuf(), lenIP);
+				dev->sendPacket(bufFrame, lenFrameHeader + lenIP);
+			}
+		}
 	}
 }
 
@@ -216,9 +236,9 @@ void STunnelServer::onConnectedSecureStream(AsyncSecureStream* securedStream, sl
 	if (session.isNotNull()) {
 		session->m_stream = securedStream;
 		session->m_server = this;
-		session->m_limitQueueOutputStream = m_param.session_stream_output_queue_limit;
-		session->m_limitQueueOutputDatagram = m_param.session_datagram_output_queue_limit;
+		session->m_limitQueueDatagram = m_param.session_datagram_queue_limit;
 		session->m_bufRead = Memory::create(102400);
+		session->m_portsUDP.setupTimer(m_param.nat_expiring_duration, m_asyncLoop.lock());
 		if (session->m_bufRead.isNotEmpty()) {
 			if (session->m_queueOutputChannels.setChannelsCount(2)) {
 				m_sessions.put(session.get(), session);
@@ -232,8 +252,7 @@ STunnelServiceSession::STunnelServiceSession()
 {
 	m_flagReading = sl_false;
 	m_flagWriting = sl_false;
-	m_limitQueueOutputStream = sl_false;
-	m_limitQueueOutputDatagram = sl_false;
+	m_limitQueueDatagram = 5000;
 }
 
 void STunnelServiceSession::close()
@@ -277,6 +296,13 @@ void STunnelServiceSession::read()
 
 void STunnelServiceSession::onRead(AsyncStream* stream, void* data, sl_uint32 sizeRead, Referable* ref, sl_bool flagError)
 {
+	{
+		PtrLocker<TCP_Port> port(Ptr<TCP_Port>::from(stream->getUserObject(0)));
+		if (port.isNotNull()) {
+			_onReadPort_TCP(port.get(), data, sizeRead, flagError);
+			return;
+		}
+	}
 	MutexLocker lock(getLocker());
 	m_flagReading = sl_false;
 	if (sizeRead > 0) {
@@ -327,6 +353,13 @@ void STunnelServiceSession::write()
 
 void STunnelServiceSession::onWrite(AsyncStream* stream, void* data, sl_uint32 sizeWritten, Referable* ref, sl_bool flagError)
 {
+	{
+		PtrLocker<TCP_Port> port(Ptr<TCP_Port>::from(stream->getUserObject(0)));
+		if (port.isNotNull()) {
+			_onWritePort_TCP(port.get(), data, sizeWritten, flagError);
+			return;
+		}
+	}
 	MutexLocker lock(getLocker());
 	m_flagWriting = sl_false;
 	if (flagError) {
@@ -336,27 +369,31 @@ void STunnelServiceSession::onWrite(AsyncStream* stream, void* data, sl_uint32 s
 	}
 }
 
-void STunnelServiceSession::sendSessionMessage(sl_uint8 method, const void* data, sl_uint32 n, sl_bool flagStream)
+void STunnelServiceSession::sendSessionMessage(sl_uint8 method, MemoryBuffer& buf, sl_bool flagDatagram)
 {
 	Ref<AsyncSecureStream> stream = m_stream;
 	if (stream.isNull()) {
 		return;
 	}
-	SLIB_SCOPED_ARRAY(sl_uint8, buf, 1 + n);
-	if (!buf) {
-		return;
-	}
-	buf[0] = method;
-	Base::copyMemory(buf + 1, data, n);
-	Memory mem = m_datagram.build(buf, 1 + n);
+	MemoryWriter writer;
+	writer.writeUint8(method);
+	writer.getMemoryBuffer().link(buf);
+	Memory mem = m_datagram.build(writer.getMemoryBuffer());
 	if (mem.isNotEmpty()) {
-		if (flagStream) {
-			m_queueOutputChannels.pushBack(0, mem, m_limitQueueOutputStream);
+		if (flagDatagram) {
+			m_queueOutputChannels.pushBack(1, mem, m_limitQueueDatagram);
 		} else {
-			m_queueOutputChannels.pushBack(1, mem, m_limitQueueOutputDatagram);
+			m_queueOutputChannels.pushBack(0, mem);
 		}
 		write();
 	}
+}
+
+void STunnelServiceSession::sendSessionMessage(sl_uint8 method, const void* buf, sl_uint32 n, sl_bool flagDatagram)
+{
+	MemoryBuffer buffer;
+	buffer.add(buf, n);
+	sendSessionMessage(method, buffer, flagDatagram);
 }
 
 void STunnelServiceSession::receiveSessionMessage(const void* _data, sl_uint32 size)
@@ -364,17 +401,34 @@ void STunnelServiceSession::receiveSessionMessage(const void* _data, sl_uint32 s
 	const sl_uint8* data = (const sl_uint8*)_data;
 	sl_uint8 method = data[0];
 	switch (method) {
-	case 10:
+	case 10: // Raw IP Packet
 		receiveRawIP(data + 1, size - 1);
+		break;
+	case 20: // Open TCP Port
+		receiveOpenPort_TCP(data + 1, size - 1);
+		break;
+	case 21: // Close TCP Port
+		receiveClosePort_TCP(data + 1, size - 1);
+		break;
+	case 22: // TCP Data
+		receiveData_TCP(data + 1, size - 1);
+		break;
+	case 23: // TCP Data Reply
+		receiveDataReply_TCP(data + 1, size - 1);
+		break;
+	case 32: // UDP Data
+		receiveData_UDP(data + 1, size - 1);
 		break;
 	}
 }
 
-void STunnelServiceSession::sendRawIP(const void* ip, sl_uint32 size, sl_bool flagStream)
+void STunnelServiceSession::sendRawIP(const void* ip, sl_uint32 size)
 {
 	Memory mem = Zlib::compressRaw(ip, size);
 	if (mem.isNotEmpty()) {
-		sendSessionMessage(10, mem.getBuf(), (sl_uint32)(mem.getSize()), flagStream);
+		MemoryBuffer buf;
+		buf.add(mem);
+		sendSessionMessage(10, buf, sl_true);
 	}
 }
 
@@ -389,4 +443,296 @@ void STunnelServiceSession::receiveRawIP(const void* data, sl_uint32 size)
 	}
 }
 
+#define MESSAGE_SIZE 65536
+#define TCP_STREAM_PENDING_SIZE 655360
+#define TCP_STREAM_PENDING_SIZE_ERROR 6553600
+
+void STunnelServiceSession::receiveOpenPort_TCP(const void* data, sl_uint32 size)
+{
+	MemoryReader reader(data, size);
+	sl_uint64 portId;
+	if (!(reader.readUint64(&portId))) {
+		return;
+	}
+	String hostAddress;
+	if (!(reader.readString(&hostAddress))) {
+		return;
+	}
+	Ref<AsyncLoop> loop = getAsyncLoop();
+	if (loop.isNotNull()) {
+		loop->addTask(SLIB_CALLBACK_WEAKREF(STunnelServiceSession, _openPort_TCP, this, portId, hostAddress));
+	}
+}
+
+void STunnelServiceSession::sendClosePort_TCP(sl_uint64 portId)
+{
+	sl_uint8 buf[8];
+	MIO::writeUint64LE(buf, portId);
+	sendSessionMessage(21, buf, 8, sl_false);
+}
+
+void STunnelServiceSession::receiveClosePort_TCP(const void* data, sl_uint32 size)
+{
+	if (size == 8) {
+		sl_uint64 portId = MIO::readUint64LE(data);
+		m_portsTCP.remove(portId);
+	}
+}
+
+void STunnelServiceSession::sendData_TCP(sl_uint64 portId, const void* data, sl_uint32 size)
+{
+	if (size == 0) {
+		return;
+	}
+	Memory mem = Zlib::compressRaw(data, size);
+	if (mem.isNotEmpty()) {
+		MemoryWriter writer;
+		writer.writeUint64(portId);
+		writer.write(mem);
+		sendSessionMessage(22, writer.getMemoryBuffer(), sl_false);
+	}
+}
+
+void STunnelServiceSession::receiveData_TCP(const void* _data, sl_uint32 size)
+{
+	const sl_uint8* data = (const sl_uint8*)_data;
+	if (size > 8) {
+		sl_uint64 portId = MIO::readUint64LE(data);
+		Ref<TCP_Port> port = m_portsTCP.getValue(portId, Ref<TCP_Port>::null());
+		if (port.isNotNull()) {
+			Memory mem = Zlib::decompressRaw(data + 8, size - 8);
+			if (mem.isNotEmpty()) {
+				MutexLocker lock(&(port->lock));
+				port->sizeClientPendingData += (sl_uint32)(mem.getSize());
+				if (port->sizeClientPendingData > TCP_STREAM_PENDING_SIZE_ERROR) {
+					_closePort_TCP(port->id);
+				} else {
+					if (!port->socket->writeFromMemory(mem, WeakRef<STunnelServiceSession>(this))) {
+						_closePort_TCP(port->id);
+					}
+				}
+			} else {
+				_closePort_TCP(port->id);
+			}			
+		}
+	}
+}
+
+void STunnelServiceSession::sendDataReply_TCP(sl_uint64 portId, sl_uint32 sizeReceived)
+{
+	sl_uint8 buf[12];
+	MIO::writeUint64LE(buf, portId);
+	MIO::writeUint64LE(buf + 8, sizeReceived);
+	sendSessionMessage(23, buf, 12, sl_false);
+}
+
+void STunnelServiceSession::receiveDataReply_TCP(const void* _data, sl_uint32 size)
+{
+	const sl_uint8* data = (const sl_uint8*)_data;
+	if (size == 12) {
+		sl_uint64 portId = MIO::readUint64LE(data);
+		sl_uint32 sizeReceived = MIO::readUint32LE(data + 8);
+		Ref<TCP_Port> port = m_portsTCP.getValue(portId, Ref<TCP_Port>::null());
+		if (port.isNotNull()) {
+			MutexLocker lock(&(port->lock));
+			if (port->sizeServerPendingData > sizeReceived) {
+				port->sizeServerPendingData -= sizeReceived;
+			} else {
+				port->sizeServerPendingData = 0;
+			}
+			_receivePort_TCP(port.get());
+		}
+	}
+}
+
+void STunnelServiceSession::_openPort_TCP(sl_uint64 portId, String hostAddress)
+{
+	Ref<AsyncLoop> loop = getAsyncLoop();
+	if (loop.isNull()) {
+		return;
+	}
+	SocketAddress address;
+	if (!(address.setHostAddress(hostAddress))) {
+		_closePort_TCP(portId);
+		return;
+	}
+	Ref<TCP_Port> port = new TCP_Port;
+	if (port.isNull()) {
+		_closePort_TCP(portId);
+		return;
+	}
+	port->id = portId;
+	port->memReceive = Memory::create(MESSAGE_SIZE);
+	if (port->memReceive.isNull()) {
+		_closePort_TCP(portId);
+		return;
+	}
+	port->socket = AsyncTcpSocket::create(loop);
+	if (port->socket.isNull()) {
+		_closePort_TCP(portId);
+		return;
+	}
+	port->socket->setUserObject(0, WeakRef<TCP_Port>(port));
+	if (port->socket->connect(address, WeakRef<STunnelServiceSession>(this))) {
+		m_portsTCP.put(portId, port);
+	} else {
+		_closePort_TCP(portId);
+	}
+}
+
+void STunnelServiceSession::_closePort_TCP(sl_uint64 portId)
+{
+	m_portsTCP.remove(portId);
+	sendClosePort_TCP(portId);
+}
+
+void STunnelServiceSession::_receivePort_TCP(TCP_Port* port)
+{
+	MutexLocker lock(&(port->lock));
+	if (port->flagReading) {
+		return;
+	}
+	if (port->sizeServerPendingData < TCP_STREAM_PENDING_SIZE) {
+		port->flagReading = sl_true;
+		if (!(port->socket->readToMemory(port->memReceive, WeakRef<STunnelServiceSession>(this)))) {
+			_closePort_TCP(port->id);
+		}
+	}
+}
+
+void STunnelServiceSession::onConnect(AsyncTcpSocket* socket, const SocketAddress& address, sl_bool flagError)
+{
+	PtrLocker<TCP_Port> port(Ptr<TCP_Port>::from(socket->getUserObject(0)));
+	if (port.isNotNull()) {
+		if (flagError) {
+			_closePort_TCP(port->id);
+		} else {
+			port->flagConnected = sl_true;
+			Memory mem;
+			while (port->queueSend.pop(&mem)) {
+				port->socket->writeFromMemory(mem, WeakRef<STunnelServiceSession>(this));
+			}
+			_receivePort_TCP(port.get());
+		}
+	}
+}
+
+void STunnelServiceSession::_onReadPort_TCP(TCP_Port* port, void* buf, sl_uint32 size, sl_bool flagError)
+{
+	MutexLocker lock(&(port->lock));
+	port->flagReading = sl_false;
+	if (size > 0) {
+		sendData_TCP(port->id, buf, size);
+		port->sizeServerPendingData += size;
+	}
+	if (flagError) {
+		_closePort_TCP(port->id);
+	} else {
+		_receivePort_TCP(port);
+	}
+}
+
+void STunnelServiceSession::_onWritePort_TCP(TCP_Port* port, void* buf, sl_uint32 size, sl_bool flagError)
+{
+	MutexLocker lock(&(port->lock));
+	if (size > 0) {
+		if (port->sizeClientPendingData > size) {
+			port->sizeClientPendingData -= size;
+		} else {
+			port->sizeClientPendingData = 0;
+		}
+		sendDataReply_TCP(port->id, size);
+	}
+	if (flagError) {
+		_closePort_TCP(port->id);
+	}
+}
+
+void STunnelServiceSession::sendData_UDP(sl_uint64 portId, const SocketAddress& addressFrom, const void* data, sl_uint32 size)
+{
+	if (size == 0) {
+		return;
+	}
+	Memory mem = Zlib::compressRaw(data, size);
+	if (mem.isNotEmpty()) {
+		MemoryWriter writer;
+		writer.writeUint64(portId);
+		writer.writeUint32(addressFrom.ip.getIPv4().toInt());
+		writer.writeUint16((sl_uint16)(addressFrom.port));
+		writer.write(mem);
+		sendSessionMessage(32, writer.getMemoryBuffer(), sl_true);
+	}
+}
+
+void STunnelServiceSession::receiveData_UDP(const void* _data, sl_uint32 size)
+{
+	const sl_uint8* data = (const sl_uint8*)_data;
+	if (size > 14) {
+		sl_uint64 portId = MIO::readUint64LE(data);
+		SocketAddress address;
+		address.ip = IPv4Address(MIO::readUint32LE(data + 8));
+		address.port = MIO::readUint16LE(data + 12);
+		Ref<UDP_Port> port = _getPort_UDP(portId);
+		if (port.isNotNull()) {
+			port->socket->sendTo(address, Memory::create(data + 14, size - 14), WeakRef<STunnelServiceSession>(this));
+		}
+	}
+}
+
+Ref<STunnelServiceSession::UDP_Port> STunnelServiceSession::_getPort_UDP(sl_uint64 portId)
+{
+	Ref<UDP_Port> port = m_portsUDP.getValue(portId, Ref<UDP_Port>::null());
+	if (port.isNotNull()) {
+		return Ref<UDP_Port>::null();
+	}
+	Ref<AsyncLoop> loop = getAsyncLoop();
+	if (loop.isNull()) {
+		return Ref<UDP_Port>::null();
+	}
+	port = new UDP_Port;
+	if (port.isNull()) {
+		return Ref<UDP_Port>::null();
+	}
+	port->id = portId;
+	port->memReceive = Memory::create(MESSAGE_SIZE);
+	if (port->memReceive.isNull()) {
+		return Ref<UDP_Port>::null();
+	}
+	port->socket = AsyncUdpSocket::create(loop);
+	if (port->socket.isNull()) {
+		return Ref<UDP_Port>::null();
+	}
+	port->socket->setUserObject(0, WeakRef<UDP_Port>(port));
+	_receivePort_UDP(port.get());
+	return port;
+}
+
+void STunnelServiceSession::_receivePort_UDP(UDP_Port* port)
+{
+	port->socket->receiveFrom(port->memReceive, WeakRef<STunnelServiceSession>(this));
+}
+
+void STunnelServiceSession::onReceiveFrom(AsyncUdpSocket* socket, void* data, sl_uint32 sizeReceive, const SocketAddress& address, sl_bool flagError)
+{
+	PtrLocker<UDP_Port> port(Ptr<UDP_Port>::from(socket->getUserObject(0)));
+	if (port.isNotNull()) {
+		if (sizeReceive) {
+			sendData_UDP(port->id, address, data, sizeReceive);
+		}
+		_receivePort_UDP(port.get());
+	}
+}
+
+void STunnelServiceSession::onSendTo(AsyncUdpSocket* socket, void* data, sl_uint32 sizeSent, const SocketAddress& address, sl_bool flagError)
+{
+}
+
+Ref<AsyncLoop> STunnelServiceSession::getAsyncLoop()
+{
+	Ref<STunnelServer> server = m_server.lock();
+	if (server.isNotNull()) {
+		return server->m_asyncLoop.lock();
+	}
+	return Ref<AsyncLoop>::null();
+}
 SLIB_SNET_NAMESPACE_END

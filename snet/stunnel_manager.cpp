@@ -18,6 +18,10 @@ sl_bool STunnelManager::_init()
 {
 	MutexLocker lock(getLocker());
 	release();
+	m_asyncLoop = AsyncLoop::create();
+	if (m_asyncLoop.isNull()) {
+		return sl_false;
+	}
 	m_thread = Thread::start(SLIB_CALLBACK_CLASS(STunnelManager, _run, this));
 	if (m_thread.isNull()) {
 		return sl_false;
@@ -31,6 +35,10 @@ void STunnelManager::release()
 	MutexLocker lock(getLocker());
 	if (!m_flagInited) {
 		return;
+	}
+	if (m_asyncLoop.isNotNull()) {
+		m_asyncLoop->release();
+		m_asyncLoop.setNull();
 	}
 	if (m_thread.isNotNull()) {
 		m_thread->finishAndWait();
@@ -50,8 +58,7 @@ sl_bool STunnelManager::initWithConfiguration(const Variant& var)
 	if (!_init()) {
 		return sl_false;
 	}
-	sl_uint32 stream_output_queue_limit = var.getField("stream_output_queue_limit").getUint32(50000);
-	sl_uint32 datagram_output_queue_limit = var.getField("datagram_output_queue_limit").getUint32(500);
+	sl_uint32 datagram_queue_limit = var.getField("datagram_queue_limit").getUint32(5000);
 	sl_uint32 auto_reconnect_timeout = var.getField("auto_reconnect_timeout").getUint32(getAutoReconnectTimeout());
 	setAutoReconnectTimeout(auto_reconnect_timeout);
 	Variant varTunnels = var.getField("tunnels");
@@ -65,8 +72,7 @@ sl_bool STunnelManager::initWithConfiguration(const Variant& var)
 				if (scp.serviceAddress.setHostAddress(strAddress)) {
 					String key = pair.value.getField("master_key").getString();
 					scp.masterKey = key;
-					scp.session_stream_output_queue_limit = stream_output_queue_limit;
-					scp.session_datagram_output_queue_limit = datagram_output_queue_limit;
+					scp.datagram_queue_limit = datagram_queue_limit;
 					scp.listener = WeakRef<STunnelManager>(this);
 					addTunnel(pair.key, scp);
 				}
@@ -83,7 +89,7 @@ Ref<STunnelClient> STunnelManager::getTunnel(const String& name)
 
 Ref<STunnelClient> STunnelManager::addTunnel(const String& name, const STunnelClientParam& param)
 {
-	Ref<STunnelClient> tunnel = STunnelClient::create(param);
+	Ref<STunnelClient> tunnel = STunnelClient::create(param, m_asyncLoop);
 	if (tunnel.isNotNull()) {
 		if (m_tunnels.put(name, tunnel)) {
 			tunnel->connect();
@@ -128,7 +134,7 @@ void STunnelManager::_run()
 					Time timeR = tunnel->getLastReceivedTime();
 					Time timeS = tunnel->getLastSentTime();
 					if (timeS > timeR && (timeS - timeR).getMillisecondsCount() > getAutoReconnectTimeout()) {
-						tunnel->reconnect();
+						//tunnel->reconnect();
 					}
 				} else {
 					if ((now - tunnel->getLastConnectingTime()).getMillisecondsCount() > getAutoReconnectTimeout()) {
@@ -146,6 +152,14 @@ void STunnelManager::onSTunnelRawIP(STunnelClient* client, const void* ip, sl_ui
 	PtrLocker<ISTunnelClientListener> listener(getTunnelListener());
 	if (listener.isNotNull()) {
 		listener->onSTunnelRawIP(client, ip, len);
+	}
+}
+
+void STunnelManager::onSTunnelDataUDP(STunnelClient* client, sl_uint64 portId, const SocketAddress& addressFrom, const void* data, sl_uint32 n)
+{
+	PtrLocker<ISTunnelClientListener> listener(getTunnelListener());
+	if (listener.isNotNull()) {
+		listener->onSTunnelDataUDP(client, portId, addressFrom, data, n);
 	}
 }
 SLIB_SNET_NAMESPACE_END
