@@ -419,6 +419,9 @@ void STunnelServiceSession::receiveSessionMessage(const void* _data, sl_uint32 s
 	case 32: // UDP Data
 		receiveData_UDP(data + 1, size - 1);
 		break;
+	case 40: // DNS Request
+		receiveDNSRequest(data + 1, size - 1);
+		break;
 	}
 }
 
@@ -674,7 +677,10 @@ void STunnelServiceSession::receiveData_UDP(const void* _data, sl_uint32 size)
 		address.port = MIO::readUint16LE(data + 12);
 		Ref<UDP_Port> port = _getPort_UDP(portId);
 		if (port.isNotNull()) {
-			port->socket->sendTo(address, Memory::create(data + 14, size - 14), WeakRef<STunnelServiceSession>(this));
+			Memory mem = Zlib::decompressRaw(data + 14, size - 14);
+			if (mem.isNotEmpty()) {
+				port->socket->sendTo(address, mem, WeakRef<STunnelServiceSession>(this));
+			}
 		}
 	}
 }
@@ -725,6 +731,32 @@ void STunnelServiceSession::onReceiveFrom(AsyncUdpSocket* socket, void* data, sl
 
 void STunnelServiceSession::onSendTo(AsyncUdpSocket* socket, void* data, sl_uint32 sizeSent, const SocketAddress& address, sl_bool flagError)
 {
+}
+
+void STunnelServiceSession::receiveDNSRequest(const void* data, sl_uint32 size)
+{
+	MemoryReader reader(data, size);
+	String dns;
+	if (reader.readString(&dns)) {
+		Ref<AsyncLoop> loop = getAsyncLoop();
+		if (loop.isNotNull()) {
+			loop->addTask(SLIB_CALLBACK_WEAKREF(STunnelServiceSession, _resolveDNS, this, dns));
+		}
+	}
+}
+
+void STunnelServiceSession::sendDNSResponse(const String& dns, const IPv4Address& ip)
+{
+	MemoryWriter writer;
+	writer.writeString(dns);
+	writer.writeUint32(ip.toInt());
+	sendSessionMessage(41, writer.getMemoryBuffer(), sl_false);
+}
+
+void STunnelServiceSession::_resolveDNS(String dns)
+{
+	IPv4Address ip = NetworkAddress::getIPv4AddressFromHostName(dns);
+	sendDNSResponse(dns, ip);
 }
 
 Ref<AsyncLoop> STunnelServiceSession::getAsyncLoop()

@@ -120,6 +120,11 @@ void STunnelClient::sendUDP(sl_uint64 portId, const SocketAddress& addressTo, co
 	sendData_UDP(portId, addressTo, data, n);
 }
 
+void STunnelClient::sendDNS(const String& dns)
+{
+	sendDNSRequest(dns);
+}
+
 sl_bool STunnelClient::isConnecting()
 {
 	MutexLocker lock(getLocker());
@@ -353,6 +358,8 @@ void STunnelClient::receiveSessionMessage(const void* _data, sl_uint32 size)
 	case 32: // UDP Data
 		receiveData_UDP(data + 1, size - 1);
 		break;
+	case 41: // DNS Response
+		receiveDNSResponse(data + 1, size - 1);
 	}
 }
 
@@ -706,10 +713,37 @@ void STunnelClient::receiveData_UDP(const void* _data, sl_uint32 size)
 		SocketAddress address;
 		address.ip = IPv4Address(MIO::readUint32LE(data + 8));
 		address.port = MIO::readUint16LE(data + 12);
-		PtrLocker<ISTunnelClientListener> listener(getListener());
-		if (listener.isNotNull()) {
-			listener->onSTunnelDataUDP(this, portId, address, data + 14, size - 14);
+		Memory mem = Zlib::decompressRaw(data + 14, size - 14);
+		if (mem.isNotEmpty()) {
+			PtrLocker<ISTunnelClientListener> listener(getListener());
+			if (listener.isNotNull()) {
+				listener->onSTunnelDataUDP(this, portId, address, mem.getBuf(), (sl_uint32)(mem.getSize()));
+			}
 		}
+	}
+}
+
+void STunnelClient::sendDNSRequest(const String& dns)
+{
+	MemoryWriter writer;
+	writer.writeString(dns);
+	sendSessionMessage(40, writer.getMemoryBuffer(), sl_false);
+}
+
+void STunnelClient::receiveDNSResponse(const void* data, sl_uint32 size)
+{
+	MemoryReader reader(data, size);
+	String dns;
+	if (!(reader.readString(&dns))) {
+		return;
+	}
+	sl_uint32 ip;
+	if (!(reader.readUint32(&ip))) {
+		return;
+	}
+	PtrLocker<ISTunnelClientListener> listener(getListener());
+	if (listener.isNotNull()) {
+		listener->onSTunnelDNSResponse(this, dns, ip);
 	}
 }
 
