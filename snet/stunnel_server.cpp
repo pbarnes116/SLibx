@@ -325,6 +325,7 @@ void STunnelServiceSession::onRead(AsyncStream* stream, void* data, sl_uint32 si
 	}
 }
 
+#define OUTPUT_UNIT 102400
 void STunnelServiceSession::write()
 {
 	MutexLocker lock(getLocker());
@@ -335,12 +336,17 @@ void STunnelServiceSession::write()
 	if (stream.isNull()) {
 		return;
 	}
+	MemoryBuffer buffer;
 	Memory output;
 	while (m_queueOutputChannels.popFront(&output)) {
 		if (output.isNotEmpty()) {
-			break;
+			buffer.add(output);
+			if (buffer.getSize() > OUTPUT_UNIT) {
+				break;
+			}
 		}
 	}
+	output = buffer.merge();
 	if (output.isEmpty()) {
 		return;
 	}
@@ -425,13 +431,17 @@ void STunnelServiceSession::receiveSessionMessage(const void* _data, sl_uint32 s
 	}
 }
 
-void STunnelServiceSession::sendRawIP(const void* ip, sl_uint32 size)
+void STunnelServiceSession::sendRawIP(const void* _ip, sl_uint32 size)
 {
+	if (size < sizeof(IPv4HeaderFormat)) {
+		return;
+	}
+	IPv4HeaderFormat* ip = (IPv4HeaderFormat*)_ip;
 	Memory mem = Zlib::compressRaw(ip, size);
 	if (mem.isNotEmpty()) {
 		MemoryBuffer buf;
 		buf.add(mem);
-		sendSessionMessage(10, buf, sl_true);
+		sendSessionMessage(10, buf, !(ip->isTCP()));
 	}
 }
 
@@ -750,7 +760,7 @@ void STunnelServiceSession::sendDNSResponse(const String& dns, const IPv4Address
 	MemoryWriter writer;
 	writer.writeString(dns);
 	writer.writeUint32(ip.toInt());
-	sendSessionMessage(41, writer.getMemoryBuffer(), sl_false);
+	sendSessionMessage(41, writer.getMemoryBuffer(), sl_true);
 }
 
 void STunnelServiceSession::_resolveDNS(String dns)

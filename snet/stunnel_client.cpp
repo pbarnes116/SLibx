@@ -1,6 +1,7 @@
 #include "../../../inc/slibx/snet/stunnel_client.h"
 
 #include "../../../inc/slib/crypto/zlib.h"
+#include "../../../inc/slib/network/tcpip.h"
 #include "../../../inc/slib/core/log.h"
 
 SLIB_SNET_NAMESPACE_BEGIN
@@ -262,6 +263,7 @@ void STunnelClient::onRead(AsyncStream* stream, void* data, sl_uint32 sizeRead, 
 	}
 }
 
+#define OUTPUT_UNIT 102400
 void STunnelClient::_write()
 {
 	MutexLocker lock(getLocker());
@@ -278,12 +280,17 @@ void STunnelClient::_write()
 	if (stream.isNull()) {
 		return;
 	}
+	MemoryBuffer buffer;
 	Memory output;
 	while (m_queueOutputChannels.popFront(&output)) {
 		if (output.isNotEmpty()) {
-			break;
+			buffer.add(output);
+			if (buffer.getSize() > OUTPUT_UNIT) {
+				break;
+			}
 		}
 	}
+	output = buffer.merge();
 	if (output.isEmpty()) {
 		return;
 	}
@@ -363,11 +370,15 @@ void STunnelClient::receiveSessionMessage(const void* _data, sl_uint32 size)
 	}
 }
 
-void STunnelClient::sendRawIP(const void* ip, sl_uint32 size)
+void STunnelClient::sendRawIP(const void* _ip, sl_uint32 size)
 {
+	if (size < sizeof(IPv4HeaderFormat)) {
+		return;
+	}
+	IPv4HeaderFormat* ip = (IPv4HeaderFormat*)_ip;
 	Memory mem = Zlib::compressRaw(ip, size);
 	if (mem.isNotEmpty()) {
-		sendSessionMessage(10, mem.getBuf(), (sl_uint32)(mem.getSize()), sl_true);
+		sendSessionMessage(10, mem.getBuf(), (sl_uint32)(mem.getSize()), !(ip->isTCP()));
 	}
 }
 
@@ -727,7 +738,7 @@ void STunnelClient::sendDNSRequest(const String& dns)
 {
 	MemoryWriter writer;
 	writer.writeString(dns);
-	sendSessionMessage(40, writer.getMemoryBuffer(), sl_false);
+	sendSessionMessage(40, writer.getMemoryBuffer(), sl_true);
 }
 
 void STunnelClient::receiveDNSResponse(const void* data, sl_uint32 size)
