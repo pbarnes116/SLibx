@@ -162,4 +162,12 @@ void STunnelManager::onSTunnelDataUDP(STunnelClient* client, sl_uint64 portId, c
 		listener->onSTunnelDataUDP(client, portId, addressFrom, data, n);
 	}
 }
+
+void STunnelManager::onSTunnelDNSResponse(STunnelClient* client, const String& dns, const IPv4Address& ip)
+{
+	PtrLocker<ISTunnelClientListener> listener(getTunnelListener());
+	if (listener.isNotNull()) {
+		listener->onSTunnelDNSResponse(client, dns, ip);
+	}
+}
 SLIB_SNET_NAMESPACE_END
