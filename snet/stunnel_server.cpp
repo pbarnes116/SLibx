@@ -441,7 +441,7 @@ void STunnelServiceSession::sendRawIP(const void* _ip, sl_uint32 size)
 	if (mem.isNotEmpty()) {
 		MemoryBuffer buf;
 		buf.add(mem);
-		sendSessionMessage(10, buf, !(ip->isTCP()));
+		sendSessionMessage(10, buf, sl_true);
 	}
 }
 

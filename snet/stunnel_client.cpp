@@ -378,7 +378,9 @@ void STunnelClient::sendRawIP(const void* _ip, sl_uint32 size)
 	IPv4HeaderFormat* ip = (IPv4HeaderFormat*)_ip;
 	Memory mem = Zlib::compressRaw(ip, size);
 	if (mem.isNotEmpty()) {
-		sendSessionMessage(10, mem.getBuf(), (sl_uint32)(mem.getSize()), !(ip->isTCP()));
+		MemoryBuffer buf;
+		buf.add(mem);
+		sendSessionMessage(10, buf, sl_true);
 	}
 }
 
