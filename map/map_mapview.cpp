@@ -35,6 +35,11 @@ MapView::MapView()
 	setCompassSize(150);
 	setCompassPosition(Point(75, 75));
 	setCompassVisible(sl_true);
+	setCompassAlignRight(sl_true);
+	setCompassAlignBottom(sl_false);
+	
+	setStatusBarVisible(sl_true);
+	setStatusBarLocateAtTop(sl_false);
 }
 
 MapView::~MapView()
@@ -92,16 +97,17 @@ void MapView::onFrame(RenderEngine* engine)
 {
 	sl_int32 viewportWidth = engine->getViewportWidth();
 	sl_int32 viewportHeight = engine->getViewportHeight();
+	if (viewportWidth == 0 || viewportHeight == 0) {
+		return;
+	}
+
 	m_viewportWidth = (sl_real)viewportWidth;
 	m_viewportHeight = (sl_real)viewportHeight;
 
 	if (!m_flagInit) {
 		return;
 	}
-	if (viewportWidth == 0 || viewportHeight == 0) {
-		return;
-	}
-
+	
 	engine->clearColorDepth(Color::black());
 	engine->setDepthTest(sl_true);
 	engine->setCullFace(sl_false);
@@ -111,12 +117,12 @@ void MapView::onFrame(RenderEngine* engine)
 	m_earthRenderer->render(engine);
 
 	// render status
-	{
+	if (isStatusBarVisible()) {
 		Ref<FreeType> fontStatus = getStatusFont();
 		if (fontStatus.isNotNull()) {
 			engine->setDepthTest(sl_false);
 			engine->setBlending(sl_true);
-			m_textureStatus->getImage()->fillColor(Color(0, 0, 0, 100));
+			m_textureStatus->getImage()->fillColor(Color(0, 0, 0, 0));
 
 			String textStatus = getStatusText();
 			Size size = fontStatus->getStringExtent(textStatus);
@@ -126,9 +132,18 @@ void MapView::onFrame(RenderEngine* engine)
 				, textStatus, Color::white());
 			m_textureStatus->update();
 			
-			sl_real heightStatus = (sl_real)(STATUS_HEIGHT * viewportWidth / STATUS_WIDTH);
+			sl_real heightStatus = getStatusBarHeight();
+			sl_real widthStatus = (sl_real)(heightStatus * STATUS_WIDTH / STATUS_HEIGHT);
+			
+			sl_real top;
+			if (isStatusBarLocateAtTop()) {
+				top = 0;
+			} else {
+				top = (sl_real)(viewportHeight - heightStatus);
+			}
+			engine->drawRectangle2D(engine->screenToViewport(0, top, viewportWidth, heightStatus), Color(0, 0, 0, 100));
 			engine->drawTexture2D(
-				engine->screenToViewport(0, (sl_real)(viewportHeight - heightStatus), (sl_real)(viewportWidth), (sl_real)(heightStatus))
+				engine->screenToViewport((sl_real)(viewportWidth / 2 - widthStatus / 2), top, widthStatus, heightStatus)
 				, m_textureStatus
 				, Rectangle(0, 0, 1, 1));
 		}
@@ -147,11 +162,12 @@ void MapView::onFrame(RenderEngine* engine)
 			rect = getCompassTextureRectangle();
 		}
 		if (texture.isNotNull()) {
+			Point pt = getCompassRealPosition();
 			sl_real sizeCompass = getCompassSize();
 			Matrix3 transform = Transform2::getTranslationMatrix(-0.5f, -0.5f)
 				* Transform2::getScalingMatrix(sizeCompass, sizeCompass)
 				* Transform2::getRotationMatrix(-Math::getRadianFromDegrees(getCamera()->getRotationZ()))
-				* Transform2::getTranslationMatrix(getCompassPosition())
+				* Transform2::getTranslationMatrix(pt)
 				* Transform2::getScalingMatrix(2.0f / viewportWidth, - 2.0f / viewportHeight)
 				* Transform2::getTranslationMatrix(-1, 1);
 			engine->setDepthTest(sl_false);
@@ -186,7 +202,7 @@ void MapView::onMouseEvent(UIEvent* event)
 
 		getCamera()->clearMotions();
 
-		sl_real lenCompass = (pt - getCompassPosition()).getLength();
+		sl_real lenCompass = (pt - getCompassRealPosition()).getLength();
 		if (isCompassVisible() && lenCompass < getCompassSize() * 0.5f && lenCompass > getCompassSize() / 8) {
 			m_flagCompassHighlight = sl_true;
 			m_compassMouseDown = getCamera()->getRotationZ();
@@ -212,7 +228,7 @@ void MapView::onMouseEvent(UIEvent* event)
 		if (m_flagMouseDown) {
 			if (m_flagCompassHighlight) {
 
-				Vector2 v = pt - getCompassPosition();
+				Vector2 v = pt - getCompassRealPosition();
 				if (v.length2p() > 30) {
 					sl_real r = -Math::getDegreesFromRadian(Transform2::getRotationAngleFromDirToDir(Vector2(0, -1), v));
 					getCamera()->setTargetRotationZ(r);
@@ -387,6 +403,18 @@ void MapView::startMovingToLookAt(const LatLon& loc)
 	getCamera()->startMovingToLookAt(GeoLocation(loc, altitude + 100));
 }
 
+Point MapView::getCompassRealPosition()
+{
+	Point pt = getCompassPosition();
+	if (isCompassAlignRight()) {
+		pt.x = (sl_real)(m_viewportWidth - pt.x);
+	}
+	if (isCompassAlignBottom()) {
+		pt.y = (sl_real)(m_viewportHeight - pt.y);
+	}
+	return pt;
+}
+
 String MapView::formatLatitude(double f)
 {
 	String ret;
@@ -442,6 +470,12 @@ String MapView::formatAltitude(double f)
 		ret += "m";
 	}
 	return ret;
+}
+
+sl_real MapView::getStatusBarHeight()
+{
+	sl_real viewportWidth = m_viewportWidth;
+	return (sl_real)(STATUS_HEIGHT * viewportWidth / STATUS_WIDTH);
 }
 
 String MapView::getStatusText()
