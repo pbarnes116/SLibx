@@ -1,6 +1,7 @@
 #include "map_earth_renderer.h"
 
 #include "../../../inc/slib/render/opengl.h"
+#include "../../../inc/slib/core/scoped_pointer.h"
 
 SLIB_MAP_NAMESPACE_BEGIN
 
@@ -114,7 +115,7 @@ void MapEarthRenderer::_renderGISLine(RenderEngine* engine, MapGISLineTile* tile
 			if (s->vb.isNotNull() && dem == s->demTileRef) {
 				vb = s->vb;
 			} else {
-				SLIB_SCOPED_ARRAY(Vector3, pos, n * 2);
+				SLIB_SCOPED_BUFFER(Vector3, 1024, pos, n * 2);
 				for (sl_uint32 i = 0; i < n; i++) {
 					if (dem.isNull()) {
 						pos[i * 2] = MapEarth::getCartesianPosition(lines[i].start);
@@ -252,7 +253,7 @@ void MapEarthRenderer::_renderPolygon(RenderEngine* engine, MapPolygon* polygon)
 	if (n <= 1) {
 		return;
 	}
-	SLIB_SCOPED_ARRAY(Vector3, pos, n);
+	SLIB_SCOPED_BUFFER(Vector3, 1024, pos, n);
 	sl_bool flagVisible = sl_false;
 	for (sl_size i = 0; i < n; i++) {
 		pos[i] = MapEarth::getCartesianPosition(getLocationFromLatLon(points[i].getLatLon()));

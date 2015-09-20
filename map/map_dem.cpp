@@ -1,6 +1,7 @@
 #include "../../../inc/slibx/map/dem.h"
 
 #include "../../../inc/slib/core/io.h"
+#include "../../../inc/slib/core/scoped_pointer.h"
 #include "../../../inc/slib/render/program.h"
 
 SLIB_MAP_NAMESPACE_BEGIN
@@ -132,7 +133,7 @@ void _DEM_makeMesh(const DEM* _dem, const GLOBE& globe, const Vector3lf& positio
 	
 	out.type = Primitive::typeTriangles;
 	out.countElements = 6 * (M - 1) * (M - 1);
-	SLIB_SCOPED_ARRAY(DEM_Vertex, vb, M*M);
+	SLIB_SCOPED_BUFFER(DEM_Vertex, 4096, vb, M*M);
 	DEM_Vertex* pv = vb;
 	for (sl_uint32 y = 0; y < M; y++) {
 		for (sl_uint32 x = 0; x < M; x++) {
@@ -181,7 +182,7 @@ void _DEM_makeMesh(const DEM* _dem, const GLOBE& globe, const Vector3lf& positio
 	}
 
 	out.vertexBuffer = VertexBuffer::create(vb, sizeof(DEM_Vertex) * M * M);
-	SLIB_SCOPED_ARRAY(sl_uint16, ib, out.countElements);
+	SLIB_SCOPED_BUFFER(sl_uint16, 4096, ib, out.countElements);
 	sl_uint16* pi = ib;
 	for (sl_uint32 y = 0; y < M - 1; y++) {
 		for (sl_uint32 x = 0; x < M - 1; x++) {

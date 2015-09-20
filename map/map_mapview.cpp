@@ -141,7 +141,7 @@ void MapView::onFrame(RenderEngine* engine)
 			} else {
 				top = (sl_real)(viewportHeight - heightStatus);
 			}
-			engine->drawRectangle2D(engine->screenToViewport(0, top, viewportWidth, heightStatus), Color(0, 0, 0, 100));
+			engine->drawRectangle2D(engine->screenToViewport(0, top, (sl_real)viewportWidth, heightStatus), Color(0, 0, 0, 100));
 			engine->drawTexture2D(
 				engine->screenToViewport((sl_real)(viewportWidth / 2 - widthStatus / 2), top, widthStatus, heightStatus)
 				, m_textureStatus

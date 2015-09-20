@@ -1,6 +1,7 @@
 #include "../../../inc/slibx/map/data_gearth.h"
 
 #include "../../../inc/slib/core/io.h"
+#include "../../../inc/slib/core/scoped_pointer.h"
 
 SLIB_MAP_NAMESPACE_BEGIN
 
@@ -324,7 +325,7 @@ public:
 					}
 					sl_uint32 maxTx = _maxTx;
 					sl_uint32 maxTy = _maxTy;
-					SLIB_SCOPED_ARRAY(sl_uint8, buf, 4 * nTex);
+					SLIB_SCOPED_BUFFER(sl_uint8, 1024, buf, 4 * nTex);
 					if (!input.read(buf, 4 * nTex)) {
 						return sl_null;
 					}
@@ -630,7 +631,7 @@ sl_bool GEarthTile::load(const void* data, sl_size size)
 			Mesh mesh;
 			Ref<_GEarthTileFile::GMesh> gmesh = gmeshes[k];
 			sl_uint32 nVertices = (sl_uint32)(gmesh->vertices.count());
-			SLIB_SCOPED_ARRAY(float, vb, nVertices * 5);
+			SLIB_SCOPED_BUFFER(float, 1024, vb, nVertices * 5);
 			float* v = vb;
 			_GEarthTileFile::GVertex* gv = gmesh->vertices.getBuf();
 			

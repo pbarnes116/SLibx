@@ -1,6 +1,7 @@
 #include "../../../inc/slibx/map/package.h"
 #include "../../../inc/slib/core/io.h"
-#include "../../../inc/slib/core/pointer.h"
+#include "../../../inc/slib/core/scoped_pointer.h"
+
 #define PACKAGE_ITEM_IDENTIFY	0xFEFF0823
 #define PACKAGE_HEADER_SIZE		32
 #define PACKAGE_IDENTIFY		"SMAP-PACKAGE V1.0"
@@ -15,7 +16,7 @@ void MapPackage::create(const String& filePath)
 	if (m_pkgFile.isNotNull()) {
 		Memory header = getHeader();
 		sl_int32 offsetTableSize = sizeof(sl_int32)* m_nTilesXNum * m_nTilesYNum;
-		SLIB_SCOPED_ARRAY(sl_int32, offsetTable, offsetTableSize);
+		SLIB_SCOPED_BUFFER(sl_int32, 4096, offsetTable, offsetTableSize);
 		Base::zeroMemory(offsetTable, offsetTableSize * sizeof(sl_int32));
 		m_pkgFile->write(header.getBuf(), header.getSize());
 		m_pkgFile->write(offsetTable, offsetTableSize);
@@ -117,7 +118,7 @@ static SLIB_INLINE String readString(MemoryReader& reader)
 	sl_uint32 nameLen = reader.readUint32CVLI();
 	String ret;
 	if (nameLen > 0){
-		SLIB_SCOPED_ARRAY(char, strName, nameLen);
+		SLIB_SCOPED_BUFFER(char, 1024, strName, nameLen);
 		reader.read(strName, nameLen);
 		ret = String::fromUtf8(strName, nameLen);
 	}

@@ -1,6 +1,7 @@
 #include "../../../inc/slibx/map/data_building.h"
 
 #include "../../../inc/slib/core/io.h"
+#include "../../../inc/slib/core/scoped_pointer.h"
 
 #include "map_data_config.h"
 
@@ -82,7 +83,7 @@ Ref<VW_Building_Object> VW_Building::readObject(Ref<MapDataLoader> data, VW_Buil
 			return ret;
 		}
 		sl_uint32 i;
-		SLIB_SCOPED_ARRAY(RenderProgram3D_PositionNormalTexture_Diffuse::VertexData, vertices, countVertices);
+		SLIB_SCOPED_BUFFER(RenderProgram3D_PositionNormalTexture_Diffuse::VertexData, 1024, vertices, countVertices);
 		for (i = 0; i < countVertices; i++) {
 			reader.readFloat(&(vertices[i].position.x));
 			reader.readFloat(&(vertices[i].position.y));
@@ -98,7 +99,7 @@ Ref<VW_Building_Object> VW_Building::readObject(Ref<MapDataLoader> data, VW_Buil
 		if (!reader.readUint32(&countIndices)) {
 			return ret;
 		}
-		SLIB_SCOPED_ARRAY(sl_uint16, indices, countIndices);
+		SLIB_SCOPED_BUFFER(sl_uint16, 1024, indices, countIndices);
 		for (i = 0; i < countIndices; i++) {
 			reader.readUint16(&(indices[i]));
 		}
