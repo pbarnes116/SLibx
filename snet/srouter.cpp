@@ -154,9 +154,9 @@ Ref<SRouterDevice> SRouterDevice::create(const SRouterDeviceParam& param)
 				}
 #if defined(SLIB_PLATFORM_IS_LINUX)
 				if (param.use_raw_socket) {
-					et->m_device = NetCapture::createRawIPv4(ncp);
+					ret->m_device = NetCapture::createRawIPv4(ncp);
 				} else {
-					et->m_device = NetCapture::createRawPacket(ncp);
+					ret->m_device = NetCapture::createRawPacket(ncp);
 				}
 #else
 				ret->m_device = NetCapture::createPcap(ncp);
