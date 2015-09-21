@@ -9,6 +9,7 @@
 #define TAG "SRouter"
 
 #define MESSAGE_SIZE 102400
+#define PACKET_SIZE 65536
 
 SLIB_SNET_NAMESPACE_BEGIN
 void SRouterInterfaceParam::parseConfig(const Variant& varConfig)
@@ -51,7 +52,7 @@ void SRouterInterface::initWithParam(const SRouterInterfaceParam& param)
 	m_tableNat.setTargetPortBegin(param.nat_port_begin);
 	m_tableNat.setTargetPortEnd(param.nat_port_end);
 
-	m_fragmentation.setupExpiringDuration(param.fragment_expiring_seconds);
+	m_fragmentation.setupExpiringDuration(param.fragment_expiring_seconds * 1000);
 
 	setListener(param.listener);
 }
@@ -63,7 +64,7 @@ void SRouterInterface::setNAT_IP(const IPv4Address& ip)
 
 void SRouterInterface::writePacket(const void* packet, sl_uint32 size)
 {
-	SLIB_SCOPED_BUFFER(char, 4096, buf, size);
+	SLIB_SCOPED_BUFFER(char, PACKET_SIZE, buf, size);
 	Base::copyMemory(buf, packet, size);
 	
 	PtrLocker<ISRouterInterfaceListener> listener(getListener());
@@ -197,7 +198,7 @@ void SRouterDevice::_writePacket(const void* packet, sl_uint32 size)
 				return;
 			}
 		}
-		SLIB_SCOPED_BUFFER(char, 4096, bufFrame, size + EthernetFrameFormat::getHeaderSize());
+		SLIB_SCOPED_BUFFER(char, PACKET_SIZE, bufFrame, size + EthernetFrameFormat::getHeaderSize());
 		EthernetFrameFormat* frame = (EthernetFrameFormat*)bufFrame;
 		frame->setSourceAddress(macSource);
 		frame->setDestinationAddress(macTarget);
@@ -299,6 +300,7 @@ Ref<SRouterRemote> SRouterRemote::create(const SRouterRemoteParam& param)
 		ret->m_address = param.host_address;
 		ret->m_key = param.key;
 		ret->m_aes.setKey_SHA256(param.key);
+		ret->initWithParam(param);
 	}
 	return ret;
 }
@@ -678,8 +680,8 @@ void SRouter::_runUdp()
 		return;
 	}
 	TimeCounter tc;
-	char buf[MESSAGE_SIZE];
-	char bufDec[MESSAGE_SIZE];
+	char buf[MESSAGE_SIZE + 32];
+	char bufDec[MESSAGE_SIZE + 16];
 	while (Thread::isNotStoppingCurrent()) {
 		SocketAddress addr;
 		while (1) {
