@@ -285,6 +285,7 @@ void SRouterRemoteParam::parseConfig(const Variant& varConfig)
 
 SRouterRemote::SRouterRemote()
 {
+	m_flagDynamicAddress = sl_true;
 	m_timeLastKeepAliveSend.setZero();
 	m_timeLastKeepAliveReceive.setZero();
 }
@@ -300,6 +301,7 @@ Ref<SRouterRemote> SRouterRemote::create(const SRouterRemoteParam& param)
 		ret->m_address = param.host_address;
 		ret->m_key = param.key;
 		ret->m_aes.setKey_SHA256(param.key);
+		ret->m_flagDynamicAddress = ret->m_address.isInvalid();
 		ret->initWithParam(param);
 	}
 	return ret;
@@ -664,7 +666,7 @@ void SRouter::_receiveRouterKeepAlive(SocketAddress& address, const void* data, 
 	}
 	Ref<SRouterRemote> remote = m_mapRemotes.getValue(name, Ref<SRouterRemote>::null());
 	if (remote.isNotNull()) {
-		if (remote->m_address.isInvalid()) {
+		if (remote->m_flagDynamicAddress) {
 			remote->m_address = address;
 		}
 		remote->m_timeLastKeepAliveReceive = Time::now();
