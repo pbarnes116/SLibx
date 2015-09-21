@@ -176,8 +176,8 @@ void STunnelServer::onCapturePacket(NetCapture* capture, NetCapturePacket* packe
 		if (mem.isNotEmpty()) {
 			Ptr<Referable> userObject;
 			ip = (IPv4HeaderFormat*)(mem.getBuf());
-			if (m_tableNat.translateIncomingPacket(ip, ip->getContent(), ip->getContentSize(), &userObject)) {
-				PtrLocker<STunnelServiceSession> client(Ptr<STunnelServiceSession>::from(userObject));
+			if (m_tableNat.translateIncomingPacket(ip, ip->getContent(), ip->getContentSize())) {
+				Ref<STunnelServiceSession> client = m_mapSessionLocalIP.getValue(ip->getDestinationAddress(), WeakRef<STunnelServiceSession>::null()).lock();
 				if (client.isNotNull()) {
 					ListLocker<Memory> fragments(m_fragmentationIncoming.makeFragments(ip, ip->getContent(), ip->getContentSize(), m_param.nat_mtu_incoming));
 					for (sl_size i = 0; i < fragments.count(); i++) {
@@ -218,8 +218,8 @@ void STunnelServer::writeIPToNAT(STunnelServiceSession* session, const void* ipP
 	Memory mem = m_fragmentationOutgoing.combineFragment(ipPacket, size);
 	if (mem.isNotEmpty()) {
 		IPv4HeaderFormat* ip = (IPv4HeaderFormat*)(mem.getBuf());
-		Ptr<Referable> userObject = WeakRef<STunnelServiceSession>(session);
-		if (m_tableNat.translateOutgoingPacket(ip, ip->getContent(), ip->getContentSize(), &userObject)) {
+		m_mapSessionLocalIP.put(ip->getSourceAddress(), session);
+		if (m_tableNat.translateOutgoingPacket(ip, ip->getContent(), ip->getContentSize())) {
 			ListLocker<Memory> fragments(m_fragmentationOutgoing.makeFragments(ip, ip->getContent(), ip->getContentSize(), m_param.nat_mtu_incoming));
 			for (sl_size i = 0; i < fragments.count(); i++) {
 				sl_uint32 lenIP = (sl_uint32)(fragments[i].getSize());
