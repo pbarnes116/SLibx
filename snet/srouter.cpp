@@ -94,11 +94,13 @@ void SRouterInterface::forwardPacket(const void* ip, sl_uint32 size)
 	Memory mem = m_fragmentation.combineFragment(ip, size);
 	if (mem.isNotEmpty()) {
 		IPv4HeaderFormat* header = (IPv4HeaderFormat*)(mem.getBuf());
-		if (header->getDestinationAddress().isHost()) {
-			if (m_flagUseNat) {
+		if (m_flagUseNat) {
+			if (header->getDestinationAddress().isHost()) {
 				if (!(m_tableNat.translateIncomingPacket(header, header->getContent(), header->getContentSize()))) {
 					return;
 				}
+			} else {
+				return;
 			}
 		}
 		Ref<SRouter> router = getRouter();
@@ -163,7 +165,7 @@ Ref<SRouterDevice> SRouterDevice::create(const SRouterDeviceParam& param)
 				ret->m_device = NetCapture::createPcap(ncp);
 #endif
 				if (ret->m_device.isNull()) {
-					SLIB_LOG_ERROR(TAG, "Can not capture on network device - " + param.iface_name);
+					SLIB_LOG_ERROR(TAG, "Can not capture on network device - " + param.iface_name + "(" + dev.name + ")");
 					return Ref<SRouterDevice>::null();
 				}
 			}
