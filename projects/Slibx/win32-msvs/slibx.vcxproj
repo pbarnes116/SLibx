@@ -1,0 +1,222 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\..\inc\slibx\map.h" />
+    <ClInclude Include="..\..\..\inc\slibx\map\camera.h" />
+    <ClInclude Include="..\..\..\inc\slibx\map\data.h" />
+    <ClInclude Include="..\..\..\inc\slibx\map\data_building.h" />
+    <ClInclude Include="..\..\..\inc\slibx\map\data_gearth.h" />
+    <ClInclude Include="..\..\..\inc\slibx\map\data_gis.h" />
+    <ClInclude Include="..\..\..\inc\slibx\map\definition.h" />
+    <ClInclude Include="..\..\..\inc\slibx\map\dem.h" />
+    <ClInclude Include="..\..\..\inc\slibx\map\earth.h" />
+    <ClInclude Include="..\..\..\inc\slibx\map\mapview.h" />
+    <ClInclude Include="..\..\..\inc\slibx\map\object.h" />
+    <ClInclude Include="..\..\..\inc\slibx\map\package.h" />
+    <ClInclude Include="..\..\..\inc\slibx\map\util.h" />
+    <ClInclude Include="..\..\..\inc\slibx\sfile.h" />
+    <ClInclude Include="..\..\..\inc\slibx\sfile\definition.h" />
+    <ClInclude Include="..\..\..\inc\slibx\sfile\secure_file_pack.h" />
+    <ClInclude Include="..\..\..\inc\slibx\snet.h" />
+    <ClInclude Include="..\..\..\inc\slibx\snet\dbip.h" />
+    <ClInclude Include="..\..\..\inc\slibx\snet\definition.h" />
+    <ClInclude Include="..\..\..\inc\slibx\snet\stunnel_client.h" />
+    <ClInclude Include="..\..\..\inc\slibx\snet\stunnel_manager.h" />
+    <ClInclude Include="..\..\..\inc\slibx\snet\stunnel_server.h" />
+    <ClInclude Include="..\..\..\src\slibx\map\map_data_config.h" />
+    <ClInclude Include="..\..\..\src\slibx\map\map_earth_renderer.h" />
+    <ClInclude Include="..\..\..\src\slibx\map\map_tile_building.h" />
+    <ClInclude Include="..\..\..\src\slibx\map\map_tile_config.h" />
+    <ClInclude Include="..\..\..\src\slibx\map\map_tile_dem.h" />
+    <ClInclude Include="..\..\..\src\slibx\map\map_tile_gis.h" />
+    <ClInclude Include="..\..\..\src\slibx\map\map_tile_layer.h" />
+    <ClInclude Include="..\..\..\src\slibx\map\map_tile_picture.h" />
+    <ClInclude Include="..\..\..\src\slibx\map\map_tile_render.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\..\src\slibx\map\map_camera.cpp" />
+    <ClCompile Include="..\..\..\src\slibx\map\map_data.cpp" />
+    <ClCompile Include="..\..\..\src\slibx\map\map_data_building.cpp" />
+    <ClCompile Include="..\..\..\src\slibx\map\map_data_gearth.cpp" />
+    <ClCompile Include="..\..\..\src\slibx\map\map_data_gis.cpp" />
+    <ClCompile Include="..\..\..\src\slibx\map\map_dem.cpp" />
+    <ClCompile Include="..\..\..\src\slibx\map\map_earth.cpp" />
+    <ClCompile Include="..\..\..\src\slibx\map\map_earth_base.cpp" />
+    <ClCompile Include="..\..\..\src\slibx\map\map_earth_control.cpp" />
+    <ClCompile Include="..\..\..\src\slibx\map\map_earth_data.cpp" />
+    <ClCompile Include="..\..\..\src\slibx\map\map_earth_render.cpp" />
+    <ClCompile Include="..\..\..\src\slibx\map\map_mapview.cpp" />
+    <ClCompile Include="..\..\..\src\slibx\map\map_package.cpp" />
+    <ClCompile Include="..\..\..\src\slibx\map\map_tile_building.cpp" />
+    <ClCompile Include="..\..\..\src\slibx\map\map_tile_dem.cpp" />
+    <ClCompile Include="..\..\..\src\slibx\map\map_tile_gis.cpp" />
+    <ClCompile Include="..\..\..\src\slibx\map\map_tile_layer.cpp" />
+    <ClCompile Include="..\..\..\src\slibx\map\map_tile_picture.cpp" />
+    <ClCompile Include="..\..\..\src\slibx\map\map_tile_render.cpp" />
+    <ClCompile Include="..\..\..\src\slibx\map\map_util.cpp" />
+    <ClCompile Include="..\..\..\src\slibx\sfile\secure_file_pack.cpp" />
+    <ClCompile Include="..\..\..\src\slibx\snet\snet_dbip.cpp" />
+    <ClCompile Include="..\..\..\src\slibx\snet\srouter.cpp" />
+    <ClCompile Include="..\..\..\src\slibx\snet\stunnel_client.cpp" />
+    <ClCompile Include="..\..\..\src\slibx\snet\stunnel_manager.cpp" />
+    <ClCompile Include="..\..\..\src\slibx\snet\stunnel_server.cpp" />
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{D01D773C-CF17-4C7C-AAB5-A16A694F852F}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>slibx</RootNamespace>
+    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v140_xp</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v140_xp</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v140_xp</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v140_xp</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <OutDir>..\..\..\bin\slib\win32\x86_debug\</OutDir>
+    <IntDir>Build\$(Platform)\$(Configuration)\</IntDir>
+    <IncludePath>../../../../Slib/inc;$(IncludePath)</IncludePath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <OutDir>..\..\..\bin\slib\win32\x86_release\</OutDir>
+    <IntDir>Build\$(Platform)\$(Configuration)\</IntDir>
+    <IncludePath>../../../../Slib/inc;$(IncludePath)</IncludePath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <OutDir>..\..\..\bin\slib\win32\x64_debug\</OutDir>
+    <IntDir>Build\$(Platform)\$(Configuration)\</IntDir>
+    <IncludePath>../../../../Slib/inc;$(IncludePath)</IncludePath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <IntDir>Build\$(Platform)\$(Configuration)\</IntDir>
+    <OutDir>..\..\..\bin\slib\win32\x64_release\</OutDir>
+    <IncludePath>../../../../Slib/inc;$(IncludePath)</IncludePath>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <SDLCheck>true</SDLCheck>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <SDLCheck>true</SDLCheck>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <SDLCheck>true</SDLCheck>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <SDLCheck>true</SDLCheck>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

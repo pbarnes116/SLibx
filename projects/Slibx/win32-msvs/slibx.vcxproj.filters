@@ -1,0 +1,214 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="inc">
+      <UniqueIdentifier>{cff46106-5009-4a59-b42c-4ad8730be145}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src">
+      <UniqueIdentifier>{81f0c3ed-66e9-4ec6-ba13-1148966762b0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\slibx">
+      <UniqueIdentifier>{6caf5777-3260-4ae9-ac4b-63373d71152c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\slibx\map">
+      <UniqueIdentifier>{aeb06f17-7b1a-43b9-a07b-21bec3c8a44c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\slibx\sfile">
+      <UniqueIdentifier>{c0876045-060e-4607-ad88-14cda0afd832}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="inc\slibx">
+      <UniqueIdentifier>{70de9215-c1b0-4a42-9e27-3a1436b3036a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="inc\slibx\map">
+      <UniqueIdentifier>{1c3dce2b-5654-417b-92f0-665d3f971fb4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="inc\slibx\sfile">
+      <UniqueIdentifier>{e597892a-0573-4fe6-896d-f84993659195}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\slibx\snet">
+      <UniqueIdentifier>{db9767f0-41fd-4e36-a139-8a6b6a6e469e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="inc\slibx\snet">
+      <UniqueIdentifier>{f5eb5f79-6b1d-4a65-9515-7656d4ef4925}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\..\inc\slibx\sfile.h">
+      <Filter>inc\slibx</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\inc\slibx\map.h">
+      <Filter>inc\slibx</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\inc\slibx\sfile\secure_file_pack.h">
+      <Filter>inc\slibx\sfile</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\inc\slibx\sfile\definition.h">
+      <Filter>inc\slibx\sfile</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\inc\slibx\map\mapview.h">
+      <Filter>inc\slibx\map</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\inc\slibx\map\object.h">
+      <Filter>inc\slibx\map</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\inc\slibx\map\camera.h">
+      <Filter>inc\slibx\map</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\inc\slibx\map\definition.h">
+      <Filter>inc\slibx\map</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\inc\slibx\map\earth.h">
+      <Filter>inc\slibx\map</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\slibx\map\map_earth_renderer.h">
+      <Filter>src\slibx\map</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\slibx\map\map_tile_building.h">
+      <Filter>src\slibx\map</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\slibx\map\map_tile_config.h">
+      <Filter>src\slibx\map</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\slibx\map\map_tile_dem.h">
+      <Filter>src\slibx\map</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\slibx\map\map_tile_gis.h">
+      <Filter>src\slibx\map</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\slibx\map\map_tile_picture.h">
+      <Filter>src\slibx\map</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\slibx\map\map_tile_render.h">
+      <Filter>src\slibx\map</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\inc\slibx\map\data_gearth.h">
+      <Filter>inc\slibx\map</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\inc\slibx\map\data_gis.h">
+      <Filter>inc\slibx\map</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\inc\slibx\map\data_building.h">
+      <Filter>inc\slibx\map</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\slibx\map\map_data_config.h">
+      <Filter>src\slibx\map</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\inc\slibx\map\data.h">
+      <Filter>inc\slibx\map</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\inc\slibx\map\util.h">
+      <Filter>inc\slibx\map</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\inc\slibx\map\dem.h">
+      <Filter>inc\slibx\map</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\inc\slibx\map\package.h">
+      <Filter>inc\slibx\map</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\inc\slibx\snet\dbip.h">
+      <Filter>inc\slibx\snet</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\inc\slibx\snet\definition.h">
+      <Filter>inc\slibx\snet</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\inc\slibx\snet.h">
+      <Filter>inc\slibx</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\inc\slibx\snet\stunnel_server.h">
+      <Filter>inc\slibx\snet</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\inc\slibx\snet\stunnel_client.h">
+      <Filter>inc\slibx\snet</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\inc\slibx\snet\stunnel_manager.h">
+      <Filter>inc\slibx\snet</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\slibx\map\map_tile_layer.h">
+      <Filter>src\slibx\map</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\..\src\slibx\sfile\secure_file_pack.cpp">
+      <Filter>src\slibx\sfile</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\slibx\map\map_dem.cpp">
+      <Filter>src\slibx\map</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\slibx\map\map_earth.cpp">
+      <Filter>src\slibx\map</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\slibx\map\map_earth_base.cpp">
+      <Filter>src\slibx\map</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\slibx\map\map_earth_control.cpp">
+      <Filter>src\slibx\map</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\slibx\map\map_earth_data.cpp">
+      <Filter>src\slibx\map</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\slibx\map\map_earth_render.cpp">
+      <Filter>src\slibx\map</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\slibx\map\map_mapview.cpp">
+      <Filter>src\slibx\map</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\slibx\map\map_package.cpp">
+      <Filter>src\slibx\map</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\slibx\map\map_tile_building.cpp">
+      <Filter>src\slibx\map</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\slibx\map\map_tile_dem.cpp">
+      <Filter>src\slibx\map</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\slibx\map\map_tile_gis.cpp">
+      <Filter>src\slibx\map</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\slibx\map\map_tile_picture.cpp">
+      <Filter>src\slibx\map</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\slibx\map\map_tile_render.cpp">
+      <Filter>src\slibx\map</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\slibx\map\map_util.cpp">
+      <Filter>src\slibx\map</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\slibx\map\map_camera.cpp">
+      <Filter>src\slibx\map</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\slibx\map\map_data.cpp">
+      <Filter>src\slibx\map</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\slibx\map\map_data_building.cpp">
+      <Filter>src\slibx\map</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\slibx\map\map_data_gearth.cpp">
+      <Filter>src\slibx\map</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\slibx\map\map_data_gis.cpp">
+      <Filter>src\slibx\map</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\slibx\snet\snet_dbip.cpp">
+      <Filter>src\slibx\snet</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\slibx\snet\stunnel_server.cpp">
+      <Filter>src\slibx\snet</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\slibx\snet\stunnel_client.cpp">
+      <Filter>src\slibx\snet</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\slibx\snet\stunnel_manager.cpp">
+      <Filter>src\slibx\snet</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\slibx\snet\srouter.cpp">
+      <Filter>src\slibx\snet</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\slibx\map\map_tile_layer.cpp">
+      <Filter>src\slibx\map</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>

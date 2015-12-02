@@ -1,0 +1,431 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 46;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		A21C166F1BA74EF0006B1FA1 /* stunnel_client.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A21C166C1BA74EF0006B1FA1 /* stunnel_client.cpp */; };
+		A21C16701BA74EF0006B1FA1 /* stunnel_manager.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A21C166D1BA74EF0006B1FA1 /* stunnel_manager.cpp */; };
+		A21C16711BA74EF0006B1FA1 /* stunnel_server.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A21C166E1BA74EF0006B1FA1 /* stunnel_server.cpp */; };
+		A2255B331BBA70B800E4CA9B /* map_tile_layer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A2255B311BBA70B800E4CA9B /* map_tile_layer.cpp */; };
+		A2255B341BBA70B800E4CA9B /* map_tile_layer.h in Headers */ = {isa = PBXBuildFile; fileRef = A2255B321BBA70B800E4CA9B /* map_tile_layer.h */; };
+		A2492A4C1B8C44FC00928EAD /* map_camera.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A2492A2D1B8C44FC00928EAD /* map_camera.cpp */; };
+		A2492A4D1B8C44FC00928EAD /* map_data.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A2492A2E1B8C44FC00928EAD /* map_data.cpp */; };
+		A2492A4E1B8C44FC00928EAD /* map_data_building.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A2492A2F1B8C44FC00928EAD /* map_data_building.cpp */; };
+		A2492A4F1B8C44FC00928EAD /* map_data_config.h in Headers */ = {isa = PBXBuildFile; fileRef = A2492A301B8C44FC00928EAD /* map_data_config.h */; };
+		A2492A501B8C44FC00928EAD /* map_data_gearth.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A2492A311B8C44FC00928EAD /* map_data_gearth.cpp */; };
+		A2492A511B8C44FC00928EAD /* map_data_gis.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A2492A321B8C44FC00928EAD /* map_data_gis.cpp */; };
+		A2492A521B8C44FC00928EAD /* map_dem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A2492A331B8C44FC00928EAD /* map_dem.cpp */; };
+		A2492A531B8C44FC00928EAD /* map_earth.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A2492A341B8C44FC00928EAD /* map_earth.cpp */; };
+		A2492A541B8C44FC00928EAD /* map_earth_base.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A2492A351B8C44FC00928EAD /* map_earth_base.cpp */; };
+		A2492A551B8C44FC00928EAD /* map_earth_control.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A2492A361B8C44FC00928EAD /* map_earth_control.cpp */; };
+		A2492A561B8C44FC00928EAD /* map_earth_data.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A2492A371B8C44FC00928EAD /* map_earth_data.cpp */; };
+		A2492A571B8C44FC00928EAD /* map_earth_render.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A2492A381B8C44FC00928EAD /* map_earth_render.cpp */; };
+		A2492A581B8C44FC00928EAD /* map_earth_renderer.h in Headers */ = {isa = PBXBuildFile; fileRef = A2492A391B8C44FC00928EAD /* map_earth_renderer.h */; };
+		A2492A591B8C44FC00928EAD /* map_mapview.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A2492A3A1B8C44FC00928EAD /* map_mapview.cpp */; };
+		A2492A5A1B8C44FC00928EAD /* map_package.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A2492A3B1B8C44FC00928EAD /* map_package.cpp */; };
+		A2492A5B1B8C44FC00928EAD /* map_tile_building.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A2492A3C1B8C44FC00928EAD /* map_tile_building.cpp */; };
+		A2492A5C1B8C44FC00928EAD /* map_tile_building.h in Headers */ = {isa = PBXBuildFile; fileRef = A2492A3D1B8C44FC00928EAD /* map_tile_building.h */; };
+		A2492A5D1B8C44FC00928EAD /* map_tile_config.h in Headers */ = {isa = PBXBuildFile; fileRef = A2492A3E1B8C44FC00928EAD /* map_tile_config.h */; };
+		A2492A5E1B8C44FC00928EAD /* map_tile_dem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A2492A3F1B8C44FC00928EAD /* map_tile_dem.cpp */; };
+		A2492A5F1B8C44FC00928EAD /* map_tile_dem.h in Headers */ = {isa = PBXBuildFile; fileRef = A2492A401B8C44FC00928EAD /* map_tile_dem.h */; };
+		A2492A601B8C44FC00928EAD /* map_tile_gis.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A2492A411B8C44FC00928EAD /* map_tile_gis.cpp */; };
+		A2492A611B8C44FC00928EAD /* map_tile_gis.h in Headers */ = {isa = PBXBuildFile; fileRef = A2492A421B8C44FC00928EAD /* map_tile_gis.h */; };
+		A2492A621B8C44FC00928EAD /* map_tile_picture.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A2492A431B8C44FC00928EAD /* map_tile_picture.cpp */; };
+		A2492A631B8C44FC00928EAD /* map_tile_picture.h in Headers */ = {isa = PBXBuildFile; fileRef = A2492A441B8C44FC00928EAD /* map_tile_picture.h */; };
+		A2492A641B8C44FC00928EAD /* map_tile_render.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A2492A451B8C44FC00928EAD /* map_tile_render.cpp */; };
+		A2492A651B8C44FC00928EAD /* map_tile_render.h in Headers */ = {isa = PBXBuildFile; fileRef = A2492A461B8C44FC00928EAD /* map_tile_render.h */; };
+		A2492A661B8C44FC00928EAD /* map_util.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A2492A471B8C44FC00928EAD /* map_util.cpp */; };
+		A2492A671B8C44FC00928EAD /* secure_file_pack.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A2492A491B8C44FC00928EAD /* secure_file_pack.cpp */; };
+		A2492A681B8C44FC00928EAD /* snet_dbip.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A2492A4B1B8C44FC00928EAD /* snet_dbip.cpp */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		A21C166C1BA74EF0006B1FA1 /* stunnel_client.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = stunnel_client.cpp; sourceTree = "<group>"; };
+		A21C166D1BA74EF0006B1FA1 /* stunnel_manager.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = stunnel_manager.cpp; sourceTree = "<group>"; };
+		A21C166E1BA74EF0006B1FA1 /* stunnel_server.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = stunnel_server.cpp; sourceTree = "<group>"; };
+		A2255B311BBA70B800E4CA9B /* map_tile_layer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = map_tile_layer.cpp; sourceTree = "<group>"; };
+		A2255B321BBA70B800E4CA9B /* map_tile_layer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = map_tile_layer.h; sourceTree = "<group>"; };
+		A2492A211B8C446400928EAD /* libslibx.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libslibx.a; sourceTree = BUILT_PRODUCTS_DIR; };
+		A2492A2A1B8C44EB00928EAD /* slibx */ = {isa = PBXFileReference; lastKnownFileType = folder; name = slibx; path = ../../../inc/slibx; sourceTree = "<group>"; };
+		A2492A2D1B8C44FC00928EAD /* map_camera.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = map_camera.cpp; sourceTree = "<group>"; };
+		A2492A2E1B8C44FC00928EAD /* map_data.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = map_data.cpp; sourceTree = "<group>"; };
+		A2492A2F1B8C44FC00928EAD /* map_data_building.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = map_data_building.cpp; sourceTree = "<group>"; };
+		A2492A301B8C44FC00928EAD /* map_data_config.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = map_data_config.h; sourceTree = "<group>"; };
+		A2492A311B8C44FC00928EAD /* map_data_gearth.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = map_data_gearth.cpp; sourceTree = "<group>"; };
+		A2492A321B8C44FC00928EAD /* map_data_gis.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = map_data_gis.cpp; sourceTree = "<group>"; };
+		A2492A331B8C44FC00928EAD /* map_dem.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = map_dem.cpp; sourceTree = "<group>"; };
+		A2492A341B8C44FC00928EAD /* map_earth.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = map_earth.cpp; sourceTree = "<group>"; };
+		A2492A351B8C44FC00928EAD /* map_earth_base.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = map_earth_base.cpp; sourceTree = "<group>"; };
+		A2492A361B8C44FC00928EAD /* map_earth_control.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = map_earth_control.cpp; sourceTree = "<group>"; };
+		A2492A371B8C44FC00928EAD /* map_earth_data.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = map_earth_data.cpp; sourceTree = "<group>"; };
+		A2492A381B8C44FC00928EAD /* map_earth_render.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = map_earth_render.cpp; sourceTree = "<group>"; };
+		A2492A391B8C44FC00928EAD /* map_earth_renderer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = map_earth_renderer.h; sourceTree = "<group>"; };
+		A2492A3A1B8C44FC00928EAD /* map_mapview.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = map_mapview.cpp; sourceTree = "<group>"; };
+		A2492A3B1B8C44FC00928EAD /* map_package.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = map_package.cpp; sourceTree = "<group>"; };
+		A2492A3C1B8C44FC00928EAD /* map_tile_building.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = map_tile_building.cpp; sourceTree = "<group>"; };
+		A2492A3D1B8C44FC00928EAD /* map_tile_building.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = map_tile_building.h; sourceTree = "<group>"; };
+		A2492A3E1B8C44FC00928EAD /* map_tile_config.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = map_tile_config.h; sourceTree = "<group>"; };
+		A2492A3F1B8C44FC00928EAD /* map_tile_dem.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = map_tile_dem.cpp; sourceTree = "<group>"; };
+		A2492A401B8C44FC00928EAD /* map_tile_dem.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = map_tile_dem.h; sourceTree = "<group>"; };
+		A2492A411B8C44FC00928EAD /* map_tile_gis.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = map_tile_gis.cpp; sourceTree = "<group>"; };
+		A2492A421B8C44FC00928EAD /* map_tile_gis.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = map_tile_gis.h; sourceTree = "<group>"; };
+		A2492A431B8C44FC00928EAD /* map_tile_picture.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = map_tile_picture.cpp; sourceTree = "<group>"; };
+		A2492A441B8C44FC00928EAD /* map_tile_picture.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = map_tile_picture.h; sourceTree = "<group>"; };
+		A2492A451B8C44FC00928EAD /* map_tile_render.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = map_tile_render.cpp; sourceTree = "<group>"; };
+		A2492A461B8C44FC00928EAD /* map_tile_render.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = map_tile_render.h; sourceTree = "<group>"; };
+		A2492A471B8C44FC00928EAD /* map_util.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = map_util.cpp; sourceTree = "<group>"; };
+		A2492A491B8C44FC00928EAD /* secure_file_pack.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = secure_file_pack.cpp; sourceTree = "<group>"; };
+		A2492A4B1B8C44FC00928EAD /* snet_dbip.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = snet_dbip.cpp; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		A2492A1E1B8C446400928EAD /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		A2492A181B8C446400928EAD = {
+			isa = PBXGroup;
+			children = (
+				A2492A281B8C44C900928EAD /* inc */,
+				A2492A291B8C44CF00928EAD /* src */,
+				A2492A221B8C446400928EAD /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		A2492A221B8C446400928EAD /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				A2492A211B8C446400928EAD /* libslibx.a */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		A2492A281B8C44C900928EAD /* inc */ = {
+			isa = PBXGroup;
+			children = (
+				A2492A2A1B8C44EB00928EAD /* slibx */,
+			);
+			name = inc;
+			sourceTree = "<group>";
+		};
+		A2492A291B8C44CF00928EAD /* src */ = {
+			isa = PBXGroup;
+			children = (
+				A2492A2B1B8C44FC00928EAD /* slibx */,
+			);
+			name = src;
+			sourceTree = "<group>";
+		};
+		A2492A2B1B8C44FC00928EAD /* slibx */ = {
+			isa = PBXGroup;
+			children = (
+				A2492A2C1B8C44FC00928EAD /* map */,
+				A2492A481B8C44FC00928EAD /* sfile */,
+				A2492A4A1B8C44FC00928EAD /* snet */,
+			);
+			name = slibx;
+			path = ../../../src/slibx;
+			sourceTree = "<group>";
+		};
+		A2492A2C1B8C44FC00928EAD /* map */ = {
+			isa = PBXGroup;
+			children = (
+				A2492A2D1B8C44FC00928EAD /* map_camera.cpp */,
+				A2492A2E1B8C44FC00928EAD /* map_data.cpp */,
+				A2492A2F1B8C44FC00928EAD /* map_data_building.cpp */,
+				A2492A301B8C44FC00928EAD /* map_data_config.h */,
+				A2492A311B8C44FC00928EAD /* map_data_gearth.cpp */,
+				A2492A321B8C44FC00928EAD /* map_data_gis.cpp */,
+				A2492A331B8C44FC00928EAD /* map_dem.cpp */,
+				A2492A341B8C44FC00928EAD /* map_earth.cpp */,
+				A2492A351B8C44FC00928EAD /* map_earth_base.cpp */,
+				A2492A361B8C44FC00928EAD /* map_earth_control.cpp */,
+				A2492A371B8C44FC00928EAD /* map_earth_data.cpp */,
+				A2492A381B8C44FC00928EAD /* map_earth_render.cpp */,
+				A2492A391B8C44FC00928EAD /* map_earth_renderer.h */,
+				A2492A3A1B8C44FC00928EAD /* map_mapview.cpp */,
+				A2492A3B1B8C44FC00928EAD /* map_package.cpp */,
+				A2492A3C1B8C44FC00928EAD /* map_tile_building.cpp */,
+				A2492A3D1B8C44FC00928EAD /* map_tile_building.h */,
+				A2492A3E1B8C44FC00928EAD /* map_tile_config.h */,
+				A2492A3F1B8C44FC00928EAD /* map_tile_dem.cpp */,
+				A2492A401B8C44FC00928EAD /* map_tile_dem.h */,
+				A2492A411B8C44FC00928EAD /* map_tile_gis.cpp */,
+				A2492A421B8C44FC00928EAD /* map_tile_gis.h */,
+				A2255B311BBA70B800E4CA9B /* map_tile_layer.cpp */,
+				A2255B321BBA70B800E4CA9B /* map_tile_layer.h */,
+				A2492A431B8C44FC00928EAD /* map_tile_picture.cpp */,
+				A2492A441B8C44FC00928EAD /* map_tile_picture.h */,
+				A2492A451B8C44FC00928EAD /* map_tile_render.cpp */,
+				A2492A461B8C44FC00928EAD /* map_tile_render.h */,
+				A2492A471B8C44FC00928EAD /* map_util.cpp */,
+			);
+			path = map;
+			sourceTree = "<group>";
+		};
+		A2492A481B8C44FC00928EAD /* sfile */ = {
+			isa = PBXGroup;
+			children = (
+				A2492A491B8C44FC00928EAD /* secure_file_pack.cpp */,
+			);
+			path = sfile;
+			sourceTree = "<group>";
+		};
+		A2492A4A1B8C44FC00928EAD /* snet */ = {
+			isa = PBXGroup;
+			children = (
+				A2492A4B1B8C44FC00928EAD /* snet_dbip.cpp */,
+				A21C166C1BA74EF0006B1FA1 /* stunnel_client.cpp */,
+				A21C166D1BA74EF0006B1FA1 /* stunnel_manager.cpp */,
+				A21C166E1BA74EF0006B1FA1 /* stunnel_server.cpp */,
+			);
+			path = snet;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXHeadersBuildPhase section */
+		A2492A1F1B8C446400928EAD /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A2492A4F1B8C44FC00928EAD /* map_data_config.h in Headers */,
+				A2492A651B8C44FC00928EAD /* map_tile_render.h in Headers */,
+				A2492A581B8C44FC00928EAD /* map_earth_renderer.h in Headers */,
+				A2492A631B8C44FC00928EAD /* map_tile_picture.h in Headers */,
+				A2492A5F1B8C44FC00928EAD /* map_tile_dem.h in Headers */,
+				A2255B341BBA70B800E4CA9B /* map_tile_layer.h in Headers */,
+				A2492A611B8C44FC00928EAD /* map_tile_gis.h in Headers */,
+				A2492A5C1B8C44FC00928EAD /* map_tile_building.h in Headers */,
+				A2492A5D1B8C44FC00928EAD /* map_tile_config.h in Headers */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXHeadersBuildPhase section */
+
+/* Begin PBXNativeTarget section */
+		A2492A201B8C446400928EAD /* Slibx */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A2492A251B8C446400928EAD /* Build configuration list for PBXNativeTarget "Slibx" */;
+			buildPhases = (
+				A2492A1D1B8C446400928EAD /* Sources */,
+				A2492A1E1B8C446400928EAD /* Frameworks */,
+				A2492A1F1B8C446400928EAD /* Headers */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Slibx;
+			productName = Slibx;
+			productReference = A2492A211B8C446400928EAD /* libslibx.a */;
+			productType = "com.apple.product-type.library.static";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		A2492A191B8C446400928EAD /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 0630;
+				ORGANIZATIONNAME = hstt;
+				TargetAttributes = {
+					A2492A201B8C446400928EAD = {
+						CreatedOnToolsVersion = 6.3;
+					};
+				};
+			};
+			buildConfigurationList = A2492A1C1B8C446400928EAD /* Build configuration list for PBXProject "Slibx" */;
+			compatibilityVersion = "Xcode 3.2";
+			developmentRegion = English;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+			);
+			mainGroup = A2492A181B8C446400928EAD;
+			productRefGroup = A2492A221B8C446400928EAD /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				A2492A201B8C446400928EAD /* Slibx */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		A2492A1D1B8C446400928EAD /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A2492A641B8C44FC00928EAD /* map_tile_render.cpp in Sources */,
+				A2255B331BBA70B800E4CA9B /* map_tile_layer.cpp in Sources */,
+				A2492A681B8C44FC00928EAD /* snet_dbip.cpp in Sources */,
+				A2492A4D1B8C44FC00928EAD /* map_data.cpp in Sources */,
+				A2492A501B8C44FC00928EAD /* map_data_gearth.cpp in Sources */,
+				A2492A551B8C44FC00928EAD /* map_earth_control.cpp in Sources */,
+				A2492A5A1B8C44FC00928EAD /* map_package.cpp in Sources */,
+				A2492A671B8C44FC00928EAD /* secure_file_pack.cpp in Sources */,
+				A2492A4C1B8C44FC00928EAD /* map_camera.cpp in Sources */,
+				A2492A4E1B8C44FC00928EAD /* map_data_building.cpp in Sources */,
+				A2492A5B1B8C44FC00928EAD /* map_tile_building.cpp in Sources */,
+				A2492A511B8C44FC00928EAD /* map_data_gis.cpp in Sources */,
+				A21C16701BA74EF0006B1FA1 /* stunnel_manager.cpp in Sources */,
+				A2492A531B8C44FC00928EAD /* map_earth.cpp in Sources */,
+				A2492A5E1B8C44FC00928EAD /* map_tile_dem.cpp in Sources */,
+				A2492A541B8C44FC00928EAD /* map_earth_base.cpp in Sources */,
+				A2492A571B8C44FC00928EAD /* map_earth_render.cpp in Sources */,
+				A2492A521B8C44FC00928EAD /* map_dem.cpp in Sources */,
+				A2492A591B8C44FC00928EAD /* map_mapview.cpp in Sources */,
+				A21C16711BA74EF0006B1FA1 /* stunnel_server.cpp in Sources */,
+				A2492A621B8C44FC00928EAD /* map_tile_picture.cpp in Sources */,
+				A21C166F1BA74EF0006B1FA1 /* stunnel_client.cpp in Sources */,
+				A2492A601B8C44FC00928EAD /* map_tile_gis.cpp in Sources */,
+				A2492A661B8C44FC00928EAD /* map_util.cpp in Sources */,
+				A2492A561B8C44FC00928EAD /* map_earth_data.cpp in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		A2492A231B8C446400928EAD /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
+					../../../../Slib/inc,
+				);
+				MACOSX_DEPLOYMENT_TARGET = 10.10;
+				MTL_ENABLE_DEBUG_INFO = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		A2492A241B8C446400928EAD /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
+					../../../../Slib/inc,
+				);
+				MACOSX_DEPLOYMENT_TARGET = 10.10;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		A2492A261B8C446400928EAD /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				EXECUTABLE_PREFIX = lib;
+				MACOSX_DEPLOYMENT_TARGET = 10.7;
+				PRODUCT_NAME = slibx;
+			};
+			name = Debug;
+		};
+		A2492A271B8C446400928EAD /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				EXECUTABLE_PREFIX = lib;
+				GCC_SYMBOLS_PRIVATE_EXTERN = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.7;
+				PRODUCT_NAME = slibx;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		A2492A1C1B8C446400928EAD /* Build configuration list for PBXProject "Slibx" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A2492A231B8C446400928EAD /* Debug */,
+				A2492A241B8C446400928EAD /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A2492A251B8C446400928EAD /* Build configuration list for PBXNativeTarget "Slibx" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A2492A261B8C446400928EAD /* Debug */,
+				A2492A271B8C446400928EAD /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = A2492A191B8C446400928EAD /* Project object */;
+}
