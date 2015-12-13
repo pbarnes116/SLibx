@@ -1,6 +1,8 @@
 #include "map_earth_renderer.h"
 #include "../../../inc/slibx/map/dem.h"
 
+#include <slib/math/transform3d.h>
+
 SLIB_MAP_NAMESPACE_BEGIN
 
 void MapEarthRenderer::_runThreadControl()

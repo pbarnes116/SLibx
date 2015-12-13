@@ -1,6 +1,7 @@
 #include "../../../inc/slibx/snet/stunnel_server.h"
 
 #include <slib/network/ethernet.h>
+#include <slib/network/os.h>
 #include <slib/crypto/zlib.h>
 #include <slib/core/log.h>
 
@@ -41,8 +42,8 @@ sl_bool STunnelServer::initialize(const STunnelServerParam& param)
 	if (param.nat_enabled) {
 		// initialize NAT device
 		if (param.nat_device.isNotEmpty()) {
-			NetworkDevice dev;
-			if (dev.findDevice(param.nat_device)) {
+			NetworkInterfaceInfo dev;
+			if (Network::findInterface(param.nat_device, &dev)) {
 				SLIB_LOG(TAG, "Starting NAT on device - " + param.nat_device + ":" + param.nat_port_begin + "~" + param.nat_port_end);
 				NetCaptureParam ncp;
 				ncp.deviceName = dev.name;
@@ -132,8 +133,8 @@ void STunnelServer::release()
 void STunnelServer::runNAT()
 {
 	while (Thread::isNotStoppingCurrent()) {
-		NetworkDevice dev;
-		if (dev.findDevice(m_param.nat_device)) {
+		NetworkInterfaceInfo dev;
+		if (Network::findInterface(m_param.nat_device, &dev)) {
 			m_addressNatDev = dev.macAddress;
 			if (dev.addresses_IPv4.isNotEmpty()) {
 				IPv4AddressInfo addr;
@@ -765,7 +766,7 @@ void STunnelServiceSession::sendDNSResponse(const String& dns, const IPv4Address
 
 void STunnelServiceSession::_resolveDNS(String dns)
 {
-	IPv4Address ip = NetworkAddress::getIPv4AddressFromHostName(dns);
+	IPv4Address ip = Network::getIPv4AddressFromHostName(dns);
 	sendDNSResponse(dns, ip);
 }
 

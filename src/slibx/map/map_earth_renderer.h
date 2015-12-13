@@ -20,6 +20,7 @@
 #include <slib/core/thread.h>
 #include <slib/core/time.h>
 #include <slib/graphics/freetype.h>
+#include <slib/math/view_frustum.h>
 
 SLIB_MAP_NAMESPACE_BEGIN
 

@@ -5,6 +5,7 @@
 #include "data.h"
 
 #include <slib/render/engine.h>
+#include <slib/math/box.h>
 
 SLIB_MAP_NAMESPACE_BEGIN
 

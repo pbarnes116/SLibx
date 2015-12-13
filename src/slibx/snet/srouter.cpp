@@ -2,6 +2,7 @@
 
 #include <slib/network/event.h>
 #include <slib/network/ethernet.h>
+#include <slib/network/os.h>
 #include <slib/crypto/zlib.h>
 #include <slib/core/scoped_pointer.h>
 #include <slib/core/log.h>
@@ -142,8 +143,8 @@ Ref<SRouterDevice> SRouterDevice::create(const SRouterDeviceParam& param)
 	if (ret.isNotNull()) {
 		ret->m_device = param.device;
 		ret->m_deviceName = param.iface_name;
-		NetworkDevice dev;
-		if (dev.findDevice(param.iface_name)) {
+		NetworkInterfaceInfo dev;
+		if (Network::findInterface(param.iface_name, &dev)) {
 			if (ret->m_device.isNull()) {
 				NetCaptureParam ncp;
 				ncp.deviceName = dev.name;
@@ -265,8 +266,8 @@ String SRouterDevice::getStatus()
 
 void SRouterDevice::_idle()
 {
-	NetworkDevice dev;
-	if (dev.findDevice(m_deviceName)) {
+	NetworkInterfaceInfo dev;
+	if (Network::findInterface(m_deviceName, &dev)) {
 		m_macAddressDevice = dev.macAddress;
 		if (dev.addresses_IPv4.isNotEmpty()) {
 			IPv4AddressInfo addr;

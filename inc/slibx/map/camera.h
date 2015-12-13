@@ -4,7 +4,7 @@
 #include "definition.h"
 #include "earth.h"
 
-#include <slib/math/geometry.h>
+#include <slib/math/matrix4.h>
 #include <slib/math/geograph.h>
 
 SLIB_MAP_NAMESPACE_BEGIN

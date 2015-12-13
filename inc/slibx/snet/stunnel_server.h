@@ -3,7 +3,8 @@
 
 #include "definition.h"
 
-#include <slib/network/address.h>
+#include <slib/network/socket_address.h>
+#include <slib/network/mac_address.h>
 #include <slib/network/capture.h>
 #include <slib/network/secure_stream.h>
 #include <slib/network/nat.h>

@@ -5,6 +5,7 @@
 #include "data.h"
 
 #include <slib/render/engine.h>
+#include <slib/math/geograph.h>
 #include <slib/db.h>
 
 SLIB_MAP_NAMESPACE_BEGIN

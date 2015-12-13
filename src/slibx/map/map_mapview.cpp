@@ -5,6 +5,7 @@
 
 #include <slib/core/log.h>
 #include <slib/graphics/image.h>
+#include <slib/math/transform2d.h>
 
 #define STATUS_WIDTH 1024
 #define STATUS_HEIGHT 30

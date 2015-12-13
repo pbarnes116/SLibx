@@ -3,6 +3,9 @@
 #include <slib/render/opengl.h>
 #include <slib/core/scoped_pointer.h>
 #include <slib/graphics/image.h>
+#include <slib/math/transform2d.h>
+#include <slib/math/transform3d.h>
+#include <slib/math/triangle.h>
 
 SLIB_MAP_NAMESPACE_BEGIN
 
@@ -185,10 +188,10 @@ void MapEarthRenderer::_renderGISPoi(RenderEngine* engine, MapGISPoi* poi, const
 		}
 		font->setSize((sl_uint32)(s.fontSize * screenRatio));
 		Sizei size = font->getStringExtent(text);
-		Ref<Image> image = Image::create(size.width + 6, size.height + 8);
+		Ref<Image> image = Image::create(size.x + 6, size.y + 8);
 		if (image.isNotNull()) {
-			font->strokeString(image, 3, size.height + 2, text, Color::Black, 2);
-			font->drawString(image, 3, size.height + 2, text, s.clr);
+			font->strokeString(image, 3, size.x + 2, text, Color::Black, 2);
+			font->drawString(image, 3, size.y + 2, text, s.clr);
 			Ref<Texture> texture = Texture::create(image);
 			if (texture.isNotNull()) {
 				s.texture = texture;
@@ -217,7 +220,7 @@ void MapEarthRenderer::_renderMarker(RenderEngine* engine, MapMarker* marker)
 	if (_checkPointVisible(pos)) {
 		Vector2 ps = convertPointToScreen(pos);
 		if (marker->iconTexture.isNotNull()) {
-			Rectangle rectangle = Rectangle(Point(ps.x - marker->iconSize.width / 2, ps.y - marker->iconSize.height), marker->iconSize);
+			Rectangle rectangle = Rectangle(Point(ps.x - marker->iconSize.x / 2, ps.y - marker->iconSize.y), marker->iconSize);
 			engine->drawTexture2D(
 				engine->screenToViewport(rectangle)
 				, marker->iconTexture
@@ -231,10 +234,10 @@ void MapEarthRenderer::_renderMarker(RenderEngine* engine, MapMarker* marker)
 				}
 				marker->textFont->setSize((sl_uint32)(marker->textFontSize * screenRatio));
 				Sizei size = marker->textFont->getStringExtent(text);
-				Ref<Image> image = Image::create(size.width + 8, size.height + 8);
+				Ref<Image> image = Image::create(size.x + 8, size.y + 8);
 				if (image.isNotNull()) {
-					marker->textFont->strokeString(image, 3, size.height + 2, text, Color::Black, 2);
-					marker->textFont->drawString(image, 3, size.height + 2, text, marker->textColor);
+					marker->textFont->strokeString(image, 3, size.y + 2, text, Color::Black, 2);
+					marker->textFont->drawString(image, 3, size.y + 2, text, marker->textColor);
 					Ref<Texture> texture = Texture::create(image);
 					if (texture.isNotNull()) {
 						marker->_textureText = texture;
@@ -556,7 +559,7 @@ sl_bool MapEarthRenderer::_checkTileExpandable(_Tile* tile)
 	if (nBehind != 0) {
 		return sl_true;
 	} else {
-		Triangle2 t;
+		Triangle t;
 		t.point1.x = ptBL.x / ptBL.z;
 		t.point1.y = ptBL.y / ptBL.z;
 		t.point2.x = ptBR.x / ptBR.z;

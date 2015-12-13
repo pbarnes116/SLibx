@@ -14,7 +14,7 @@ For example,
 
 #include "definition.h"
 
-#include <slib/network/address.h>
+#include <slib/network/ip_address.h>
 
 SLIB_SNET_NAMESPACE_BEGIN
 class DbIp : public Object

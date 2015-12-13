@@ -4,8 +4,6 @@
 #include "definition.h"
 
 #include <slib/core/string.h>
-#include <slib/math/geometry.h>
-#include <slib/math/geograph.h>
 
 SLIB_MAP_NAMESPACE_BEGIN
 

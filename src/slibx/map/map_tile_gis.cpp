@@ -35,7 +35,7 @@ Ref<MapGISLineTile> MapGISLineTileManager::loadTile(const MapTileLocationi& loca
 			return Ref<MapGISLineTile>::null();
 		}
 	}
-	sl_real screenRatio = getViewportSize().width / 1280;
+	sl_real screenRatio = getViewportSize().x / 1280;
 	Ref<MapDataLoader> loader = getDataLoader();
 	if (loader.isNotNull()) {
 		Map< sl_int32, Ref<MapGISShapeData> > shapes = m_dataLoader.loadTile(loader, SLIB_MAP_GIS_LINE_TILE_TYPE, location);
