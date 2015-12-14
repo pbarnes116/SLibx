@@ -83,9 +83,6 @@ Ref<MapPictureTile> MapPictureTileManager::loadTile(const MapTileLocationi& loca
 		// first load x picture
 		{
 			Memory mem = loader->loadData(SLIB_MAP_PICTUREX_TILE_TYPE, location, SLIB_MAP_PICTURE_PACKAGE_DIMENSION, SLIB_MAP_PICTUREX_TILE_EXT);
-			if (mem.isEmpty()) {
-				mem = loader->loadData(SLIB_MAP_PICTUREX_TILE_TYPE, location, SLIB_MAP_PICTURE_PACKAGE_DIMENSION, SLIB_MAP_PICTUREX_TILE_EXT);
-			}
 			if (mem.isNotEmpty()) {
 				type = Image::getFileType(mem);
 				image = Image::loadFromMemory(mem);

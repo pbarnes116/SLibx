@@ -4,6 +4,7 @@
 #include "definition.h"
 
 #include <slib/core/string.h>
+#include <slib/graphics/image.h>
 
 SLIB_MAP_NAMESPACE_BEGIN
 
@@ -66,6 +67,13 @@ class SLIB_EXPORT MapTilePath
 public:
 	static String makeGenericStylePath(const MapTileLocationi& location, String* packagePath = sl_null, String* filePath = sl_null);
 	static String makeVWStylePath(const MapTileLocationi& location, String* packagePath = sl_null, String* filePath = sl_null);
+};
+
+class IMapTileDataLoader;
+class SLIB_EXPORT MapPictureUtil
+{
+public:
+	static Ref<Image> capturePictureFromTiles(IMapTileDataLoader* loader, sl_uint32 width, sl_uint32 height, sl_uint32 level, double X0, double Y0, double X1, double Y1, sl_bool flagOpaque, sl_bool& outFlagContainsAlpha);
 };
 
 SLIB_MAP_NAMESPACE_END

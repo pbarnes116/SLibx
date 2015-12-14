@@ -74,6 +74,21 @@ Ref<MapLayerTile> MapLayerTileManager::getTileHierarchically(sl_uint32 layer, co
 	return Ref<MapLayerTile>::null();
 }
 
+class _MapLayerTitleManager_GoogleEarthTileLoader : public IMapTileDataLoader
+{
+public:
+	Ref<MapDataLoader> dataLoader;
+	
+	Memory loadData(const MapTileLocationi& location, const String& subPath)
+	{
+		Memory ret = dataLoader->loadData("gm/gge", location, SLIB_MAP_PICTURE_PACKAGE_DIMENSION, subPath);
+		if (ret.isNull()) {
+			ret = dataLoader->loadData("gm/gg", location, SLIB_MAP_PICTURE_PACKAGE_DIMENSION, subPath);
+		}
+		return ret;
+	}
+};
+
 Ref<MapLayerTile> MapLayerTileManager::loadTile(sl_uint32 layer, const MapTileLocationi& location)
 {
 	if (layer >= SLIB_SMAP_MAX_LAYERS_COUNT) {
@@ -92,16 +107,38 @@ Ref<MapLayerTile> MapLayerTileManager::loadTile(sl_uint32 layer, const MapTileLo
 	Ref<MapDataLoader> loader = getDataLoader();
 	if (loader.isNotNull()) {
 		Ref<Image> image;
-		Memory mem;
 		if (layer == 0) {
-			mem = loader->loadData(SLIB_MAP_VCA_DAUM_MAP_TILE_TYPE, location, SLIB_MAP_PICTURE_PACKAGE_DIMENSION, SLIB_MAP_VCA_DAUM_MAP_TILE_EXT);
+			Memory mem = loader->loadData(SLIB_MAP_VCA_DAUM_MAP_TILE_TYPE, location, SLIB_MAP_PICTURE_PACKAGE_DIMENSION, SLIB_MAP_VCA_DAUM_MAP_TILE_EXT);
+			if (mem.isNotEmpty()) {
+				image = Image::loadFromMemory(mem);
+			}
 		} else if (layer == 1) {
-			mem = loader->loadData(SLIB_MAP_VCA_SEA_TILE_TYPE, location, SLIB_MAP_PICTURE_PACKAGE_DIMENSION, SLIB_MAP_VCA_SEA_TILE_EXT);
+			Memory mem = loader->loadData(SLIB_MAP_VCA_SEA_TILE_TYPE, location, SLIB_MAP_PICTURE_PACKAGE_DIMENSION, SLIB_MAP_VCA_SEA_TILE_EXT);
+			if (mem.isNotEmpty()) {
+				image = Image::loadFromMemory(mem);
+			}
+		} else if (layer == 2) {
+			if (location.level < 10) {
+				image = Image::create(16, 16);
+				if (image.isNotNull()) {
+					image->fillColor(Color::zero());
+				}
+			} else {
+				_MapLayerTitleManager_GoogleEarthTileLoader tl;
+				tl.dataLoader = loader;
+				sl_bool flagAlpha;
+				sl_int32 n = 1 << (location.level + 3);
+				double lat0 = location.y * 36.0 / (1 << location.level) - 90.0;
+				double lon0 = location.x * 36.0 / (1 << location.level) - 180.0;
+				double lat1 = (location.y + 1) * 36.0 / (1 << location.level) - 90.0;
+				double lon1 = (location.x + 1) * 36.0 / (1 << location.level) - 180.0;
+				double Y0 = (lat0 + 90) / 180 * (n / 2);
+				double X0 = (lon0 + 180) / 360 * n;
+				double Y1 = (lat1 + 90) / 180 * (n / 2);
+				double X1 = (lon1 + 180) / 360 * n;
+				image = MapPictureUtil::capturePictureFromTiles(&tl, 256, 256, location.level + 3, X0, Y0, X1, Y1, sl_true, flagAlpha);
+			}
 		}
-		if (mem.isNotEmpty()) {
-			image = Image::loadFromMemory(mem);
-		}
-
 		Ref<Texture> texture = Texture::create(image);
 		if (texture.isNotNull()) {
 			tile = new MapLayerTile();

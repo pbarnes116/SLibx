@@ -190,7 +190,7 @@ void MapEarthRenderer::_renderGISPoi(RenderEngine* engine, MapGISPoi* poi, const
 		Sizei size = font->getStringExtent(text);
 		Ref<Image> image = Image::create(size.x + 6, size.y + 8);
 		if (image.isNotNull()) {
-			font->strokeString(image, 3, size.x + 2, text, Color::Black, 2);
+			font->strokeString(image, 3, size.y + 2, text, Color::Black, 2);
 			font->drawString(image, 3, size.y + 2, text, s.clr);
 			Ref<Texture> texture = Texture::create(image);
 			if (texture.isNotNull()) {
@@ -740,7 +740,7 @@ public:
 	class MapInfo_GL : public Info_GL
 	{
 	public:
-		sl_int32 attrTexCoordLayers[2]; // Vector2
+		sl_int32 attrTexCoordLayers[4]; // Vector2
 		sl_int32 attrAltitude;	// float
 	};
 
@@ -767,6 +767,8 @@ public:
 			sl_uint32 program = info->program_GL;
 			info->attrTexCoordLayers[0] = engine->getAttributeLocation(program, "a_TexCoord1");
 			info->attrTexCoordLayers[1] = engine->getAttributeLocation(program, "a_TexCoord2");
+			info->attrTexCoordLayers[2] = engine->getAttributeLocation(program, "a_TexCoord3");
+			info->attrTexCoordLayers[3] = engine->getAttributeLocation(program, "a_TexCoord4");
 			info->attrAltitude = engine->getAttributeLocation(program, "a_Altitude");
 			return sl_true;
 		}
@@ -784,6 +786,8 @@ public:
 			SLIB_RENDER_GL_SET_VERTEX_FLOAT_ARRAY_ATTRIBUTE(engine, info->attrTexCoord, DEM_Vertex, texCoord);
 			SLIB_RENDER_GL_SET_VERTEX_FLOAT_ARRAY_ATTRIBUTE(engine, info->attrTexCoordLayers[0], DEM_Vertex, texCoordLayers[0]);
 			SLIB_RENDER_GL_SET_VERTEX_FLOAT_ARRAY_ATTRIBUTE(engine, info->attrTexCoordLayers[1], DEM_Vertex, texCoordLayers[1]);
+			SLIB_RENDER_GL_SET_VERTEX_FLOAT_ARRAY_ATTRIBUTE(engine, info->attrTexCoordLayers[2], DEM_Vertex, texCoordLayers[2]);
+			SLIB_RENDER_GL_SET_VERTEX_FLOAT_ARRAY_ATTRIBUTE(engine, info->attrTexCoordLayers[3], DEM_Vertex, texCoordLayers[3]);
 			return sl_true;
 		}
 		return sl_false;
@@ -800,6 +804,8 @@ public:
 			engine->disableVertexArrayAttribute(info->attrTexCoord);
 			engine->disableVertexArrayAttribute(info->attrTexCoordLayers[0]);
 			engine->disableVertexArrayAttribute(info->attrTexCoordLayers[1]);
+			engine->disableVertexArrayAttribute(info->attrTexCoordLayers[2]);
+			engine->disableVertexArrayAttribute(info->attrTexCoordLayers[3]);
 		}
 	}
 
@@ -813,10 +819,14 @@ public:
 			attribute vec2 a_TexCoord;
 			attribute vec2 a_TexCoord1;
 			attribute vec2 a_TexCoord2;
+			attribute vec2 a_TexCoord3;
+			attribute vec2 a_TexCoord4;
 			varying float v_Altitude;
 			varying vec2 v_TexCoord;
 			varying vec2 v_TexCoord1;
 			varying vec2 v_TexCoord2;
+			varying vec2 v_TexCoord3;
+			varying vec2 v_TexCoord4;
 			void main() {
 				vec4 P = vec4(a_Position, 1.0) * u_Transform;
 				gl_Position = P;
@@ -824,6 +834,8 @@ public:
 				v_TexCoord = a_TexCoord;
 				v_TexCoord1 = a_TexCoord1;
 				v_TexCoord2 = a_TexCoord2;
+				v_TexCoord3 = a_TexCoord3;
+				v_TexCoord4 = a_TexCoord4;
 			}
 		);
 		return source;
@@ -836,21 +848,40 @@ public:
 			uniform sampler2D u_Texture;
 			uniform sampler2D u_Texture1;
 			uniform sampler2D u_Texture2;
+			uniform sampler2D u_Texture3;
+			uniform sampler2D u_Texture4;
 			uniform float u_TextureAlpha1;
 			uniform float u_TextureAlpha2;
+			uniform float u_TextureAlpha3;
+			uniform float u_TextureAlpha4;
 			varying vec2 v_TexCoord;
 			varying vec2 v_TexCoord1;
 			varying vec2 v_TexCoord2;
+			varying vec2 v_TexCoord3;
+			varying vec2 v_TexCoord4;
 			void main() {
 				vec4 colorTexture = texture2D(u_Texture, v_TexCoord);
 				vec4 colorTexture1 = texture2D(u_Texture1, v_TexCoord1);
 				vec4 colorTexture2 = texture2D(u_Texture2, v_TexCoord2);
+				vec4 colorTexture3 = texture2D(u_Texture3, v_TexCoord3);
+				vec4 colorTexture4 = texture2D(u_Texture4, v_TexCoord4);
+				
 				float a = colorTexture1.a * u_TextureAlpha1;
 				colorTexture1.a = 1.0;
 				vec4 c = colorTexture * (1.0 - a) + colorTexture1 * a;
+				
 				a = colorTexture2.a * u_TextureAlpha2;
 				colorTexture2.a = 1.0;
 				c = c * (1.0 - a) + colorTexture2 * a;
+				
+				a = colorTexture3.a * u_TextureAlpha3;
+				colorTexture3.a = 1.0;
+				c = c * (1.0 - a) + colorTexture3 * a;
+				
+				a = colorTexture4.a * u_TextureAlpha4;
+				colorTexture4.a = 1.0;
+				c = c * (1.0 - a) + colorTexture4 * a;
+				
 				gl_FragColor = c;
 			}
 		);

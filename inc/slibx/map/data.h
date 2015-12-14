@@ -47,6 +47,12 @@ protected:
 	Memory _readData(const String& packagePath, const String& filePath);
 };
 
+class SLIB_EXPORT IMapTileDataLoader
+{
+public:
+	virtual Memory loadData(const MapTileLocationi& location, const String& subPath) = 0;
+};
+
 SLIB_MAP_NAMESPACE_END
 
 #endif
