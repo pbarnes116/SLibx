@@ -61,7 +61,7 @@ public:
 
 	SLIB_INLINE Ref<AsyncLoop> getAsyncLoop()
 	{
-		return m_asyncLoop.lock();
+		return m_asyncLoop;
 	}
 
 	SLIB_INLINE const SocketAddress& getServiceAddress()

@@ -555,7 +555,7 @@ void _STunnelClient_TcpStream::close()
 		return;
 	}
 	m_flagClosed = sl_true;
-	Ref<STunnelClient> client = m_client.lock();
+	Ref<STunnelClient> client = m_client;
 	m_client.setNull();
 	if (client.isNotNull()) {
 		client->sendClosePort_TCP(m_port);
@@ -588,7 +588,7 @@ sl_bool _STunnelClient_TcpStream::read(void* data, sl_uint32 size, const Ptr<IAs
 	if (m_flagClosed) {
 		return sl_false;
 	}
-	Ref<STunnelClient> client = m_client.lock();
+	Ref<STunnelClient> client = m_client;
 	if (client.isNull()) {
 		return sl_false;
 	}
@@ -630,7 +630,7 @@ void _STunnelClient_TcpStream::processReadDone(Ref<AsyncStreamRequest> req)
 	if (req.isNotNull()) {
 		PtrLocker<IAsyncStreamListener> listener(req->listener);
 		if (listener.isNotNull()) {
-			listener->onRead(this, req->data, req->size, req->refData.getObject(), sl_false);
+			listener->onRead(this, req->data, req->size, req->refData.get(), sl_false);
 		}
 	}
 }
@@ -640,7 +640,7 @@ void _STunnelClient_TcpStream::processReadError(Ref<AsyncStreamRequest> req)
 	if (req.isNotNull()) {
 		PtrLocker<IAsyncStreamListener> listener(req->listener);
 		if (listener.isNotNull()) {
-			listener->onRead(this, req->data, 0, req->refData.getObject(), sl_true);
+			listener->onRead(this, req->data, 0, req->refData.get(), sl_true);
 		}
 	}
 }
@@ -651,7 +651,7 @@ sl_bool _STunnelClient_TcpStream::write(void* data, sl_uint32 size, const Ptr<IA
 	if (m_flagClosed) {
 		return sl_false;
 	}
-	Ref<STunnelClient> client = m_client.lock();
+	Ref<STunnelClient> client = m_client;
 	if (client.isNull()) {
 		return sl_false;
 	}
@@ -687,7 +687,7 @@ void _STunnelClient_TcpStream::processWriteDone(Ref<AsyncStreamRequest> req)
 	if (req.isNotNull()) {
 		PtrLocker<IAsyncStreamListener> listener(req->listener);
 		if (listener.isNotNull()) {
-			listener->onWrite(this, req->data, req->size, req->refData.getObject(), sl_false);
+			listener->onWrite(this, req->data, req->size, req->refData.get(), sl_false);
 		}
 	}
 }
@@ -697,7 +697,7 @@ void _STunnelClient_TcpStream::processWriteError(Ref<AsyncStreamRequest> req)
 	if (req.isNotNull()) {
 		PtrLocker<IAsyncStreamListener> listener(req->listener);
 		if (listener.isNotNull()) {
-			listener->onWrite(this, req->data, 0, req->refData.getObject(), sl_true);
+			listener->onWrite(this, req->data, 0, req->refData.get(), sl_true);
 		}
 	}
 }

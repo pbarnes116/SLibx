@@ -9,7 +9,7 @@ sl_bool DEM::initialize(sl_uint32 _N)
 {
 	Array<float> _array = Array<float>::create(_N * _N);
 	if (_array.isNotNull()) {
-		float* _dem = _array.getBuf();
+		float* _dem = _array.data();
 		for (sl_size i = 0; i < _array.count(); i++) {
 			_dem[i] = 0;
 		}

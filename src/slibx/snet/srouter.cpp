@@ -36,7 +36,7 @@ SRouterInterface::~SRouterInterface()
 
 Ref<SRouter> SRouterInterface::getRouter()
 {
-	return m_router.lock();
+	return m_router;
 }
 
 void SRouterInterface::setRouter(const Ref<SRouter>& router)

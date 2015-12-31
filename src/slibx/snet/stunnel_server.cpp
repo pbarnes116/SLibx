@@ -178,7 +178,7 @@ void STunnelServer::onCapturePacket(NetCapture* capture, NetCapturePacket* packe
 			Ptr<Referable> userObject;
 			ip = (IPv4HeaderFormat*)(mem.getBuf());
 			if (m_tableNat.translateIncomingPacket(ip, ip->getContent(), ip->getContentSize())) {
-				Ref<STunnelServiceSession> client = m_mapSessionLocalIP.getValue(ip->getDestinationAddress(), WeakRef<STunnelServiceSession>::null()).lock();
+				Ref<STunnelServiceSession> client = m_mapSessionLocalIP.getValue(ip->getDestinationAddress(), WeakRef<STunnelServiceSession>::null());
 				if (client.isNotNull()) {
 					ListLocker<Memory> fragments(m_fragmentationIncoming.makeFragments(ip, ip->getContent(), ip->getContentSize(), m_param.nat_mtu_incoming));
 					for (sl_size i = 0; i < fragments.count(); i++) {
@@ -239,7 +239,7 @@ void STunnelServer::onConnectedSecureStream(AsyncSecureStream* securedStream, sl
 		session->m_server = this;
 		session->m_limitQueueDatagram = m_param.session_datagram_queue_limit;
 		session->m_bufRead = Memory::create(102400);
-		session->m_portsUDP.setupTimer(m_param.nat_expiring_duration, m_asyncLoop.lock());
+		session->m_portsUDP.setupTimer(m_param.nat_expiring_duration, m_asyncLoop);
 		if (session->m_bufRead.isNotEmpty()) {
 			if (session->m_queueOutputChannels.setChannelsCount(2)) {
 				m_sessions.put(session.get(), session);
@@ -262,7 +262,7 @@ void STunnelServiceSession::close()
 	if (m_stream.isNotNull()) {
 		m_stream->close();
 		m_stream.setNull();
-		Ref<STunnelServer> server = m_server.lock();
+		Ref<STunnelServer> server = m_server;
 		if (server.isNotNull()) {
 			server->m_sessions.remove(this);
 		}
@@ -271,7 +271,7 @@ void STunnelServiceSession::close()
 
 Ref<NetCapture> STunnelServiceSession::getNatDevice()
 {
-	Ref<STunnelServer> server = m_server.lock();
+	Ref<STunnelServer> server = m_server;
 	if (server.isNotNull()) {
 		return server->m_captureNat;
 	}
@@ -448,7 +448,7 @@ void STunnelServiceSession::sendRawIP(const void* _ip, sl_uint32 size)
 
 void STunnelServiceSession::receiveRawIP(const void* data, sl_uint32 size)
 {
-	Ref<STunnelServer> server = m_server.lock();
+	Ref<STunnelServer> server = m_server;
 	if (server.isNotNull()) {
 		Memory mem = Zlib::decompressRaw(data, size);
 		if (mem.isNotEmpty()) {
@@ -772,9 +772,9 @@ void STunnelServiceSession::_resolveDNS(String dns)
 
 Ref<AsyncLoop> STunnelServiceSession::getAsyncLoop()
 {
-	Ref<STunnelServer> server = m_server.lock();
+	Ref<STunnelServer> server = m_server;
 	if (server.isNotNull()) {
-		return server->m_asyncLoop.lock();
+		return server->m_asyncLoop;
 	}
 	return Ref<AsyncLoop>::null();
 }

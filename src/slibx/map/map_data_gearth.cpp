@@ -231,7 +231,7 @@ public:
 					}
 					n = n / 3;
 					mesh->vertices = Array<GVertex>::create(n);
-					GVertex* v = mesh->vertices.getBuf();
+					GVertex* v = mesh->vertices.data();
 					if (!v) {
 						return sl_null;
 					}
@@ -262,7 +262,7 @@ public:
 						return sl_null;
 					}
 					mesh->indices = Array<sl_uint16>::create(n);
-					sl_uint16* indices = mesh->indices.getBuf();
+					sl_uint16* indices = mesh->indices.data();
 					if (!indices) {
 						return sl_null;
 					}
@@ -330,7 +330,7 @@ public:
 						return sl_null;
 					}
 					sl_int32 tx = 0, ty = 0;
-					GVertex* vertices = mesh->vertices.getBuf();
+					GVertex* vertices = mesh->vertices.data();
 					for (sl_uint32 i = 0; i < nTex; i++) {
 						tx = (tx + ((sl_uint32)(buf[i]) | ((sl_uint32)(buf[2 * nTex + i]) << 8))) % (maxTx + 1);
 						ty = (ty + ((sl_uint32)(buf[nTex + i]) | ((sl_uint32)(buf[3 * nTex + i]) << 8))) % (maxTy + 1);
@@ -382,7 +382,7 @@ public:
 					}
 					sl_uint32 a = 0;
 					mesh->alphas = Array<sl_uint8>::create(num);
-					sl_uint8* alphas = mesh->alphas.getBuf();
+					sl_uint8* alphas = mesh->alphas.data();
 					if (!alphas) {
 						return sl_null;
 					}
@@ -407,7 +407,7 @@ public:
 					}
 					num = num / 4;
 					mesh->uvOffsetAndScale = Array<float>::create(num);
-					float* uvs = mesh->uvOffsetAndScale.getBuf();
+					float* uvs = mesh->uvOffsetAndScale.data();
 					if (!uvs) {
 						return sl_null;
 					}
@@ -453,7 +453,7 @@ public:
 		{
 			sl_uint32 n = (sl_uint32)(mesh->indices.count());
 			mesh->indexLayerOctants = Array<sl_uint32>::create(n);
-			sl_uint32* indexLayerOctants = mesh->indexLayerOctants.getBuf();
+			sl_uint32* indexLayerOctants = mesh->indexLayerOctants.data();
 			if (!indexLayerOctants) {
 				return sl_null;
 			}
@@ -633,7 +633,7 @@ sl_bool GEarthTile::load(const void* data, sl_size size)
 			sl_uint32 nVertices = (sl_uint32)(gmesh->vertices.count());
 			SLIB_SCOPED_BUFFER(float, 1024, vb, nVertices * 5);
 			float* v = vb;
-			_GEarthTileFile::GVertex* gv = gmesh->vertices.getBuf();
+			_GEarthTileFile::GVertex* gv = gmesh->vertices.data();
 			
 			sl_real roty = SLIB_PI / 2;
 			sl_real roty_sin = Math::sin(roty);
@@ -657,7 +657,7 @@ sl_bool GEarthTile::load(const void* data, sl_size size)
 				gv++;
 			}
 			mesh.vertexBuffer = VertexBuffer::create(vb, nVertices * 20);
-			mesh.indexBuffer = IndexBuffer::create(gmesh->triangleIndices.getBuf(), gmesh->triangleIndices.count() * 2);
+			mesh.indexBuffer = IndexBuffer::create(gmesh->triangleIndices.data(), gmesh->triangleIndices.count() * 2);
 			if (gmesh->texture.format == 1) {
 				mesh.texture = Texture::loadFromMemory(gmesh->texture.data);
 				if (k == 0) {
