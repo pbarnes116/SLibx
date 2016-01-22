@@ -170,7 +170,7 @@ void MapEarthRenderer::_renderGISLine(RenderEngine* engine, MapGISLineTile* tile
 				vb = s->vb;
 			}
 			if (vb.isNotNull()) {
-				engine->draw(m_programLine, n * 2, vb, Primitive::typeLines);
+				engine->draw(m_programLine, n * 2, vb, primitiveType_Lines);
 			}
 		}
 	}
@@ -226,28 +226,30 @@ void MapEarthRenderer::_renderMarker(RenderEngine* engine, MapMarker* marker)
 				, marker->iconTexture
 				, marker->iconTextureRectangle);
 		}
-		if (marker->text.isNotEmpty() && marker->textFont.isNotNull()) {
-			if (marker->_textureText.isNull()) {
-				String16 text = marker->text;
+		String16 text = marker->text;
+		Ref<FreeType> font = marker->textFont;
+		if (text.isNotEmpty() && font.isNotNull()) {
+			Ref<Texture> textureText = marker->_textureText;
+			if (textureText.isNull()) {
 				if (text.length() > 50) {
 					text = text.substring(0, 50);
 				}
-				marker->textFont->setSize((sl_uint32)(marker->textFontSize * screenRatio));
-				Sizei size = marker->textFont->getStringExtent(text);
+				font->setSize((sl_uint32)(marker->textFontSize * screenRatio));
+				Sizei size = font->getStringExtent(text);
 				Ref<Image> image = Image::create(size.x + 8, size.y + 8);
 				if (image.isNotNull()) {
-					marker->textFont->strokeString(image, 3, size.y + 2, text, Color::Black, 2);
-					marker->textFont->drawString(image, 3, size.y + 2, text, marker->textColor);
-					Ref<Texture> texture = Texture::create(image);
-					if (texture.isNotNull()) {
-						marker->_textureText = texture;
+					font->strokeString(image, 3, size.y + 2, text, Color::Black, 2);
+					font->drawString(image, 3, size.y + 2, text, marker->textColor);
+					textureText = Texture::create(image);
+					if (textureText.isNotNull()) {
+						marker->_textureText = textureText;
 					}
 				}
 			}
-			if (marker->_textureText.isNotNull()) {
+			if (textureText.isNotNull()) {
 				Rectangle rectangle = Rectangle(
-					Point(ps.x - marker->_textureText->getWidth() / 2, ps.y)
-					,Size((float)(marker->_textureText->getWidth()), (float)(marker->_textureText->getHeight()))
+					Point(ps.x - textureText->getWidth() / 2, ps.y)
+					,Size((float)(textureText->getWidth()), (float)(textureText->getHeight()))
 					);
 				engine->drawTexture2D(
 					engine->screenToViewport(rectangle)
@@ -297,7 +299,7 @@ void MapEarthRenderer::_renderPolygon(RenderEngine* engine, MapPolygon* polygon)
 	engine->setLineWidth(polygon->width);
 	m_programLine->setDiffuseColor(polygon->color);
 	Ref<VertexBuffer> vb = VertexBuffer::create(pos, n*sizeof(Vector3));
-	engine->draw(m_programLine, (sl_uint32)n, vb, Primitive::typeLineStrip);
+	engine->draw(m_programLine, (sl_uint32)n, vb, primitiveType_LineStrip);
 	engine->setLineWidth(1);
 }
 
@@ -749,8 +751,8 @@ public:
 	Ref<RenderProgramInfo> create(RenderEngine* engine)
 	{
 		Ref<RenderProgramInfo> ret;
-		RenderEngine::EngineType type = engine->getEngineType();
-		if (type == RenderEngine::OPENGL_ES || type == RenderEngine::OPENGL) {
+		RenderEngineType type = engine->getEngineType();
+		if (type == renderEngineType_OpenGL_ES || type == renderEngineType_OpenGL) {
 			ret = new MapInfo_GL;
 		}
 		return ret;
@@ -760,8 +762,8 @@ public:
 	{
 		RenderProgram3D::onInit(_engine, _info);
 
-		RenderEngine::EngineType type = _engine->getEngineType();
-		if (type == RenderEngine::OPENGL_ES || type == RenderEngine::OPENGL) {
+		RenderEngineType type = _engine->getEngineType();
+		if (type == renderEngineType_OpenGL_ES || type == renderEngineType_OpenGL) {
 			GLRenderEngine* engine = (GLRenderEngine*)_engine;
 			MapInfo_GL* info = (MapInfo_GL*)_info;
 			sl_uint32 program = info->program_GL;
@@ -777,8 +779,8 @@ public:
 
 	sl_bool onPreRender(RenderEngine* _engine, RenderProgramInfo* _info, Primitive* primitive)
 	{
-		RenderEngine::EngineType type = _engine->getEngineType();
-		if (type == RenderEngine::OPENGL_ES || type == RenderEngine::OPENGL) {
+		RenderEngineType type = _engine->getEngineType();
+		if (type == renderEngineType_OpenGL_ES || type == renderEngineType_OpenGL) {
 			GLRenderEngine* engine = (GLRenderEngine*)_engine;
 			MapInfo_GL* info = (MapInfo_GL*)_info;
 			SLIB_RENDER_GL_SET_VERTEX_FLOAT_ARRAY_ATTRIBUTE(engine, info->attrPosition, DEM_Vertex, position);
@@ -795,8 +797,8 @@ public:
 
 	void onPostRender(RenderEngine* _engine, RenderProgramInfo* _info, Primitive* primitive)
 	{
-		RenderEngine::EngineType type = _engine->getEngineType();
-		if (type == RenderEngine::OPENGL_ES || type == RenderEngine::OPENGL) {
+		RenderEngineType type = _engine->getEngineType();
+		if (type == renderEngineType_OpenGL_ES || type == renderEngineType_OpenGL) {
 			GLRenderEngine* engine = (GLRenderEngine*)_engine;
 			MapInfo_GL* info = (MapInfo_GL*)_info;
 			engine->disableVertexArrayAttribute(info->attrPosition);

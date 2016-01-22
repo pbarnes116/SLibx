@@ -70,15 +70,11 @@ class SLIB_EXPORT MapGISShapeData : public Referable
 public:
 	SLIB_INLINE MapGISShapeData()
 	{
-		lines.clear();
 		width = 0.f;
 		showMinLevel = 0;
 		initShape();
 	}
-	~MapGISShapeData()
-	{
-
-	}
+	
 	void initShape();
 	sl_uint32 boundType;
 	sl_uint32 highWayType;
@@ -104,7 +100,7 @@ public:
 	List<MapGISPoiData> loadTile(Ref<MapDataLoader> data, String type, const MapTileLocation& location);
 };
 
-class MapGISLine_DataLoader: public Referable
+class SLIB_EXPORT MapGISLine_DataLoader: public Referable
 {
 public:
 	void setWayNames(Map<sl_int64, String> _wayNames)
@@ -112,7 +108,8 @@ public:
 		this->wayNames = _wayNames;
 	}
 
-	Map<sl_int64, String> wayNames;
+	SafeMap<sl_int64, String> wayNames;
+	
 	Map<sl_int32, Ref<MapGISShapeData>> loadTile(Ref<MapDataLoader> loader, String type, const MapTileLocation& location);
 };
 

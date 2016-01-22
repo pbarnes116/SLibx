@@ -4,13 +4,6 @@
 #include <slib/core/algorithm.h>
 
 SLIB_SNET_NAMESPACE_BEGIN
-DbIp::DbIp()
-{
-}
-
-DbIp::~DbIp()
-{
-}
 
 template<>
 SLIB_INLINE int Compare<DbIp::IPv4Item, sl_uint32>::compare(const DbIp::IPv4Item& a, const sl_uint32& b)
@@ -60,8 +53,8 @@ Ref<DbIp> DbIp::create(const void* _data, sl_size _size)
 	char* sz = (char*)_data;
 	sl_uint32 len = (sl_uint32)_size;
 
-	List<IPv4Item> list4 = List<IPv4Item>::create(len / 64);
-	List<IPv6Item> list6 = List<IPv6Item>::create(len / 128);
+	List<IPv4Item> list4 = List<IPv4Item>::create(0, len / 64);
+	List<IPv6Item> list6 = List<IPv6Item>::create(0, len / 128);
 
 	sl_uint32 pos = 0;
 	sl_int32 resultParse;
@@ -156,11 +149,11 @@ Ref<DbIp> DbIp::create(const void* _data, sl_size _size)
 	ret = new DbIp;
 	if (ret.isNotNull()) {
 		ret->m_listIPv4 = list4;
-		ret->m_ipv4 = list4.getBuffer();
+		ret->m_ipv4 = list4.data();
 		ret->m_countIPv4 = (sl_uint32)(list4.count());
 
 		ret->m_listIPv6 = list6;
-		ret->m_ipv6 = list6.getBuffer();
+		ret->m_ipv6 = list6.data();
 		ret->m_countIPv6 = (sl_uint32)(list6.count());
 	}
 	return ret;
@@ -175,4 +168,5 @@ Ref<DbIp> DbIp::create(const String& pathToCSVFile)
 	}
 	return ret;
 }
+
 SLIB_SNET_NAMESPACE_END

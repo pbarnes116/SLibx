@@ -2,6 +2,7 @@
 #define CHECKHEADER_SLIB_MAP_CAMERA
 
 #include "definition.h"
+
 #include "earth.h"
 
 #include <slib/math/matrix4.h>
@@ -155,7 +156,7 @@ private:
 	MapCameraLocation m_current;
 
 	sl_bool m_flagMoving;
-	List<MapCameraMovingTarget> m_listMovingTargets;
+	SafeList<MapCameraMovingTarget> m_listMovingTargets;
 	sl_size m_indexMovingTargets;
 
 	double m_targetAltitudeMin;

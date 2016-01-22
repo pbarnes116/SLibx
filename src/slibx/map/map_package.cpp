@@ -13,16 +13,16 @@ void MapPackage::create(const String& filePath)
 {
 	String dirPath = File::getParentDirectoryPath(filePath);
 	File::createDirectories(dirPath);
-	m_pkgFile = File::openForWrite(filePath);
-	if (m_pkgFile.isNotNull()) {
+	Ref<File> file = File::openForWrite(filePath);
+	if (file.isNotNull()) {
 		Memory header = getHeader();
 		sl_int32 offsetTableSize = sizeof(sl_int32)* m_nTilesXNum * m_nTilesYNum;
 		SLIB_SCOPED_BUFFER(sl_int32, 4096, offsetTable, offsetTableSize);
 		Base::zeroMemory(offsetTable, offsetTableSize * sizeof(sl_int32));
-		m_pkgFile->write(header.getBuf(), header.getSize());
-		m_pkgFile->write(offsetTable, offsetTableSize);
-		m_pkgFile->seekToBegin();
-		m_pkgFile->close();
+		file->write(header.getBuf(), header.getSize());
+		file->write(offsetTable, offsetTableSize);
+		file->seekToBegin();
+		file->close();
 	}
 }
 
@@ -41,14 +41,16 @@ Memory MapPackage::getHeader()
 
 sl_bool MapPackage::checkHeader()
 {
-	sl_bool ret = sl_true;
-	Memory originalHeader = getHeader();
-	Memory header = Memory::create(PACKAGE_HEADER_SIZE);
-	m_pkgFile->read(header.getBuf(), header.getSize());
-	if (Base::compareMemory(originalHeader.getBuf(), header.getBuf(), PACKAGE_HEADER_SIZE) != 0) {
-		ret = sl_false;
+	Ref<File> file = m_pkgFile;
+	if (file.isNotNull()) {
+		Memory originalHeader = getHeader();
+		Memory header = Memory::create(PACKAGE_HEADER_SIZE);
+		file->read(header.getBuf(), header.getSize());
+		if (Base::compareMemory(originalHeader.getBuf(), header.getBuf(), PACKAGE_HEADER_SIZE) == 0) {
+			return sl_true;
+		}
 	}
-	return ret;
+	return sl_false;
 }
 
 sl_bool MapPackage::open(const String& filePath, sl_bool flagReadOnly)
@@ -58,15 +60,20 @@ sl_bool MapPackage::open(const String& filePath, sl_bool flagReadOnly)
 	if (!File::exists(filePath) && !flagReadOnly) {
 		create(filePath);
 	}
+	
+	Ref<File> file;
 	if (flagReadOnly) {
-		m_pkgFile = File::open(filePath, File::modeRead);
+		file = File::open(filePath, fileMode_Read);
 	} else {
-		m_pkgFile = File::open(filePath, File::modeRandomAccess);
+		file = File::open(filePath, fileMode_RandomAccess);
 	}
 	
-	if (m_pkgFile.isNotNull() && checkHeader()) {
-		m_flagOpen = sl_true;
-		return sl_true;
+	if (file.isNotNull()) {
+		m_pkgFile = file;
+		if (checkHeader()) {
+			m_flagOpen = sl_true;
+			return sl_true;
+		}
 	}
 	return sl_false;
 }
@@ -80,11 +87,14 @@ sl_int32 MapPackage::getTableOffset(sl_int32 offsetX, sl_int32 offsetY)
 sl_int32 MapPackage::getItemOffset(sl_int32 x, sl_int32 y)
 {
 	sl_int32 ret = -1;
-	sl_int32 offsetToTable = getTableOffset(x, y);
-	if (offsetToTable + 4 < m_pkgFile->getSize()) {
-		m_pkgFile->seek(offsetToTable, File::positionBegin);
-		m_pkgFile->readInt32(&ret);
-		m_pkgFile->seekToBegin();
+	Ref<File> file = m_pkgFile;
+	if (file.isNotNull()) {
+		sl_int32 offsetToTable = getTableOffset(x, y);
+		if (offsetToTable + 4 < file->getSize()) {
+			file->seek(offsetToTable, seekPosition_Begin);
+			file->readInt32(&ret);
+			file->seekToBegin();
+		}
 	}
 	return ret;
 }
@@ -92,15 +102,18 @@ sl_int32 MapPackage::getItemOffset(sl_int32 x, sl_int32 y)
 Memory MapPackage::getItem(sl_int32 itemOffset)
 {
 	Memory ret;
-	if (itemOffset + 4 < m_pkgFile->getSize()) {
-		m_pkgFile->seek(itemOffset);
-		sl_int32 identify = 0;
-		m_pkgFile->readInt32(&identify);
-		if (identify == PACKAGE_ITEM_IDENTIFY) {
-			sl_int32 itemSize = 0;
-			m_pkgFile->readInt32(&itemSize);
-			ret = Memory::create(itemSize);
-			m_pkgFile->read(ret.getBuf(), itemSize);
+	Ref<File> file = m_pkgFile;
+	if (file.isNotNull()) {
+		if (itemOffset + 4 < file->getSize()) {
+			file->seek(itemOffset, seekPosition_Begin);
+			sl_int32 identify = 0;
+			file->readInt32(&identify);
+			if (identify == PACKAGE_ITEM_IDENTIFY) {
+				sl_int32 itemSize = 0;
+				file->readInt32(&itemSize);
+				ret = Memory::create(itemSize);
+				file->read(ret.getBuf(), itemSize);
+			}
 		}
 	}
 	return ret;
@@ -203,30 +216,33 @@ Memory MapPackage::createItem(const Map<String, Memory>& itemData, sl_int32 oldI
 sl_bool MapPackage::write(sl_int32 offsetX, sl_int32 offsetY, const Map<String, Memory>& itemData)
 {
 	sl_bool ret = sl_false;
-	if (m_flagOpen && itemData.getCount() > 0) {
-		Memory packageItem = createItem(itemData, 0);
-		sl_int32 itemPosition = (sl_int32)(m_pkgFile->getSize());
-		sl_int32 tblOffset = getTableOffset(offsetX, offsetY);
-
-		m_pkgFile->seek(tblOffset, File::positionBegin);
-		if (!m_pkgFile->writeInt32(itemPosition)) {
-			return sl_false;
+	Ref<File> file = m_pkgFile;
+	if (file.isNotNull()) {
+		if (m_flagOpen && itemData.getCount() > 0) {
+			Memory packageItem = createItem(itemData, 0);
+			sl_int32 itemPosition = (sl_int32)(file->getSize());
+			sl_int32 tblOffset = getTableOffset(offsetX, offsetY);
+			
+			file->seek(tblOffset, seekPosition_Begin);
+			if (!file->writeInt32(itemPosition)) {
+				return sl_false;
+			}
+			
+			file->seekToEnd();
+			
+			if (!file->writeUint32(PACKAGE_ITEM_IDENTIFY)) {
+				return sl_false;
+			}
+			sl_uint32 packageSize = (sl_uint32)(packageItem.getSize());
+			if (!file->writeUint32(packageSize)) {
+				return sl_false;
+			}
+			
+			if (file->writeFromMemory(packageItem) != packageItem.getSize()) {
+				return sl_false;
+			}
+			ret = sl_true;
 		}
-
-		m_pkgFile->seekToEnd();
-
-		if (!m_pkgFile->writeUint32(PACKAGE_ITEM_IDENTIFY)) {
-			return sl_false;
-		}
-		sl_uint32 packageSize = (sl_uint32)(packageItem.getSize());
-		if (!m_pkgFile->writeUint32(packageSize)) {
-			return sl_false;
-		}
-
-		if (m_pkgFile->writeFromMemory(packageItem) != packageItem.getSize()) {
-			return sl_false;
-		}
-		ret = sl_true;
 	}
 	return ret;
 }

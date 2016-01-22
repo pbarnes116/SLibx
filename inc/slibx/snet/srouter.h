@@ -21,14 +21,13 @@ SLIB_SNET_NAMESPACE_BEGIN
 class SRouter;
 
 class SRouterInterface;
+
 class SLIB_EXPORT ISRouterInterfaceListener
 {
 public:
 	// return sl_false when the packet is not allowed
-	virtual sl_bool onWritePacket(SRouterInterface* iface, void* ip, sl_uint32 size)
-	{
-		return sl_true;
-	}
+	virtual sl_bool onWritePacket(SRouterInterface* iface, void* ip, sl_uint32 size) = 0;
+	
 };
 
 class SLIB_EXPORT SRouterInterfaceParam
@@ -45,49 +44,45 @@ public:
 	Ptr<ISRouterInterfaceListener> listener;
 
 public:
-	SRouterInterfaceParam()
-	{
-		fragment_expiring_seconds = 3600;
-		mtu_outgoing = 1450;
-		
-		use_nat = sl_false;
-		nat_ip.setZero();
-		nat_port_begin = 30000;
-		nat_port_end = 60000;
-	}
-
+	SRouterInterfaceParam();
+	
+public:
 	void parseConfig(const Variant& varConfig);
+	
 };
 
 class SLIB_EXPORT SRouterInterface : public Object
 {
 public:
 	SRouterInterface();
-	~SRouterInterface();
 
 public:
 	Ref<SRouter> getRouter();
+	
 	void setRouter(const Ref<SRouter>& router);
 	
+	
 	void initWithParam(const SRouterInterfaceParam& param);
-
+	
 	void setNAT_IP(const IPv4Address& ip);
-
+	
 	void writePacket(const void* packet, sl_uint32 size);
+	
 	void forwardPacket(const void* packet, sl_uint32 size);
 
-	SLIB_PROPERTY_INLINE(Ptr<ISRouterInterfaceListener>, Listener);
+public:
+	SLIB_PTR_PROPERTY(ISRouterInterfaceListener, Listener);
 
 protected:
 	virtual void _writePacket(const void* packet, sl_uint32 size) = 0;
 
 protected:
-	WeakRef<SRouter> m_router;
+	SafeWeakRef<SRouter> m_router;
 
 	sl_uint32 m_mtuOutgoing;
 
 	sl_bool m_flagUseNat;
-	NAT_Table m_tableNat;
+	NatTable m_tableNat;
 	
 	IPv4Fragmentation m_fragmentation;
 
@@ -104,13 +99,9 @@ public:
 	MacAddress gateway_mac;
 
 public:
-	SRouterDeviceParam()
-	{
-		use_raw_socket = sl_false;
-		is_ethernet = sl_true;
-		gateway_mac.setZero();
-	}
-
+	SRouterDeviceParam();
+	
+public:
 	void parseConfig(const Variant& varConfig);
 };
 
@@ -118,8 +109,6 @@ class SLIB_EXPORT SRouterDevice : public SRouterInterface, public INetCaptureLis
 {
 protected:
 	SRouterDevice();
-public:
-	~SRouterDevice();
 
 public:
 	static Ref<SRouterDevice> create(const SRouterDeviceParam& param);
@@ -130,11 +119,12 @@ public:
 
 	String getStatus();
 
-
-
 protected:
-	virtual void _writePacket(const void* packet, sl_uint32 size);
-	virtual void onCapturePacket(NetCapture* capture, NetCapturePacket* packet);
+	// override
+	void _writePacket(const void* packet, sl_uint32 size);
+	
+	// override
+	void onCapturePacket(NetCapture* capture, NetCapturePacket* packet);
 
 	void _idle();
 
@@ -142,8 +132,10 @@ protected:
 	String m_deviceName;
 	IPv4Address m_ipAddressDevice;
 	Ref<NetCapture> m_device;
+	
 	MacAddress m_macAddressDevice;
 	MacAddress m_macAddressGateway;
+	
 	EthernetMacTable m_tableMac;
 
 	friend class SRouter;
@@ -156,10 +148,6 @@ public:
 	String key;
 
 public:
-	SRouterRemoteParam()
-	{
-	}
-
 	void parseConfig(const Variant& varConfig);
 };
 
@@ -167,8 +155,6 @@ class SLIB_EXPORT SRouterRemote : public SRouterInterface
 {
 protected:
 	SRouterRemote();
-public:
-	~SRouterRemote();
 
 public:
 	static Ref<SRouterRemote> create(const SRouterRemoteParam& param);
@@ -177,13 +163,15 @@ public:
 	String getStatus();
 
 protected:
-	virtual void _writePacket(const void* packet, sl_uint32 size);
+	// override
+	void _writePacket(const void* packet, sl_uint32 size);
 
 	void _idle();
 
 protected:
 	SocketAddress m_address;
 	String m_key;
+	
 	Time m_timeLastKeepAliveReceive;
 	Time m_timeLastKeepAliveSend;
 	sl_bool m_flagDynamicAddress;
@@ -201,8 +189,8 @@ public:
 	IPv4Address src_ip_begin;
 	IPv4Address src_ip_end;
 	
-	String interfaceName;
-	Ref<SRouterInterface> interfaceDevice;
+	SafeString interfaceName;
+	SafeRef<SRouterInterface> interfaceDevice;
 
 	sl_bool flagBreak;
 
@@ -210,9 +198,11 @@ public:
 	SRouterRoute();
 	SRouterRoute(const SRouterRoute& other);
 
+public:
 	SRouterRoute& operator=(const SRouterRoute& other);
 
 	sl_bool operator==(const SRouterRoute& other) const;
+	
 };
 
 class SLIB_EXPORT SRouterParam
@@ -223,34 +213,40 @@ public:
 	String key;
 
 public:
-	SRouterParam()
-	{
-		port = 0;
-	}
+	SRouterParam();
+
 };
 
 class SLIB_EXPORT SRouter : public Object
 {
 protected:
 	SRouter();
-public:
 	~SRouter();
 
 public:
 	static Ref<SRouter> create(const SRouterParam& param);
+	
 	static Ref<SRouter> createFromConfiguration(const Variant& varConfig);
 
+public:
 	void release();
 
+	
 	Ref<SRouterInterface> getInterface(const String& name);
+	
 	void registerInterface(const String& name, const Ref<SRouterInterface>& iface);
 	
+	
 	Ref<SRouterDevice> getDevice(const String& name);
+	
 	void registerDevice(const String& name, const Ref<SRouterDevice>& dev);
 
+	
 	Ref<SRouterRemote> getRemote(const String& name);
+	
 	void registerRemote(const String& name, const Ref<SRouterRemote>& remote);
 
+	
 	void addRoute(const SRouterRoute& route, sl_bool flagReplace = sl_true);
 
 	void forwardPacket(const void* ip, sl_uint32 size);
@@ -259,32 +255,39 @@ public:
 	
 protected:
 	void _sendRemoteMessage(SRouterRemote* remote, sl_uint8 method, const void* data, sl_uint32 n);
+	
 	void _receiveRemoteMessage(SocketAddress& address, const void* data, sl_uint32 size);
 
+	
 	void _sendRawPacketToRemote(SRouterRemote* remote, const void* ip, sl_uint32 size);
+	
 	void _receiveRawPacketFromRemote(SocketAddress& address, const void* data, sl_uint32 size);
 
+	
 	void _sendRouterKeepAlive(SRouterRemote* remote);
+	
 	void _receiveRouterKeepAlive(SocketAddress& address, const void* data, sl_uint32 size);
 
+	
 	void _runUdp();
 
 protected:
 	String m_name;
 
-	Ref<Socket> m_udp;
-	Ref<Thread> m_threadUdp;
+	SafeRef<Socket> m_udp;
+	SafeRef<Thread> m_threadUdp;
 	sl_bool m_flagClosed;
 
 	AES m_aes;
 
-	Map< String, Ref<SRouterInterface> > m_mapInterfaces;
-	Map< String, Ref<SRouterDevice> > m_mapDevices;
-	Map< String, Ref<SRouterRemote> > m_mapRemotes;
-	List<SRouterRoute> m_listRoutes;
+	HashMap< String, Ref<SRouterInterface> > m_mapInterfaces;
+	HashMap< String, Ref<SRouterDevice> > m_mapDevices;
+	HashMap< String, Ref<SRouterRemote> > m_mapRemotes;
+	CList<SRouterRoute> m_listRoutes;
 
 	friend class SRouterRemote;
 };
+
 SLIB_SNET_NAMESPACE_END
 
 #endif

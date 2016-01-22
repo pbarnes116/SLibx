@@ -95,33 +95,33 @@ protected:
 	void _zoom(double ratio);
 	
 public:
-	SLIB_PROPERTY_INLINE(Ref<FreeType>, StatusFont);
-	SLIB_PROPERTY_INLINE(Ref<MapDataLoader>, DataLoader);
+	SLIB_REF_PROPERTY(FreeType, StatusFont);
+	SLIB_REF_PROPERTY(MapDataLoader, DataLoader);
 	
-	SLIB_PROPERTY_INLINE(Ref<Texture>, CompassTexture);
-	SLIB_PROPERTY_INLINE(Rectangle, CompassTextureRectangle);
-	SLIB_PROPERTY_INLINE(Ref<Texture>, CompassHighlightTexture);
-	SLIB_PROPERTY_INLINE(Rectangle, CompassHighlightTextureRectangle);
-	SLIB_PROPERTY_INLINE(sl_real, CompassSize);
-	SLIB_PROPERTY_INLINE(Point, CompassPosition);
-	SLIB_BOOLEAN_PROPERTY_INLINE(CompassVisible);
-	SLIB_BOOLEAN_PROPERTY_INLINE(CompassAlignRight);
-	SLIB_BOOLEAN_PROPERTY_INLINE(CompassAlignBottom);
+	SLIB_REF_PROPERTY(Texture, CompassTexture);
+	SLIB_PROPERTY(Rectangle, CompassTextureRectangle);
+	SLIB_REF_PROPERTY(Texture, CompassHighlightTexture);
+	SLIB_PROPERTY(Rectangle, CompassHighlightTextureRectangle);
+	SLIB_PROPERTY(sl_real, CompassSize);
+	SLIB_PROPERTY(Point, CompassPosition);
+	SLIB_BOOLEAN_PROPERTY(CompassVisible);
+	SLIB_BOOLEAN_PROPERTY(CompassAlignRight);
+	SLIB_BOOLEAN_PROPERTY(CompassAlignBottom);
 	
 	Point getCompassRealPosition();
 	
-	SLIB_BOOLEAN_PROPERTY_INLINE(StatusBarVisible);
-	SLIB_BOOLEAN_PROPERTY_INLINE(StatusBarLocateAtTop);
+	SLIB_BOOLEAN_PROPERTY(StatusBarVisible);
+	SLIB_BOOLEAN_PROPERTY(StatusBarLocateAtTop);
 	
-	SLIB_PROPERTY_INLINE(Ref<Runnable>, OnClick);
-	SLIB_PROPERTY_INLINE(Point, LastClickedPoint);
+	SLIB_REF_PROPERTY(Runnable, OnClick);
+	SLIB_PROPERTY(Point, LastClickedPoint);
 	
 private:
 	sl_bool m_flagInit;
 
 	Ref<MapEarthRenderer> m_earthRenderer;
 
-	Ref<Texture> m_textureStatus;
+	SafeRef<Texture> m_textureStatus;
 
 	sl_real m_viewportWidth;
 	sl_real m_viewportHeight;

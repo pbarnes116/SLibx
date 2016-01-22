@@ -78,7 +78,7 @@ Ref<MapPictureTile> MapPictureTileManager::loadTile(const MapTileLocationi& loca
 	}
 	Ref<MapDataLoader> loader = getDataLoader();
 	if (loader.isNotNull()) {
-		ImageFileType type = imageFileTypeUnknown;
+		ImageFileType type = imageFileType_Unknown;
 		Ref<Image> image;
 		// first load x picture
 		{
@@ -88,7 +88,7 @@ Ref<MapPictureTile> MapPictureTileManager::loadTile(const MapTileLocationi& loca
 				image = Image::loadFromMemory(mem);
 			}
 		}
-		if (image.isNull() || type == imageFileTypePNG) {
+		if (image.isNull() || type == imageFileType_PNG) {
 			Ref<Image> imagex = image;
 			image.setNull();
 			Memory mem;
@@ -111,7 +111,7 @@ Ref<MapPictureTile> MapPictureTileManager::loadTile(const MapTileLocationi& loca
 				if (imagex.isNotNull()) {
 					image->drawImage(
 						0, 0, image->getWidth(), image->getHeight()
-						, imagex, 0, 0, imagex->getWidth(), imagex->getHeight(), blendSrcAlpha);
+						, imagex, 0, 0, imagex->getWidth(), imagex->getHeight(), blendMode_SrcAlpha);
 				}
 			}
 		}

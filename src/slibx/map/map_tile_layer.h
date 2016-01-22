@@ -27,13 +27,13 @@ public:
 	~MapLayerTileManager();
 
 public:
-	SLIB_PROPERTY_INLINE(Ref<MapDataLoader>, DataLoader);
+	SLIB_REF_PROPERTY(MapDataLoader, DataLoader);
 
-	SLIB_PROPERTY_INLINE(sl_uint32, TileLifeMillseconds);
-	SLIB_PROPERTY_INLINE(sl_uint32, MaxTilesCount);
+	SLIB_PROPERTY(sl_uint32, TileLifeMillseconds);
+	SLIB_PROPERTY(sl_uint32, MaxTilesCount);
 
 protected:
-	Map< MapTileLocationi, Ref<MapLayerTile> > m_tiles[SLIB_SMAP_MAX_LAYERS_COUNT];
+	HashMap< MapTileLocationi, Ref<MapLayerTile> > m_tiles[SLIB_SMAP_MAX_LAYERS_COUNT];
 
 public:
 	Ref<MapLayerTile> getTile(sl_uint32 layer, const MapTileLocationi& location);

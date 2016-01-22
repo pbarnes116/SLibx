@@ -31,15 +31,15 @@ public:
 	~MapEarthRenderer();
 
 protected:
-	SLIB_PROPERTY_INLINE(sl_uint32, MaxLevel);
-	SLIB_PROPERTY_INLINE(sl_uint32, CountX0);
-	SLIB_PROPERTY_INLINE(sl_uint32, CountY0);
+	SLIB_PROPERTY(sl_uint32, MaxLevel);
+	SLIB_PROPERTY(sl_uint32, CountX0);
+	SLIB_PROPERTY(sl_uint32, CountY0);
 
-	SLIB_PROPERTY_INLINE(sl_uint32, MinBuildingLevel);
+	SLIB_PROPERTY(sl_uint32, MinBuildingLevel);
 
-	SLIB_BOOLEAN_PROPERTY_INLINE(ShowBuilding);
-	SLIB_BOOLEAN_PROPERTY_INLINE(ShowGISLine);
-	SLIB_BOOLEAN_PROPERTY_INLINE(ShowGISPoi);
+	SLIB_BOOLEAN_PROPERTY(ShowBuilding);
+	SLIB_BOOLEAN_PROPERTY(ShowGISLine);
+	SLIB_BOOLEAN_PROPERTY(ShowGISPoi);
 	
 protected:
 	sl_bool m_flagShowLayer[SLIB_SMAP_MAX_LAYERS_COUNT];
@@ -89,7 +89,7 @@ public:
 		m_tilesGISLine->setViewportSize(size);
 	}
 
-	SLIB_INLINE const Ref<MapCamera>& getCamera() const
+	SLIB_INLINE Ref<MapCamera> getCamera() const
 	{
 		return m_camera;
 	}
@@ -117,9 +117,9 @@ public:
 	sl_real getAltitudeFromLatLon(const LatLon& latLon, sl_bool flagReadDEMAlways = sl_false);
 
 public:
-	Map< String, Ref<MapMarker> > markers;
-	Map< String, Ref<MapIcon> > icons;
-	Map< String, Ref<MapPolygon> > polygons;
+	HashMap< String, Ref<MapMarker> > markers;
+	HashMap< String, Ref<MapIcon> > icons;
+	HashMap< String, Ref<MapPolygon> > polygons;
 
 protected:
 	sl_bool m_flagInitialized;
@@ -146,7 +146,7 @@ protected:
 
 
 protected:
-	Ref<MapDataLoader> m_dataLoader;
+	SafeRef<MapDataLoader> m_dataLoader;
 
 	Ref<MapRenderTileManager> m_tilesRender;
 	Ref<MapPictureTileManager> m_tilesPicture;
@@ -163,9 +163,9 @@ protected:
 	sl_real m_sizeTileMinimum;
 	sl_uint32 m_nMaxRenderTileLevel;
 
-	List<MapTileLocationi> m_listRenderedTiles;
+	SafeList<MapTileLocationi> m_listRenderedTiles;
 
-	Map<sl_int64, MapGISPoiInfo> m_poiInfo;
+	SafeMap<sl_int64, MapGISPoiInfo> m_poiInfo;
 	
 protected:
 	Ref<MapCamera> m_camera;

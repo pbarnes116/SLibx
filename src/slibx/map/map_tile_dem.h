@@ -28,13 +28,13 @@ public:
 	~MapDEMTileManager() {}
 
 public:
-	SLIB_PROPERTY_INLINE(Ref<MapDataLoader>, DataLoader);
+	SLIB_REF_PROPERTY(MapDataLoader, DataLoader);
 
-	SLIB_PROPERTY_INLINE(sl_uint32, TileLifeMillseconds);
-	SLIB_PROPERTY_INLINE(sl_uint32, MaxTilesCount);
+	SLIB_PROPERTY(sl_uint32, TileLifeMillseconds);
+	SLIB_PROPERTY(sl_uint32, MaxTilesCount);
 
 protected:
-	Map< MapTileLocationi, Ref<MapDEMTile> > m_tiles;
+	HashMap< MapTileLocationi, Ref<MapDEMTile> > m_tiles;
 
 public:
 	Ref<MapDEMTile> getTile(const MapTileLocationi& location);

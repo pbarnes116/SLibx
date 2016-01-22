@@ -141,7 +141,7 @@ void _DEM_makeMesh(const DEM* _dem, const GLOBE& globe, const Vector3lf& positio
 	
 	GeoLocation loc;
 	
-	out.type = Primitive::typeTriangles;
+	out.type = primitiveType_Triangles;
 	out.countElements = 6 * (M - 1) * (M - 1);
 	SLIB_SCOPED_BUFFER(DEM_Vertex, 4096, vb, M*M);
 	DEM_Vertex* pv = vb;

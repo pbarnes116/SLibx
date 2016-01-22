@@ -44,13 +44,13 @@ public:
 	~MapGISLineTileManager() {}
 
 public:
-	SLIB_PROPERTY_INLINE(Ref<MapDataLoader>, DataLoader);
-	SLIB_PROPERTY_INLINE(Sizef, ViewportSize);
-	SLIB_PROPERTY_INLINE(sl_uint32, TileLifeMillseconds);
-	SLIB_PROPERTY_INLINE(sl_uint32, MaxTilesCount);
+	SLIB_REF_PROPERTY(MapDataLoader, DataLoader);
+	SLIB_PROPERTY(Sizef, ViewportSize);
+	SLIB_PROPERTY(sl_uint32, TileLifeMillseconds);
+	SLIB_PROPERTY(sl_uint32, MaxTilesCount);
 
 protected:
-	Map< MapTileLocationi, Ref<MapGISLineTile> > m_tiles;
+	HashMap< MapTileLocationi, Ref<MapGISLineTile> > m_tiles;
 	MapGISLine_DataLoader m_dataLoader;
 
 public:
@@ -85,11 +85,12 @@ public:
 	sl_uint32 fontSize;
 	Color clr;
 
-	void init(Map<sl_int64, MapGISPoiInfo>& info);
+	void init(const Map<sl_int64, MapGISPoiInfo>& info);
 
 private:
 	sl_bool _flagInit;
 };
+
 class MapGISPoiTile : public Referable
 {
 public:
@@ -106,15 +107,15 @@ public:
 	~MapGISPoiTileManager() {}
 
 public:
-	SLIB_PROPERTY_INLINE(Ref<MapDataLoader>, DataLoader);
-	SLIB_PROPERTY_INLINE(Sizef, ViewportSize);
-	SLIB_PROPERTY_INLINE(sl_uint32, TileLifeMillseconds);
-	SLIB_PROPERTY_INLINE(sl_uint32, MaxTilesCount);
+	SLIB_REF_PROPERTY(MapDataLoader, DataLoader);
+	SLIB_PROPERTY(Sizef, ViewportSize);
+	SLIB_PROPERTY(sl_uint32, TileLifeMillseconds);
+	SLIB_PROPERTY(sl_uint32, MaxTilesCount);
 
-	SLIB_PROPERTY_INLINE(Ref<FreeType>, FontForPOI);
+	SLIB_PROPERTY(Ref<FreeType>, FontForPOI);
 
 protected:
-	Map< MapTileLocationi, Ref<MapGISPoiTile> > m_tiles;
+	HashMap< MapTileLocationi, Ref<MapGISPoiTile> > m_tiles;
 	MapGISPoi_DataLoader m_dataLoader;
 
 public:

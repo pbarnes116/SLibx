@@ -125,15 +125,18 @@ void MapView::onFrame(RenderEngine* engine)
 		if (fontStatus.isNotNull()) {
 			engine->setDepthTest(sl_false);
 			engine->setBlending(sl_true);
-			m_textureStatus->getSource()->resetPixels(Color(0, 0, 0, 0));
-
-			String textStatus = getStatusText();
-			Size size = fontStatus->getStringExtent(textStatus);
-			fontStatus->drawString(
-				Ref<Image>::from(m_textureStatus->getSource()), STATUS_WIDTH / 2 - (sl_uint32)(size.x / 2)
-				, STATUS_HEIGHT / 2 + (sl_uint32)(size.y / 2)
-				, textStatus, Color::white());
-			m_textureStatus->update();
+			
+			Ref<Texture> textureStatus = m_textureStatus;
+			if (textureStatus.isNotNull()) {
+				String textStatus = getStatusText();
+				Size size = fontStatus->getStringExtent(textStatus);
+				fontStatus->drawString(
+									   Ref<Image>::from(textureStatus->getSource()), STATUS_WIDTH / 2 - (sl_uint32)(size.x / 2)
+									   , STATUS_HEIGHT / 2 + (sl_uint32)(size.y / 2)
+									   , textStatus, Color::white());
+				textureStatus->update();
+				textureStatus->getSource()->resetPixels(Color(0, 0, 0, 0));
+			}
 			
 			sl_real heightStatus = getStatusBarHeight();
 			sl_real widthStatus = (sl_real)(heightStatus * STATUS_WIDTH / STATUS_HEIGHT);

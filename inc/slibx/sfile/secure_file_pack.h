@@ -17,12 +17,6 @@ protected:
 	sl_bool m_flagPassword;
 
 public:
-	SecureFilePackage()
-	{
-	}
-
-public:
-
 	struct CreateParam {
 		sl_uint16 type; // reserved
 		sl_uint16 version; // reserved

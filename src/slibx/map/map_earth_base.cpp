@@ -24,8 +24,9 @@ MapEarthRenderer::MapEarthRenderer()
 
 	m_nMaxRenderTileLevel = 0;
 
-	m_camera = new MapCamera;
-	m_camera->setEyeLocation(GeoLocation(38, 126, 8000000));
+	Ref<MapCamera> camera = new MapCamera;
+	m_camera = camera;
+	camera->setEyeLocation(GeoLocation(38, 126, 8000000));
 
 	m_altitudeEyeSurface = 0;
 	

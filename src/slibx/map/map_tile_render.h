@@ -30,11 +30,11 @@ public:
 	~MapRenderTileManager() {}
 
 public:
-	SLIB_PROPERTY_INLINE(sl_uint32, TileLifeMillseconds);
-	SLIB_PROPERTY_INLINE(sl_uint32, MaxTilesCount);
+	SLIB_PROPERTY(sl_uint32, TileLifeMillseconds);
+	SLIB_PROPERTY(sl_uint32, MaxTilesCount);
 
 protected:
-	Map< MapTileLocationi, Ref<MapRenderTile> > m_tiles;
+	HashMap< MapTileLocationi, Ref<MapRenderTile> > m_tiles;
 
 public:
 	Ref<MapRenderTile> getTile(const MapTileLocationi& location);

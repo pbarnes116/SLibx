@@ -76,7 +76,7 @@ public:
 	}
 
 private:
-	Ref<File> m_pkgFile;
+	SafeRef<File> m_pkgFile;
 	sl_bool m_flagOpen;
 private:
 	void		create(const String& filePath);

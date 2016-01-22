@@ -26,10 +26,13 @@ void MapEarthRenderer::_runThreadControl()
 
 void MapEarthRenderer::_runThreadControlStep()
 {
-	GeoLocation eye = m_camera->getEyeLocation();
-	m_altitudeEyeSurface = getAltitudeFromLatLon(eye.getLatLon());
-	m_camera->setMinimumAltitude(m_altitudeEyeSurface + 20);
-	m_camera->stepMotions((sl_real)m_dtimeThreadControl);
+	Ref<MapCamera> camera = m_camera;
+	if (camera.isNotNull()) {
+		GeoLocation eye = camera->getEyeLocation();
+		m_altitudeEyeSurface = getAltitudeFromLatLon(eye.getLatLon());
+		camera->setMinimumAltitude(m_altitudeEyeSurface + 20);
+		camera->stepMotions((sl_real)m_dtimeThreadControl);
+	}
 }
 
 LatLon MapEarthRenderer::getLatLonFromTileLocation(const MapTileLocationi& location)

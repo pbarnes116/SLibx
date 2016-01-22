@@ -13,6 +13,18 @@
 #define PACKET_SIZE 65536
 
 SLIB_SNET_NAMESPACE_BEGIN
+
+SRouterInterfaceParam::SRouterInterfaceParam()
+{
+	fragment_expiring_seconds = 3600;
+	mtu_outgoing = 1450;
+	
+	use_nat = sl_false;
+	nat_ip.setZero();
+	nat_port_begin = 30000;
+	nat_port_end = 60000;
+}
+
 void SRouterInterfaceParam::parseConfig(const Variant& varConfig)
 {
 	fragment_expiring_seconds = varConfig.getField("fragment_expiring_seconds").getUint32(fragment_expiring_seconds);
@@ -28,10 +40,6 @@ SRouterInterface::SRouterInterface()
 {
 	m_mtuOutgoing = 1450;
 	m_flagUseNat = sl_false;
-}
-
-SRouterInterface::~SRouterInterface()
-{
 }
 
 Ref<SRouter> SRouterInterface::getRouter()
@@ -111,6 +119,14 @@ void SRouterInterface::forwardPacket(const void* ip, sl_uint32 size)
 	}
 }
 
+
+SRouterDeviceParam::SRouterDeviceParam()
+{
+	use_raw_socket = sl_false;
+	is_ethernet = sl_true;
+	gateway_mac.setZero();
+}
+
 void SRouterDeviceParam::parseConfig(const Variant& varConfig)
 {
 	SRouterInterfaceParam::parseConfig(varConfig);
@@ -133,10 +149,6 @@ SRouterDevice::SRouterDevice()
 	m_macAddressGateway.setZero();
 }
 
-SRouterDevice::~SRouterDevice()
-{
-}
-
 Ref<SRouterDevice> SRouterDevice::create(const SRouterDeviceParam& param)
 {
 	Ref<SRouterDevice> ret = new SRouterDevice;
@@ -152,9 +164,9 @@ Ref<SRouterDevice> SRouterDevice::create(const SRouterDeviceParam& param)
 				ncp.sizeBuffer = 1024 * 1024 * 20;
 				ncp.flagPromiscuous = sl_true;
 				if (param.is_ethernet) {
-					ncp.preferedLinkDeviceType = networkLinkDevice_Ethernet;
+					ncp.preferedLinkDeviceType = networkLinkDeviceType_Ethernet;
 				} else {
-					ncp.preferedLinkDeviceType = networkLinkDevice_Raw;
+					ncp.preferedLinkDeviceType = networkLinkDeviceType_Raw;
 				}
 #if defined(SLIB_PLATFORM_IS_LINUX)
 				if (param.use_raw_socket) {
@@ -188,7 +200,7 @@ void SRouterDevice::_writePacket(const void* packet, sl_uint32 size)
 	if (dev.isNull()) {
 		return;
 	}
-	if (dev->getLinkType() == networkLinkDevice_Ethernet) {
+	if (dev->getLinkType() == networkLinkDeviceType_Ethernet) {
 		IPv4HeaderFormat* ip = (IPv4HeaderFormat*)(packet); 
 		MacAddress macSource = m_macAddressDevice;
 		if (macSource.isZero()) {
@@ -221,7 +233,7 @@ void SRouterDevice::processReadFrame(const void* _frame, sl_uint32 lenFrame)
 	}
 	IPv4HeaderFormat* ip = 0;
 	sl_uint32 lenIP = 0;
-	if (dev->getLinkType() == networkLinkDevice_Ethernet) {
+	if (dev->getLinkType() == networkLinkDeviceType_Ethernet) {
 		EthernetFrameFormat* frame = (EthernetFrameFormat*)(_frame);
 		if (m_macAddressGateway.isZero() && m_macAddressDevice != frame->getSourceAddress()) {
 			m_tableMac.parseEthernetFrame(_frame, lenFrame, sl_true, sl_false);
@@ -278,6 +290,7 @@ void SRouterDevice::_idle()
 	}
 }
 
+
 void SRouterRemoteParam::parseConfig(const Variant& varConfig)
 {
 	SRouterInterfaceParam::parseConfig(varConfig);
@@ -291,10 +304,6 @@ SRouterRemote::SRouterRemote()
 	m_flagDynamicAddress = sl_true;
 	m_timeLastKeepAliveSend.setZero();
 	m_timeLastKeepAliveReceive.setZero();
-}
-
-SRouterRemote::~SRouterRemote()
-{
 }
 
 Ref<SRouterRemote> SRouterRemote::create(const SRouterRemoteParam& param)
@@ -341,6 +350,7 @@ void SRouterRemote::_writePacket(const void* packet, sl_uint32 size)
 	}
 }
 
+
 SRouterRoute::SRouterRoute()
 {
 	dst_ip_begin.setZero();
@@ -386,6 +396,12 @@ sl_bool SRouterRoute::operator==(const SRouterRoute& other) const
 		&& src_ip_end == other.src_ip_end;
 }
 
+
+SRouterParam::SRouterParam()
+{
+	port = 0;
+}
+
 SRouter::SRouter()
 {
 	m_flagClosed = sl_false;
@@ -423,11 +439,12 @@ Ref<SRouter> SRouter::create(const SRouterParam& param)
 		ret->m_name = param.name;
 		ret->m_aes.setKey_SHA256(param.key);
 		if (param.port != 0) {
-			ret->m_udp = Socket::openUdp_IPv4();
-			if (ret->m_udp.isNotNull()) {
-				ret->m_udp->setNonBlockingMode(sl_true);
-				ret->m_udp->setOption_ReuseAddress(sl_true);
-				if (ret->m_udp->bind(SocketAddress(param.port))) {
+			Ref<Socket> socket = Socket::openUdp();
+			if (socket.isNotNull()) {
+				socket->setNonBlockingMode(sl_true);
+				socket->setOption_ReuseAddress(sl_true);
+				if (socket->bind(SocketAddress(param.port))) {
+					ret->m_udp = socket;
 					ret->m_threadUdp = Thread::start(SLIB_CALLBACK_CLASS(SRouter, _runUdp, ret.get()));
 				} else {
 					SLIB_LOG(TAG, String("Failed to bind UDP socket on port: ") + param.port);
@@ -584,8 +601,9 @@ void SRouter::forwardPacket(const void* packet, sl_uint32 size)
 				}
 			}
 			if (flagMatch) {
-				if (route.interfaceDevice.isNotNull()) {
-					route.interfaceDevice->writePacket(packet, size);
+				Ref<SRouterInterface> device = route.interfaceDevice;
+				if (device.isNotNull()) {
+					device->writePacket(packet, size);
 				}
 				if (route.flagBreak) {
 					return;

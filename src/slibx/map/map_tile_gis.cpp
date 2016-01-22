@@ -116,7 +116,7 @@ MapGISPoiTileManager::MapGISPoiTileManager()
 	setMaxTilesCount(SLIB_MAP_MAX_GIS_POI_TILES_COUNT);
 }
 
-void MapGISPoi::init(Map<sl_int64, MapGISPoiInfo>& info)
+void MapGISPoi::init(const Map<sl_int64, MapGISPoiInfo>& info)
 {
 	if (_flagInit) {
 		return;

@@ -253,7 +253,7 @@ sl_bool SecureFilePackage::createFromFiles(String filePath, const CreateParam& p
 	}
 	Base::freeMemory(block);
 
-	file->seek(posIndexHeader);
+	file->seek(posIndexHeader, seekPosition_Begin);
 	if (flagPassword) {
 		enc.encryptBlocks(&indexHeader, &indexHeader, sizeof(indexHeader));
 	}
@@ -264,7 +264,7 @@ sl_bool SecureFilePackage::createFromFiles(String filePath, const CreateParam& p
 		return sl_false;
 	}
 
-	file->seek(posIndexes);
+	file->seek(posIndexes, seekPosition_Begin);
 	if (flagPassword) {
 		enc.encryptBlocks(indexes, indexes, sizeIndex);
 	}
@@ -347,7 +347,7 @@ List<SecureFilePackage::FileDesc> SecureFilePackage::getFiles()
 		return list;
 	}
 
-	file->seek(sizeof(_SECURE_FILE_PACKAGE_HEADER));
+	file->seek(sizeof(_SECURE_FILE_PACKAGE_HEADER), seekPosition_Begin);
 
 	_SECURE_FILE_PACKAGE_INDEX_HEADER indexHeader;
 	if (file->read(&indexHeader, sizeof(indexHeader)) != sizeof(indexHeader)) {
@@ -405,7 +405,7 @@ sl_bool SecureFilePackage::findFile(String fileName, FileDesc* output)
 		return sl_false;
 	}
 
-	file->seek(sizeof(_SECURE_FILE_PACKAGE_HEADER));
+	file->seek(sizeof(_SECURE_FILE_PACKAGE_HEADER), seekPosition_Begin);
 
 	_SECURE_FILE_PACKAGE_INDEX_HEADER indexHeader;
 	if (file->read(&indexHeader, sizeof(indexHeader)) != sizeof(indexHeader)) {
@@ -437,7 +437,7 @@ sl_bool SecureFilePackage::findFile(String fileName, FileDesc* output)
 		int mid = (start + end) / 2;
 
 		_SECURE_FILE_PACKAGE_INDEX index;
-		file->seek(pre + mid * sizeof(_SECURE_FILE_PACKAGE_INDEX));
+		file->seek(pre + mid * sizeof(_SECURE_FILE_PACKAGE_INDEX), seekPosition_Begin);
 		if (file->read(&index, sizeof(index)) != sizeof(index)) {
 			SLIB_LOG(TAG, "index " + String::fromUint32(mid) + " read error" + m_filePath);
 			break;
@@ -500,7 +500,7 @@ Memory SecureFilePackage::readFile(sl_int64 position, String* pFileName)
 	AES dec;
 	dec.setKey(m_password, 32);
 
-	file->seek(position);
+	file->seek(position, seekPosition_Begin);
 	_SECURE_FILE_CONTENT_HEADER contentHeader;
 	if (file->read(&contentHeader, sizeof(contentHeader)) != sizeof(contentHeader)) {
 		file->close();
@@ -538,7 +538,7 @@ Memory SecureFilePackage::readFile(sl_int64 position, String* pFileName)
 			return ret;
 		}
 	} else {
-		file->seek(contentHeader.sizeHeader - sizeof(_SECURE_FILE_CONTENT_HEADER), File::positionCurrent);
+		file->seek(contentHeader.sizeHeader - sizeof(_SECURE_FILE_CONTENT_HEADER), seekPosition_Current);
 	}
 
 	int fileSize = (int)(contentHeader.size - contentHeader.sizeHeader);

@@ -64,13 +64,13 @@ public:
 	sl_bool m_flagOpen;
 
 	double m_globeMatrix[16];
-	List< Ref<GMesh> > m_listMesh;
+	CList< Ref<GMesh> > m_listMesh;
 	Ref<GMesh> m_waterMesh;
-	List< Ref<GMesh> > m_listSurfaceMesh;
+	CList< Ref<GMesh> > m_listSurfaceMesh;
 
 	sl_bool m_flagUseNormal;
 	sl_uint32 m_nonEmptyOctants;
-	List<sl_uint32> m_copyrightIds;
+	CList<sl_uint32> m_copyrightIds;
 
 
 	_GEarthTileFile()
@@ -87,10 +87,10 @@ public:
 		if (!m_flagOpen) {
 			return;
 		}
-		m_listMesh.clear();
-		m_listSurfaceMesh.clear();
+		m_listMesh.removeAll();
+		m_listSurfaceMesh.removeAll();
 		m_waterMesh.setNull();
-		m_copyrightIds.clear();
+		m_copyrightIds.removeAll();
 		m_flagOpen = sl_false;
 	}
 	
@@ -126,7 +126,7 @@ public:
 			}
 			return sl_true;
 		case 1:
-			if (!input.seek(8)) {
+			if (!input.seek(8, seekPosition_Current)) {
 				return sl_false;
 			}
 			return sl_true;
@@ -136,13 +136,13 @@ public:
 				if (!input.readUint32CVLI(&n)) {
 					return sl_false;
 				}
-				if (!input.seek(n)) {
+				if (!input.seek(n, seekPosition_Current)) {
 					return sl_false;
 				}
 			}
 			return sl_true;
 		case 5:
-			if (!input.seek(4)) {
+			if (!input.seek(4, seekPosition_Current)) {
 				return sl_false;
 			}
 			return sl_true;
@@ -605,7 +605,7 @@ public:
 
 sl_bool GEarthTile::load(const void* data, sl_size size)
 {
-	meshes.clear();
+	meshes.removeAll();
 
 	_GEarthTileFile file;
 	if (file.open(data, size)) {
@@ -626,7 +626,7 @@ sl_bool GEarthTile::load(const void* data, sl_size size)
 		float m31 = (float)_m[13];
 		float m32 = (float)_m[14];
 		//float m33 = (float)_m[15];
-		List< Ref<_GEarthTileFile::GMesh> > gmeshes(file.m_listMesh);
+		ListLocker< Ref<_GEarthTileFile::GMesh> > gmeshes(file.m_listMesh);
 		for (sl_size k = 0; k < gmeshes.count(); k++) {
 			Mesh mesh;
 			Ref<_GEarthTileFile::GMesh> gmesh = gmeshes[k];

@@ -118,17 +118,11 @@
     <ClInclude Include="..\..\..\inc\slibx\snet.h">
       <Filter>inc\slibx</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\inc\slibx\snet\stunnel_server.h">
-      <Filter>inc\slibx\snet</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\inc\slibx\snet\stunnel_client.h">
-      <Filter>inc\slibx\snet</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\inc\slibx\snet\stunnel_manager.h">
-      <Filter>inc\slibx\snet</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\..\src\slibx\map\map_tile_layer.h">
       <Filter>src\slibx\map</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\inc\slibx\snet\srouter.h">
+      <Filter>inc\slibx\snet</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -193,15 +187,6 @@
       <Filter>src\slibx\map</Filter>
     </ClCompile>
     <ClCompile Include="..\..\..\src\slibx\snet\snet_dbip.cpp">
-      <Filter>src\slibx\snet</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\slibx\snet\stunnel_server.cpp">
-      <Filter>src\slibx\snet</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\slibx\snet\stunnel_client.cpp">
-      <Filter>src\slibx\snet</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\slibx\snet\stunnel_manager.cpp">
       <Filter>src\slibx\snet</Filter>
     </ClCompile>
     <ClCompile Include="..\..\..\src\slibx\snet\srouter.cpp">

@@ -27,13 +27,13 @@ public:
 	~MapPictureTileManager() {}
 
 public:
-	SLIB_PROPERTY_INLINE(Ref<MapDataLoader>, DataLoader);
+	SLIB_REF_PROPERTY(MapDataLoader, DataLoader);
 
-	SLIB_PROPERTY_INLINE(sl_uint32, TileLifeMillseconds);
-	SLIB_PROPERTY_INLINE(sl_uint32, MaxTilesCount);
+	SLIB_PROPERTY(sl_uint32, TileLifeMillseconds);
+	SLIB_PROPERTY(sl_uint32, MaxTilesCount);
 
 protected:
-	Map< MapTileLocationi, Ref<MapPictureTile> > m_tiles;
+	HashMap< MapTileLocationi, Ref<MapPictureTile> > m_tiles;
 
 public:
 	Ref<MapPictureTile> getTile(const MapTileLocationi& location);

@@ -23,7 +23,7 @@ class SLIB_EXPORT DEM : public Referable
 public:
 	float* dem;
 	sl_uint32 N;
-	Array<float> array;
+	SafeArray<float> array;
 
 public:
 	SLIB_INLINE DEM()

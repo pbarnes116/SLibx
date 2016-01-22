@@ -27,7 +27,7 @@ public:
 	Memory loadData(const String& type, const MapTileLocationi& location, sl_uint32 packageDimension, const String& subPath);
 
 public:
-	List< Ref<MapDataLoader> > list;
+	CList< Ref<MapDataLoader> > list;
 };
 
 // basePath/type/level/y/x.ext
@@ -40,8 +40,8 @@ public:
 public:
 	Memory loadData(const String& type, const MapTileLocationi& location, sl_uint32 packageDimension, const String& subPath);
 
-	SLIB_PROPERTY_INLINE(String, BasePath);
-	SLIB_PROPERTY_INLINE(String, SecureFilePackagePassword);
+	SLIB_STRING_PROPERTY(BasePath);
+	SLIB_STRING_PROPERTY(SecureFilePackagePassword);
 
 protected:
 	Memory _readData(const String& packagePath, const String& filePath);

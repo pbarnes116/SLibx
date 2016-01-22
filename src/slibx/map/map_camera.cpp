@@ -99,7 +99,7 @@ void MapCamera::clearMovingTargets()
 {
 	MutexLocker lock(getLocker());
 	m_flagMoving = sl_false;
-	m_listMovingTargets.clear();
+	m_listMovingTargets.removeAll();
 	m_indexMovingTargets = 0;
 }
 
@@ -241,8 +241,9 @@ void MapCamera::stepMotions(sl_real dt)
 {
 	MutexLocker lock(getLocker());
 	if (m_flagMoving) {
-		if (m_indexMovingTargets < m_listMovingTargets.count()) {
-			MapCameraMovingTarget& t = m_listMovingTargets[m_indexMovingTargets];
+		ListLocker<MapCameraMovingTarget> targets(m_listMovingTargets);
+		if (m_indexMovingTargets < targets.count()) {
+			MapCameraMovingTarget& t = targets[m_indexMovingTargets];
 			GeoLocation tl = t.location;
 			if (tl.altitude < m_targetAltitudeMin) {
 				tl.altitude = m_targetAltitudeMin;

@@ -12,21 +12,21 @@ SLIB_MAP_NAMESPACE_BEGIN
 class SLIB_EXPORT MapMarker : public Referable
 {
 public:
-	String key;
+	SafeString key;
 
 	GeoLocation location;
-	String text;
+	SafeString text;
 	Color textColor;
-	Ref<FreeType> textFont;
+	SafeRef<FreeType> textFont;
 	sl_uint32 textFontSize;
 
 	Size iconSize;
-	Ref<Texture> iconTexture;
+	SafeRef<Texture> iconTexture;
 	Rectangle iconTextureRectangle; // texture whole coordinate
 	sl_bool flagVisible;
 
 public:
-	Ref<Texture> _textureText;
+	SafeRef<Texture> _textureText;
 
 public:
 	void invalidate()
@@ -39,11 +39,11 @@ public:
 class SLIB_EXPORT MapIcon : public Referable
 {
 public:
-	String key;
+	SafeString key;
 	GeoLocation location;
 	Size iconSize;
 	sl_real rotationAngle;
-	Ref<Texture> iconTexture;
+	SafeRef<Texture> iconTexture;
 	Rectangle iconTextureRectangle; // texture whole coordinate
 	
 	sl_bool flagVisible;
@@ -55,7 +55,7 @@ class SLIB_EXPORT MapPolygon : public Referable
 {
 public:
 	String key;
-	List<GeoLocation> points;
+	SafeList<GeoLocation> points;
 	Color color;
 	float width;
 };

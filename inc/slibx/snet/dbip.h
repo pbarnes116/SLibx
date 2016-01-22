@@ -17,19 +17,17 @@ For example,
 #include <slib/network/ip_address.h>
 
 SLIB_SNET_NAMESPACE_BEGIN
+
 class DbIp : public Object
 {
-private:
-	DbIp();
-public:
-	~DbIp();
-
 public:
 	const char* getCountryCode(const IPv4Address& ipv4);
+	
 	const char* getCountryCode(const IPv6Address& ipv6);
 
 public:
 	static Ref<DbIp> create(const void* dbCSV, sl_size size);
+	
 	static Ref<DbIp> create(const String& pathToCSVFile);
 
 public:
@@ -55,7 +53,9 @@ private:
 	List<IPv6Item> m_listIPv6;
 	IPv6Item* m_ipv6;
 	sl_uint32 m_countIPv6;
+	
 };
+
 SLIB_SNET_NAMESPACE_END
 
 #endif
