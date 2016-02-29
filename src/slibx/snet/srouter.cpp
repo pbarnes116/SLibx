@@ -2,6 +2,7 @@
 
 #include <slib/network/event.h>
 #include <slib/network/ethernet.h>
+#include <slib/network/arp.h>
 #include <slib/network/os.h>
 #include <slib/crypto/zlib.h>
 #include <slib/core/scoped_pointer.h>
@@ -17,7 +18,7 @@ SLIB_SNET_NAMESPACE_BEGIN
 SRouterInterfaceParam::SRouterInterfaceParam()
 {
 	fragment_expiring_seconds = 3600;
-	mtu_outgoing = 1450;
+	mtu_outgoing = 0;
 	
 	use_nat = sl_false;
 	nat_ip.setZero();
@@ -32,13 +33,13 @@ void SRouterInterfaceParam::parseConfig(const Variant& varConfig)
 
 	use_nat = varConfig.getField("use_nat").getBoolean(use_nat);
 	nat_ip.parse(varConfig.getField("nat_ip").getString());
-	nat_port_begin = varConfig.getField("nat_port_begin").getUint32(nat_port_begin);
-	nat_port_end = varConfig.getField("nat_port_end").getUint32(nat_port_end);
+	nat_port_begin = (sl_uint16)(varConfig.getField("nat_port_begin").getUint32(nat_port_begin));
+	nat_port_end = (sl_uint16)(varConfig.getField("nat_port_end").getUint32(nat_port_end));
 }
 
 SRouterInterface::SRouterInterface()
 {
-	m_mtuOutgoing = 1450;
+	m_mtuOutgoing = 0;
 	m_flagUseNat = sl_false;
 }
 
@@ -54,76 +55,88 @@ void SRouterInterface::setRouter(const Ref<SRouter>& router)
 
 void SRouterInterface::initWithParam(const SRouterInterfaceParam& param)
 {
+	ObjectLocker lock(this);
+
 	m_mtuOutgoing = param.mtu_outgoing;
 
 	m_flagUseNat = param.use_nat;
-	m_tableNat.setTargetAddress(param.nat_ip);
-	m_tableNat.setTargetPortBegin(param.nat_port_begin);
-	m_tableNat.setTargetPortEnd(param.nat_port_end);
-
-	m_fragmentation.setupExpiringDuration(param.fragment_expiring_seconds * 1000);
-
-	setListener(param.listener);
+	if (m_flagUseNat) {
+		m_natParam.targetAddress = param.nat_ip;
+		m_natParam.tcpPortBegin = param.nat_port_begin;
+		m_natParam.tcpPortEnd = param.nat_port_end;
+		m_natParam.udpPortBegin = param.nat_port_begin;
+		m_natParam.udpPortEnd = param.nat_port_end;
+		if (m_natParam.targetAddress.isZero()) {
+			m_flagNatDynamicTarget = sl_true;
+		} else {
+			m_flagNatDynamicTarget = sl_false;
+			m_nat.setup(m_natParam);
+		}
+	}
+	m_fragmentation.setupExpiringDuration(param.fragment_expiring_seconds * 1000, param.loop);
 }
 
-void SRouterInterface::setNAT_IP(const IPv4Address& ip)
+void SRouterInterface::setNatIp(const IPv4Address& ip)
 {
-	m_tableNat.setTargetAddress(ip);
+	ObjectLocker lock(this);
+	if (m_natParam.targetAddress != ip) {
+		m_natParam.targetAddress = ip;
+		m_nat.setup(m_natParam);
+	}
 }
 
-void SRouterInterface::writePacket(const void* packet, sl_uint32 size)
+void SRouterInterface::writeIPv4Packet(const void* packet, sl_uint32 size)
 {
-	SLIB_SCOPED_BUFFER(char, PACKET_SIZE, buf, size);
-	Base::copyMemory(buf, packet, size);
-	
-	PtrLocker<ISRouterInterfaceListener> listener(getListener());
-	if (listener.isNotNull()) {
-		if (!(listener->onWritePacket(this, buf, size))) {
+	char stack[PACKET_SIZE];
+	Memory memNat;
+	Memory memCombined;
+	IPv4HeaderFormat* header = (IPv4HeaderFormat*)(packet);
+	if (m_mtuOutgoing > 0) {
+		if (IPv4Fragmentation::isNeededCombine(packet, size, sl_true)) {
+			memCombined = m_fragmentation.combineFragment(packet, size, sl_true);
+			header = (IPv4HeaderFormat*)(memCombined.getBuf());
+			size = (sl_uint32)(memCombined.getSize());
+		}
+		if (!header) {
 			return;
 		}
 	}
-	packet = buf;
-
-	IPv4HeaderFormat* header = (IPv4HeaderFormat*)(packet);
 	if (header->getDestinationAddress().isHost()) {
 		if (m_flagUseNat) {
-			if (!(m_tableNat.translateOutgoingPacket(header, header->getContent(), header->getContentSize()))) {
-				return;
-			}
-		}
-	}
-	ListLocker<Memory> packets(m_fragmentation.makeFragments(header, header->getContent(), header->getContentSize(), m_mtuOutgoing));
-	for (sl_size i = 0; i < packets.count(); i++) {
-		_writePacket(packets[i].getBuf(), (sl_uint32)(packets[i].getSize()));
-	}
-}
-
-void SRouterInterface::forwardPacket(const void* ip, sl_uint32 size)
-{
-	Memory mem = m_fragmentation.combineFragment(ip, size);
-	if (mem.isNotEmpty()) {
-		IPv4HeaderFormat* header = (IPv4HeaderFormat*)(mem.getBuf());
-		if (m_flagUseNat) {
-			if (header->getDestinationAddress().isHost()) {
-				if (!(m_tableNat.translateIncomingPacket(header, header->getContent(), header->getContentSize()))) {
+			if (size < PACKET_SIZE) {
+				Base::copyMemory(stack, packet, size);
+				packet = stack;
+			} else {
+				memNat = Memory::create(packet, size);
+				if (memNat.isEmpty()) {
 					return;
 				}
-			} else {
+				packet = memNat.getBuf();
+			}
+			header = (IPv4HeaderFormat*)(packet);
+			if (!(m_nat.translateOutgoingPacket(header, header->getContent(), header->getContentSize()))) {
 				return;
 			}
 		}
-		Ref<SRouter> router = getRouter();
-		if (router.isNotNull()) {
-			router->forwardPacket(mem.getBuf(), (sl_uint32)(mem.getSize()));
-		}
 	}
+	if (m_mtuOutgoing > 0) {
+		ListItems<Memory> packets(m_fragmentation.makeFragments(header, header->getContent(), header->getContentSize(), m_mtuOutgoing));
+		for (sl_size i = 0; i < packets.count(); i++) {
+			_writeIPv4Packet(packets[i].getBuf(), (sl_uint32)(packets[i].getSize()));
+		}
+	} else {
+		_writeIPv4Packet(header, header->getTotalSize());
+	}
+	
 }
 
 
 SRouterDeviceParam::SRouterDeviceParam()
 {
+	use_pcap = sl_false;
 	use_raw_socket = sl_false;
 	is_ethernet = sl_true;
+	subnet_broadcast.setZero();
 	gateway_mac.setZero();
 }
 
@@ -136,8 +149,10 @@ void SRouterDeviceParam::parseConfig(const Variant& varConfig)
 #else
 	iface_name = varConfig.getField("iface_unix").getString(iface_name);
 #endif
+	use_pcap = varConfig.getField("use_pcap").getBoolean(use_pcap);
 	use_raw_socket = varConfig.getField("use_raw_socket").getBoolean(use_raw_socket);
 	is_ethernet = varConfig.getField("is_ethernet").getBoolean(is_ethernet);
+	subnet_broadcast.parse(varConfig.getField("subnet_broadcast").getString());
 	gateway_mac.parse(varConfig.getField("gateway_mac").getString());
 
 }
@@ -146,7 +161,13 @@ SRouterDevice::SRouterDevice()
 {
 	m_ipAddressDevice.setZero();
 	m_macAddressDevice.setZero();
+	m_subnetBroadcast.setZero();
 	m_macAddressGateway.setZero();
+}
+
+SRouterDevice::~SRouterDevice()
+{
+	release();
 }
 
 Ref<SRouterDevice> SRouterDevice::create(const SRouterDeviceParam& param)
@@ -160,7 +181,7 @@ Ref<SRouterDevice> SRouterDevice::create(const SRouterDeviceParam& param)
 			if (ret->m_device.isNull()) {
 				NetCaptureParam ncp;
 				ncp.deviceName = dev.name;
-				ncp.listener = WeakRef<SRouterDevice>(ret);
+				ncp.listener = ret.get();
 				ncp.sizeBuffer = 1024 * 1024 * 20;
 				ncp.flagPromiscuous = sl_true;
 				if (param.is_ethernet) {
@@ -168,15 +189,19 @@ Ref<SRouterDevice> SRouterDevice::create(const SRouterDeviceParam& param)
 				} else {
 					ncp.preferedLinkDeviceType = networkLinkDeviceType_Raw;
 				}
-#if defined(SLIB_PLATFORM_IS_LINUX)
-				if (param.use_raw_socket) {
+				ncp.flagAutoStart = sl_false;
+
+				if (param.use_pcap) {
+					ret->m_device = NetCapture::createPcap(ncp);
+				} else if (param.use_raw_socket) {
 					ret->m_device = NetCapture::createRawIPv4(ncp);
 				} else {
+#if defined(SLIB_PLATFORM_IS_LINUX)
 					ret->m_device = NetCapture::createRawPacket(ncp);
-				}
 #else
-				ret->m_device = NetCapture::createPcap(ncp);
+					ret->m_device = NetCapture::createPcap(ncp);
 #endif
+				}
 				if (ret->m_device.isNull()) {
 					SLIB_LOG_ERROR(TAG, "Can not capture on network device - " + param.iface_name + "(" + dev.name + ")");
 					return Ref<SRouterDevice>::null();
@@ -188,13 +213,28 @@ Ref<SRouterDevice> SRouterDevice::create(const SRouterDeviceParam& param)
 			return Ref<SRouterDevice>::null();
 		}
 		ret->initWithParam(param);
+		ret->m_subnetBroadcast = param.subnet_broadcast;
 		ret->m_macAddressGateway = param.gateway_mac;
 		return ret;
 	}
 	return Ref<SRouterDevice>::null();
 }
 
-void SRouterDevice::_writePacket(const void* packet, sl_uint32 size)
+void SRouterDevice::release()
+{
+	if (m_device.isNotNull()) {
+		m_device->release();
+	}
+}
+
+void SRouterDevice::start()
+{
+	if (m_device.isNotNull()) {
+		m_device->start();
+	}
+}
+
+void SRouterDevice::_writeIPv4Packet(const void* packet, sl_uint32 size)
 {
 	Ref<NetCapture> dev = m_device;
 	if (dev.isNull()) {
@@ -206,12 +246,24 @@ void SRouterDevice::_writePacket(const void* packet, sl_uint32 size)
 		if (macSource.isZero()) {
 			return;
 		}
-		MacAddress macTarget = m_macAddressGateway;
-		if (macTarget.isZero()) {
-			m_tableMac.getMacAddress(ip->getDestinationAddress(), &macTarget);
+		IPv4Address ipDst = ip->getDestinationAddress();
+		MacAddress macTarget;
+		if (m_subnetBroadcast.isNotZero() && ipDst == m_subnetBroadcast) {
+			macTarget.setBroadcast();
+		} else if (ipDst.isHost()) {
+			macTarget = m_macAddressGateway;
 			if (macTarget.isZero()) {
-				return;
+				m_tableMac.getMacAddress(ipDst, &macTarget);
+				if (macTarget.isZero()) {
+					return;
+				}
 			}
+		} else if (ipDst.isBroadcast()) {
+			macTarget.setBroadcast();
+		} else if (ipDst.isMulticast()) {
+			macTarget.makeMulticast(ipDst);
+		} else {
+			return;
 		}
 		SLIB_SCOPED_BUFFER(char, PACKET_SIZE, bufFrame, size + EthernetFrameFormat::getHeaderSize());
 		EthernetFrameFormat* frame = (EthernetFrameFormat*)bufFrame;
@@ -225,8 +277,12 @@ void SRouterDevice::_writePacket(const void* packet, sl_uint32 size)
 	}
 }
 
-void SRouterDevice::processReadFrame(const void* _frame, sl_uint32 lenFrame)
+void SRouterDevice::processReadL2Frame(void* _frame, sl_uint32 lenFrame)
 {
+	Ref<SRouter> router = getRouter();
+	if (router.isNull()) {
+		return;
+	}
 	Ref<NetCapture> dev = m_device;
 	if (dev.isNull()) {
 		return;
@@ -241,10 +297,16 @@ void SRouterDevice::processReadFrame(const void* _frame, sl_uint32 lenFrame)
 		if (lenFrame <= EthernetFrameFormat::getHeaderSize()) {
 			return;
 		}
+
+		if (router->forwardEthernetFrame(this, frame, lenFrame)) {
+			return;
+		}
+
 		if (frame->getProtocol() != networkLinkProtocol_IPv4) {
 			return;
 		}
-		if (frame->getDestinationAddress() == m_macAddressDevice) {
+		MacAddress macDst = frame->getDestinationAddress();
+		if (macDst == m_macAddressDevice || macDst.isBroadcast() || macDst.isMulticast()) {
 			if (IPv4HeaderFormat::check(frame->getContent(), lenFrame - EthernetFrameFormat::getHeaderSize())) {
 				ip = (IPv4HeaderFormat*)(frame->getContent());
 				lenIP = ip->getTotalSize();
@@ -257,7 +319,7 @@ void SRouterDevice::processReadFrame(const void* _frame, sl_uint32 lenFrame)
 		}
 	}
 	if (ip && lenIP > 0) {
-		forwardPacket(ip, lenIP);
+		router->forwardIPv4Packet(this, ip, lenIP, sl_true);
 	}
 }
 
@@ -268,7 +330,16 @@ void SRouterDevice::addMacAddress(const IPv4Address& ipAddress, const MacAddress
 
 void SRouterDevice::onCapturePacket(NetCapture* capture, NetCapturePacket* packet)
 {
-	processReadFrame(packet->data, packet->length);
+	processReadL2Frame(packet->data, packet->length);
+}
+
+void SRouterDevice::writeL2Frame(const void* packet, sl_uint32 size)
+{
+	Ref<NetCapture> dev = m_device;
+	if (dev.isNull()) {
+		return;
+	}
+	dev->sendPacket(packet, size);
 }
 
 String SRouterDevice::getStatus()
@@ -285,11 +356,18 @@ void SRouterDevice::_idle()
 			IPv4AddressInfo addr;
 			dev.addresses_IPv4.getItem(0, &addr);
 			m_ipAddressDevice = addr.address;
-			m_tableNat.setTargetAddress(addr.address);
+			if (m_flagNatDynamicTarget) {
+				setNatIp(m_ipAddressDevice);
+			}
 		}
 	}
 }
 
+
+SRouterRemoteParam::SRouterRemoteParam()
+{
+	flagCompressPacket = sl_true;
+}
 
 void SRouterRemoteParam::parseConfig(const Variant& varConfig)
 {
@@ -297,6 +375,7 @@ void SRouterRemoteParam::parseConfig(const Variant& varConfig)
 
 	host_address.setHostAddress(varConfig.getField("host").getString());
 	key = varConfig.getField("key").getString();
+	flagCompressPacket = varConfig.getField("flag_compress_packet").getBoolean(flagCompressPacket);
 }
 
 SRouterRemote::SRouterRemote()
@@ -309,11 +388,16 @@ SRouterRemote::SRouterRemote()
 Ref<SRouterRemote> SRouterRemote::create(const SRouterRemoteParam& param)
 {
 	Ref<SRouterRemote> ret = new SRouterRemote();
+
 	if (ret.isNotNull()) {
+
 		ret->m_address = param.host_address;
 		ret->m_key = param.key;
+		ret->m_flagCompressPacket = param.flagCompressPacket;
+
 		ret->m_aes.setKey_SHA256(param.key);
 		ret->m_flagDynamicAddress = ret->m_address.isInvalid();
+
 		ret->initWithParam(param);
 	}
 	return ret;
@@ -340,12 +424,16 @@ void SRouterRemote::_idle()
 	}
 }
 
-void SRouterRemote::_writePacket(const void* packet, sl_uint32 size)
+void SRouterRemote::_writeIPv4Packet(const void* packet, sl_uint32 size)
 {
 	if (m_address.isValid()) {
 		Ref<SRouter> router = getRouter();
 		if (router.isNotNull()) {
-			router->_sendRawPacketToRemote(this, packet, size);
+			if (m_flagCompressPacket) {
+				router->_sendCompressedRawIPv4PacketToRemote(this, packet, size);
+			} else {
+				router->_sendRawIPv4PacketToRemote(this, packet, size);
+			}
 		}
 	}
 }
@@ -353,58 +441,150 @@ void SRouterRemote::_writePacket(const void* packet, sl_uint32 size)
 
 SRouterRoute::SRouterRoute()
 {
+	flagCheckProtocol = sl_false;
+	flagTcp = sl_true;
+	flagUdp = sl_true;
+	flagIcmp = sl_true;
+
+	flagCheckDstIp = sl_false;
 	dst_ip_begin.setZero();
 	dst_ip_end.setZero();
+
+	flagCheckDstPort = sl_false;
+	dst_port_begin = 0;
+	dst_port_end = 0;
+
+	flagCheckSrcIp = sl_false;
 	src_ip_begin.setZero();
 	src_ip_end.setZero();
+
+	flagCheckDstIp = sl_false;
+	src_port_begin = 0;
+	src_port_end = 0;
+
+	targets = sl_null;
+	countTargets = 0;
 
 	flagBreak = sl_true;
 }
 
-SRouterRoute::SRouterRoute(const SRouterRoute& other)
+sl_bool SRouterRoute::parseConfig(SRouter* router, const Variant& conf)
 {
-	dst_ip_begin = other.dst_ip_begin;
-	dst_ip_end = other.dst_ip_end;
-	src_ip_begin = other.src_ip_begin;
-	src_ip_end = other.src_ip_end;
+	Variant protocols = conf.getField("protocols");
+	if (protocols.isNotNull()) {
+		flagCheckProtocol = sl_true;
+		flagTcp = sl_false;
+		flagUdp = sl_false;
+		flagIcmp = sl_false;
+		for (sl_size i = 0; i < protocols.getListItemsCount(); i++) {
+			String protocol = protocols.getListItem(i).getString().toLower();
+			if (protocol == "tcp") {
+				flagTcp = sl_true;
+			} else if (protocol == "udp") {
+				flagUdp = sl_true;
+			} else if (protocol == "icmp") {
+				flagIcmp = sl_true;
+			}
+		}
+	} else {
+		flagCheckProtocol = sl_false;
+	}
 
-	interfaceName = other.interfaceName;
-	interfaceDevice = other.interfaceDevice;
+	String str;
 
-	flagBreak = other.flagBreak;
+	str = conf.getField("dst_ip").getString();
+	if (str.isNotEmpty()) {
+		if (!(SocketAddress::parseIPv4Range(str, &dst_ip_begin, &dst_ip_end))) {
+			return sl_false;
+		}
+		flagCheckDstIp = sl_true;
+	} else {
+		flagCheckDstIp = sl_false;
+	}
+
+	str = conf.getField("dst_port").getString();
+	if (str.isNotEmpty()) {
+		if (!(SocketAddress::parsePortRange(str, &dst_port_begin, &dst_port_end))) {
+			return sl_false;
+		}
+		flagCheckDstPort = sl_true;
+	} else {
+		flagCheckDstPort = sl_false;
+	}
+
+	str = conf.getField("src_ip").getString();
+	if (str.isNotEmpty()) {
+		if (!(SocketAddress::parseIPv4Range(str, &src_ip_begin, &src_ip_end))) {
+			return sl_false;
+		}
+		flagCheckSrcIp = sl_true;
+	} else {
+		flagCheckSrcIp = sl_false;
+	}
+
+	str = conf.getField("src_port").getString();
+	if (str.isNotEmpty()) {
+		if (!(SocketAddress::parsePortRange(str, &src_port_begin, &src_port_end))) {
+			return sl_false;
+		}
+		flagCheckSrcPort = sl_true;
+	} else {
+		flagCheckSrcPort = sl_false;
+	}
+
+	Variant varTargets = conf.getField("targets");
+	if (varTargets.isNotNull()) {
+		sl_uint32 n = (sl_uint32)(varTargets.getListItemsCount());
+		arrTargets = Array< Ref<SRouterInterface> >::create(n);
+		targets = arrTargets.data();
+		countTargets = (sl_uint32)(arrTargets.count());
+		for (sl_uint32 i = 0; i < n; i++) {
+			String target = varTargets.getListItem(i).getString();
+			targets[i] = router->getInterface(target);
+			if (targets[i].isNull()) {
+				SLIB_LOG_ERROR(TAG, "Failed to resolve route target: " + target);
+				return sl_false;
+			}
+		}
+	}
+
+	return sl_true;
 }
 
-SRouterRoute& SRouterRoute::operator= (const SRouterRoute& other)
+
+SRouterArpProxy::SRouterArpProxy()
 {
-	dst_ip_begin = other.dst_ip_begin;
-	dst_ip_end = other.dst_ip_end;
-	src_ip_begin = other.src_ip_begin;
-	src_ip_end = other.src_ip_end;
-
-	interfaceName = other.interfaceName;
-	interfaceDevice = other.interfaceDevice;
-
-	flagBreak = other.flagBreak;
-	return *this;
+	ip_begin.setZero();
+	ip_end.setZero();
 }
 
-sl_bool SRouterRoute::operator==(const SRouterRoute& other) const
+sl_bool SRouterArpProxy::parseConfig(SRouter* router, const Variant& conf)
 {
-	return dst_ip_begin == other.dst_ip_begin
-		&& dst_ip_end == other.dst_ip_end
-		&& src_ip_begin == other.src_ip_begin
-		&& src_ip_end == other.src_ip_end;
+	String str = conf.getField("ip").getString();
+	if (str.isNotEmpty()) {
+		if (SocketAddress::parseIPv4Range(str, &ip_begin, &ip_end)) {
+			str = conf.getField("device").getString();
+			device = router->getDevice(str);
+			if (device.isNotNull()) {
+				return sl_true;
+			} else {
+				SLIB_LOG_ERROR(TAG, "Failed to resolve ARP proxy device: " + str);
+			}
+		}
+	}
+	return sl_false;
 }
 
 
 SRouterParam::SRouterParam()
 {
-	port = 0;
+	udp_server_port = 0;
 }
 
 SRouter::SRouter()
 {
-	m_flagClosed = sl_false;
+	m_flagInit = sl_false;
+	m_flagRunning = sl_false;
 }
 
 SRouter::~SRouter()
@@ -412,68 +592,64 @@ SRouter::~SRouter()
 	release();
 }
 
-void SRouter::release()
-{
-	MutexLocker lock(getLocker());
-	if (m_flagClosed) {
-		return;
-	}
-	m_flagClosed = sl_true;
-	Ref<Thread> thread = m_threadUdp;
-	if (thread.isNotNull()) {
-		thread->finishAndWait();
-	}
-	m_threadUdp.setNull();
-	Ref<Socket> udp = m_udp;
-	if (udp.isNotNull()) {
-		udp->close();
-	}
-	m_udp.setNull();
-}
-
 Ref<SRouter> SRouter::create(const SRouterParam& param)
 {
-	Ref<SRouter> ret;
-	ret = new SRouter;
-	if (ret.isNotNull()) {
-		ret->m_name = param.name;
-		ret->m_aes.setKey_SHA256(param.key);
-		if (param.port != 0) {
-			Ref<Socket> socket = Socket::openUdp();
-			if (socket.isNotNull()) {
-				socket->setNonBlockingMode(sl_true);
-				socket->setOption_ReuseAddress(sl_true);
-				if (socket->bind(SocketAddress(param.port))) {
-					ret->m_udp = socket;
-					ret->m_threadUdp = Thread::start(SLIB_CALLBACK_CLASS(SRouter, _runUdp, ret.get()));
-				} else {
-					SLIB_LOG(TAG, String("Failed to bind UDP socket on port: ") + param.port);
-				}
+	Ref<AsyncLoop> loop = AsyncLoop::create(sl_false);
+	Ref<AsyncIoLoop> ioLoop = AsyncIoLoop::create(sl_false);
+
+	if (loop.isNotNull() && ioLoop.isNotNull()) {
+
+		Ref<SRouter> ret = new SRouter;
+		
+		if (ret.isNotNull()) {
+
+			ret->m_name = param.name;
+
+			ret->m_loop = loop;
+			ret->m_ioLoop = ioLoop;
+
+			Ref<AsyncUdpSocket> udpServer = AsyncUdpSocket::create(param.udp_server_port, ret.get(), MESSAGE_SIZE + 32, ioLoop, sl_false);
+			if (udpServer.isNotNull()) {
+				ret->m_udpServer = udpServer;
+				ret->m_aesUdpServer.setKey_SHA256(param.udp_key);
 			} else {
-				SLIB_LOG(TAG, "Failed to open UDP socket");
+				SLIB_LOG_ERROR(TAG, "Failed to create UDP server on port " + String::fromUint32(param.udp_server_port));
+				return Ref<SRouter>::null();
 			}
+
+			ret->m_timerIdle = loop->addTimer(SLIB_CALLBACK_CLASS(SRouter, _onIdle, ret.get()), 1000);
+
+			ret->m_flagInit = sl_true;
+
+			return ret;
 		}
 	}
-	return ret;
+	return Ref<SRouter>::null();
 }
 
 Ref<SRouter> SRouter::createFromConfiguration(const Variant& varConfig)
 {
 	SRouterParam param;
 	param.name = varConfig.getField("name").getString();
-	param.key = varConfig.getField("key").getString();
-	param.port = varConfig.getField("port").getUint32(param.port);
 
-	sl_uint32 fragment_expiring_seconds = varConfig.getField("fragment_expiring_seconds").getUint32(param.port);
+	sl_uint32 fragment_expiring_seconds = varConfig.getField("fragment_expiring_seconds").getUint32(3600);
+
+	Variant udp_server = varConfig.getField("udp_server");
+	if (udp_server.isNotNull()) {
+		param.udp_server_port = udp_server.getField("port").getUint32(0);
+		param.udp_key = udp_server.getField("key").getString();
+	}
 
 	Ref<SRouter> ret = SRouter::create(param);
+
 	if (ret.isNotNull()) {
 		// add devices
 		{
-			ListLocker< Pair<String, Variant> > varDevices(varConfig.getField("devices").getVariantMap().pairs());
+			ListItems< Pair<String, Variant> > varDevices(varConfig.getField("devices").getVariantMap().pairs());
 			for (sl_size i = 0; i < varDevices.count(); i++) {
 				SRouterDeviceParam dp;
 				dp.fragment_expiring_seconds = fragment_expiring_seconds;
+				dp.loop = ret->m_loop;
 				dp.parseConfig(varDevices[i].value);
 				Ref<SRouterDevice> device = SRouterDevice::create(dp);
 				if (device.isNotNull()) {
@@ -483,10 +659,11 @@ Ref<SRouter> SRouter::createFromConfiguration(const Variant& varConfig)
 		}
 		// add remotes
 		{
-			ListLocker< Pair<String, Variant> > varRemotes(varConfig.getField("remotes").getVariantMap().pairs());
+			ListItems< Pair<String, Variant> > varRemotes(varConfig.getField("remotes").getVariantMap().pairs());
 			for (sl_size i = 0; i < varRemotes.count(); i++) {
 				SRouterRemoteParam rp;
 				rp.fragment_expiring_seconds = fragment_expiring_seconds;
+				rp.loop = ret->m_loop;
 				rp.parseConfig(varRemotes[i].value);
 				Ref<SRouterRemote> remote = SRouterRemote::create(rp);
 				if (remote.isNotNull()) {
@@ -496,25 +673,91 @@ Ref<SRouter> SRouter::createFromConfiguration(const Variant& varConfig)
 		}
 		// add routes
 		{
-			ListLocker<Variant> varRoutes(varConfig.getField("routes").getVariantList());
+			ListItems<Variant> varRoutes(varConfig.getField("routes").getVariantList());
 			for (sl_size i = 0; i < varRoutes.count(); i++) {
-
 				SRouterRoute route;
+				if (route.parseConfig(ret.get(), varRoutes[i])) {
+					ret->m_listRoutes.add_NoLock(route);
+				} else {
+					SLIB_LOG_ERROR(TAG, "Failed to parse route element: " + varRoutes[i].toJson());
+					return Ref<SRouter>::null();
+				}
+			}
+		}
+		// add arp proxies
+		{
+			ListItems<Variant> varArps(varConfig.getField("arp_proxies").getVariantList());
+			for (sl_size i = 0; i < varArps.count(); i++) {
+				SRouterArpProxy arp;
+				if (arp.parseConfig(ret.get(), varArps[i])) {
+					ret->m_listArpProxies.add_NoLock(arp);
+				} else {
+					SLIB_LOG_ERROR(TAG, "Failed to parse ARP proxy element: " + varArps[i].toJson());
+					return Ref<SRouter>::null();
+				}
+			}
+		}
 
-				route.dst_ip_begin.parse(varRoutes[i].getField("dst_ip_begin").getString());
-				route.dst_ip_end.parse(varRoutes[i].getField("dst_ip_end").getString());
-				route.src_ip_begin.parse(varRoutes[i].getField("src_ip_begin").getString());
-				route.src_ip_end.parse(varRoutes[i].getField("src_ip_end").getString());
+		ret->start();
 
-				route.interfaceName = varRoutes[i].getField("interface").getString();
+		return ret;
+	}
+	return Ref<SRouter>::null();
+}
 
-				route.flagBreak = varRoutes[i].getField("break").getBoolean(route.flagBreak);
+void SRouter::release()
+{
+	MutexLocker lock(getLocker());
+	if (!m_flagInit) {
+		return;
+	}
+	m_flagInit = sl_false;
 
-				ret->addRoute(route, sl_false);
+	m_flagRunning = sl_false;
+	if (m_loop.isNotNull()) {
+		m_loop->release();
+	}
+	if (m_ioLoop.isNotNull()) {
+		m_ioLoop->release();
+	}
+	if (m_udpServer.isNotNull()) {
+		m_udpServer->close();
+	}
+	{
+		ListLocker< Ref<SRouterDevice> > devices(m_mapDevices.values());
+		for (sl_size i = 0; i < devices.count(); i++) {
+			if (devices[i].isNotNull()) {
+				devices[i]->release();
 			}
 		}
 	}
-	return ret;
+
+}
+
+void SRouter::start()
+{
+	MutexLocker lock(getLocker());
+	if (!m_flagInit) {
+		return;
+	}
+	if (m_flagRunning) {
+		return;
+	}
+
+	m_udpServer->start();
+	m_loop->start();
+	m_ioLoop->start();
+
+	{
+		ListLocker< Ref<SRouterDevice> > devices(m_mapDevices.values());
+		for (sl_size i = 0; i < devices.count(); i++) {
+			if (devices[i].isNotNull()) {
+				devices[i]->start();
+			}
+		}
+	}
+
+	m_flagRunning = sl_true;
 }
 
 Ref<SRouterInterface> SRouter::getInterface(const String& name)
@@ -526,15 +769,9 @@ void SRouter::registerInterface(const String& name, const Ref<SRouterInterface>&
 {
 	Ref<SRouterInterface> iface = _iface;
 	if (iface.isNotNull()) {
-		ListLocker<SRouterRoute> routes(m_listRoutes);
-		for (sl_size i = 0; i < routes.count(); i++) {
-			if (routes[i].interfaceName == name) {
-				routes[i].interfaceDevice = iface;
-			}
-		}
+		m_mapInterfaces.put(name, iface);
 		iface->setRouter(this);
 	}
-	m_mapInterfaces.put(name, iface);	
 }
 
 Ref<SRouterDevice> SRouter::getDevice(const String& name)
@@ -544,8 +781,10 @@ Ref<SRouterDevice> SRouter::getDevice(const String& name)
 
 void SRouter::registerDevice(const String& name, const Ref<SRouterDevice>& device)
 {
-	m_mapDevices.put(name, device);
-	registerInterface(name, device);
+	if (device.isNotNull()) {
+		m_mapDevices.put(name, device);
+		registerInterface(name, device);
+	}
 }
 
 Ref<SRouterRemote> SRouter::getRemote(const String& name)
@@ -555,27 +794,116 @@ Ref<SRouterRemote> SRouter::getRemote(const String& name)
 
 void SRouter::registerRemote(const String& name, const Ref<SRouterRemote>& remote)
 {
-	m_mapRemotes.put(name, remote);
-	registerInterface(name, remote);
-}
-
-void SRouter::addRoute(const SRouterRoute& _route, sl_bool flagReplace)
-{
-	SRouterRoute route = _route;
-	if (route.interfaceDevice.isNull()) {
-		route.interfaceDevice = getInterface(route.interfaceName);
-	}
-	if (flagReplace) {
-		m_listRoutes.addIfNotExist(route);
-	} else {
-		m_listRoutes.add(route);
+	if (remote.isNotNull()) {
+		m_mapRemotes.put(name, remote);
+		if (!(remote->m_flagDynamicAddress)) {
+			m_mapRemotesBySocketAddress.put(remote->m_address, remote);
+		}
+		registerInterface(name, remote);
 	}
 }
 
-void SRouter::forwardPacket(const void* packet, sl_uint32 size)
+void SRouter::addRoute(const SRouterRoute& route)
 {
-	if (m_flagClosed) {
+	m_listRoutes.add(route);
+}
+
+
+SLIB_INLINE static sl_bool _SRouter_checkMatchRouteProtocol(const SRouterRoute& route, const IPv4HeaderFormat* ip)
+{
+	if (route.flagCheckProtocol) {
+		switch (ip->getProtocol()) {
+		case networkInternetProtocol_TCP:
+			if (route.flagTcp) {
+				return sl_true;
+			}
+			break;
+		case networkInternetProtocol_UDP:
+			if (route.flagUdp) {
+				return sl_true;
+			}
+			break;
+		case networkInternetProtocol_ICMP:
+			if (route.flagIcmp) {
+				return sl_true;
+			}
+			break;
+		}
+		return sl_false;
+	}
+	return sl_true;
+}
+
+SLIB_INLINE static sl_bool _SRouter_checkMatchRouteDstIp(const SRouterRoute& route, const IPv4HeaderFormat* ip)
+{
+	if (route.flagCheckDstIp) {
+		IPv4Address addrDst = ip->getDestinationAddress();
+		if (addrDst < route.dst_ip_begin || addrDst > route.dst_ip_end) {
+			return sl_false;
+		}
+	}
+	return sl_true;
+}
+
+SLIB_INLINE static sl_bool _SRouter_checkMatchRouteSrcIp(const SRouterRoute& route, const IPv4HeaderFormat* ip)
+{
+	if (route.flagCheckSrcIp) {
+		IPv4Address addrSrc = ip->getSourceAddress();
+		if (addrSrc < route.src_ip_begin || addrSrc > route.src_ip_end) {
+			return sl_false;
+		}
+	}
+	return sl_true;
+}
+
+SLIB_INLINE static sl_bool _SRouter_checkMatchRoutePorts(const SRouterRoute& route, const IPv4HeaderFormat* ip)
+{
+	if (route.flagCheckDstPort || route.flagCheckSrcPort) {
+		sl_uint16 portSrc;
+		sl_uint16 portDst;
+		if (ip->getPortsForTcpUdp(portSrc, portDst)) {
+			if (route.flagCheckDstPort) {
+				if (portDst < route.dst_port_begin || portDst > route.dst_port_end) {
+					return sl_false;
+				}
+			}
+			if (route.flagCheckSrcPort) {
+				if (portSrc < route.src_port_begin || portSrc > route.src_port_end) {
+					return sl_false;
+				}
+			}
+		}
+	}
+	return sl_true;
+}
+
+void SRouter::forwardIPv4Packet(SRouterInterface* deviceSource, void* packet, sl_uint32 size, sl_bool flagCheckedHeader)
+{
+	IPv4HeaderFormat* header = (IPv4HeaderFormat*)(packet);
+	if (!flagCheckedHeader) {
+		if (!(header->check(packet, size))) {
+			return;
+		}
+	}
+
+	if (!header) {
 		return;
+	}
+	if (deviceSource->m_flagUseNat) {
+		if (header->getDestinationAddress().isHost()) {
+			if (!(deviceSource->m_nat.translateIncomingPacket(header, header->getContent(), header->getContentSize()))) {
+				return;
+			}
+		} else {
+			return;
+		}
+	}
+
+	PtrLocker<SRouterListener> listener(m_listener);
+	if (listener.isNotNull()) {
+		if (listener->onForwardIPv4Packet(this, deviceSource, packet, size)) {
+			return;
+		}
 	}
 
 	if (IPv4HeaderFormat::check(packet, size)) {
@@ -583,42 +911,102 @@ void SRouter::forwardPacket(const void* packet, sl_uint32 size)
 		IPv4HeaderFormat* ip = (IPv4HeaderFormat*)packet;
 
 		ListLocker<SRouterRoute> routes(m_listRoutes);
+
 		for (sl_size i = 0; i < routes.count(); i++) {
+			
 			const SRouterRoute& route = routes[i];
-			sl_bool flagMatch = sl_true;
-			IPv4Address addrDst = ip->getDestinationAddress();
-			IPv4Address addrSrc = ip->getSourceAddress();
-			if (route.dst_ip_begin.isNotZero() && route.dst_ip_end.isNotZero()) {
-				if (addrDst < route.dst_ip_begin || addrDst > route.dst_ip_end) {
-					flagMatch = sl_false;
-				}
-			}
-			if (flagMatch) {
-				if (route.src_ip_begin.isNotZero() && route.src_ip_end.isNotZero()) {
-					if (addrSrc < route.src_ip_begin || addrSrc > route.src_ip_end) {
-						flagMatch = sl_false;
+			
+			if (_SRouter_checkMatchRouteProtocol(route, ip)) {
+				if (_SRouter_checkMatchRouteDstIp(route, ip)) {
+					if (_SRouter_checkMatchRouteSrcIp(route, ip)) {
+						if (_SRouter_checkMatchRoutePorts(route, ip)) {
+
+							for (sl_uint32 k = 0; k < route.countTargets; k++) {
+								Ref<SRouterInterface> device = route.arrTargets[k];
+								if (device.isNotNull() && device != deviceSource) {
+									device->writeIPv4Packet(packet, size);
+								}
+							}
+
+							if (route.flagBreak) {
+								return;
+							}
+
+						}
 					}
 				}
 			}
-			if (flagMatch) {
-				Ref<SRouterInterface> device = route.interfaceDevice;
-				if (device.isNotNull()) {
-					device->writePacket(packet, size);
-				}
-				if (route.flagBreak) {
-					return;
-				}
-			}
+		
 		}
 		
 	}
+
+}
+
+sl_bool SRouter::forwardEthernetFrame(SRouterDevice* deviceSource, void* packet, sl_uint32 size)
+{
+	PtrLocker<SRouterListener> listener(m_listener);
+	if (listener.isNotNull()) {
+		if (listener->onForwardEthernetFrame(this, deviceSource, packet, size)) {
+			return sl_true;
+		}
+	}
+
+	EthernetFrameFormat* frame = (EthernetFrameFormat*)(packet);
+	if (size > EthernetFrameFormat::getHeaderSize()) {
+		if (frame->getProtocol() == networkLinkProtocol_ARP) {
+			
+			ArpPacketFormat* arpIn = (ArpPacketFormat*)(frame->getContent());
+			sl_uint32 nArp = size - EthernetFrameFormat::getHeaderSize();
+			
+			if (nArp >= ArpPacketFormat::getPacketSizeForEthernetIPv4() &&
+				arpIn->isValidEthernetIPv4() &&
+				arpIn->getOperation() == arpOperation_Request)
+			{
+				sl_uint32 nSizeFrame = EthernetFrameFormat::getHeaderSize() + ArpPacketFormat::getPacketSizeForEthernetIPv4();
+				IPv4Address addr = arpIn->getTargetIPv4Address();
+
+				ListLocker<SRouterArpProxy> arpProxies(m_listArpProxies);
+
+				for (sl_size i = 0; i < arpProxies.count(); i++) {
+
+					SRouterArpProxy& arpProxy = arpProxies[i];
+
+					if (addr >= arpProxy.ip_begin && addr <= arpProxy.ip_end) {
+
+						MacAddress deviceMacAddress = arpProxy.device->m_macAddressDevice;
+
+						if (deviceMacAddress.isNotZero()) {
+							char bufOut[1024];
+							Base::copyMemory(bufOut, frame, nSizeFrame);
+
+							EthernetFrameFormat* frameOut = (EthernetFrameFormat*)(bufOut);
+							ArpPacketFormat* arpOut = (ArpPacketFormat*)(frameOut->getContent());
+							frameOut->setDestinationAddress(frame->getSourceAddress());
+							frameOut->setSourceAddress(deviceMacAddress);
+							arpOut->setOperation(arpOperation_Reply);
+							arpOut->setTargetMacAddress(arpIn->getSenderMacAddress());
+							arpOut->setTargetIPv4Address(arpIn->getSenderIPv4Address());
+							arpOut->setSenderMacAddress(deviceMacAddress);
+							arpOut->setSenderIPv4Address(addr);
+
+							arpProxy.device->writeL2Frame(bufOut, nSizeFrame);
+						}
+
+						return sl_true;
+					}
+
+				}
+
+			}
+		}
+	}
+
+	return sl_false;
 }
 
 void SRouter::_sendRemoteMessage(SRouterRemote* remote, sl_uint8 method, const void* data, sl_uint32 n)
 {
-	if (m_flagClosed) {
-		return;
-	}
 	char buf[MESSAGE_SIZE];
 	char bufEnc[MESSAGE_SIZE + 32];
 	MemoryWriter writer(buf, MESSAGE_SIZE);
@@ -631,20 +1019,20 @@ void SRouter::_sendRemoteMessage(SRouterRemote* remote, sl_uint8 method, const v
 	sl_uint32 m = (sl_uint32)(writer.getPosition());
 	m = (sl_uint32)(remote->m_aes.encrypt_CBC_PKCS7Padding(buf, m, bufEnc));
 	if (m > 0) {
-		Ref<Socket> udp = m_udp;
-		if (udp.isNotNull()) {
-			udp->sendTo(bufEnc, m, remote->m_address);
-		}
+		m_udpServer->sendTo(remote->m_address, bufEnc, m);
 	}
 }
 
-void SRouter::_receiveRemoteMessage(SocketAddress& address, const void* _data, sl_uint32 size)
+void SRouter::_receiveRemoteMessage(const SocketAddress& address, void* _data, sl_uint32 size)
 {
-	const sl_uint8* data = (const sl_uint8*)_data;
+	sl_uint8* data = (sl_uint8*)_data;
 	sl_uint8 method = data[0];
 	switch (method) {
-	case 10: // Raw IP Packet
-		_receiveRawPacketFromRemote(address, data + 1, size - 1);
+	case 10: // Compressed Raw IPv4 Packet
+		_receiveCompressedRawIPv4PacketFromRemote(address, data + 1, size - 1);
+		break;
+	case 11: // Not-Compressed Raw IPv4 Packet
+		_receiveRawIPv4PacketFromRemote(address, data + 1, size - 1);
 		break;
 	case 50: // Router Keep-Alive Notification
 		_receiveRouterKeepAlive(address, data + 1, size - 1);
@@ -652,21 +1040,44 @@ void SRouter::_receiveRemoteMessage(SocketAddress& address, const void* _data, s
 	}
 }
 
-void SRouter::_sendRawPacketToRemote(SRouterRemote* remote, const void* ip, sl_uint32 size)
+
+void SRouter::_sendCompressedRawIPv4PacketToRemote(SRouterRemote* remote, const void* packet, sl_uint32 size)
 {
-	Memory mem = Zlib::compressRaw(ip, size);
+	Memory mem = Zlib::compressRaw(packet, size);
 	if (mem.isNotEmpty()) {
 		_sendRemoteMessage(remote, 10, mem.getBuf(), (sl_uint32)(mem.getSize()));
 	}
 }
 
-void SRouter::_receiveRawPacketFromRemote(SocketAddress& address, const void* data, sl_uint32 size)
+void SRouter::_receiveCompressedRawIPv4PacketFromRemote(const SocketAddress& address, void* data, sl_uint32 size)
 {
 	Memory mem = Zlib::decompressRaw(data, size);
 	if (mem.isNotEmpty()) {
-		forwardPacket(mem.getBuf(), (sl_uint32)(mem.getSize()));
+		Ref<SRouterRemote> remote;
+		if (m_mapRemotesBySocketAddress.get(address, &remote)) {
+			if (remote.isNotNull()) {
+				forwardIPv4Packet(remote.get(), mem.getBuf(), (sl_uint32)(mem.getSize()), sl_false);
+			}
+		}
 	}
 }
+
+
+void SRouter::_sendRawIPv4PacketToRemote(SRouterRemote* remote, const void* packet, sl_uint32 size)
+{
+	_sendRemoteMessage(remote, 11, packet, size);
+}
+
+void SRouter::_receiveRawIPv4PacketFromRemote(const SocketAddress& address, void* data, sl_uint32 size)
+{
+	Ref<SRouterRemote> remote;
+	if (m_mapRemotesBySocketAddress.get(address, &remote)) {
+		if (remote.isNotNull()) {
+			forwardIPv4Packet(remote.get(), data, size, sl_false);
+		}
+	}
+}
+
 
 void SRouter::_sendRouterKeepAlive(SRouterRemote* remote)
 {
@@ -678,7 +1089,7 @@ void SRouter::_sendRouterKeepAlive(SRouterRemote* remote)
 	_sendRemoteMessage(remote, 50, buf, (sl_uint32)(writer.getPosition()));
 }
 
-void SRouter::_receiveRouterKeepAlive(SocketAddress& address, const void* data, sl_uint32 size)
+void SRouter::_receiveRouterKeepAlive(const SocketAddress& address, void* data, sl_uint32 size)
 {
 	MemoryReader reader(data, size);
 	String name;
@@ -690,54 +1101,39 @@ void SRouter::_receiveRouterKeepAlive(SocketAddress& address, const void* data, 
 		if (remote->m_flagDynamicAddress) {
 			remote->m_address = address;
 		}
+		m_mapRemotesBySocketAddress.put(address, remote);
 		remote->m_timeLastKeepAliveReceive = Time::now();
 	}
 }
 
-void SRouter::_runUdp()
+void SRouter::onReceiveFrom(AsyncUdpSocket* socket, const SocketAddress& address, void* data, sl_uint32 sizeReceived)
 {
-	Ref<Socket> udp = m_udp;
-	Ref<SocketEvent> ev = SocketEvent::createRead(udp);
-	if (ev.isNull()) {
-		SLIB_LOG_ERROR(TAG, "Can not create socket event");
+	if (sizeReceived > MESSAGE_SIZE + 32) {
 		return;
 	}
-	TimeCounter tc;
-	char buf[MESSAGE_SIZE + 32];
 	char bufDec[MESSAGE_SIZE + 16];
-	while (Thread::isNotStoppingCurrent()) {
-		SocketAddress addr;
-		while (1) {
-			sl_int32 n = udp->receiveFrom(buf, MESSAGE_SIZE, addr);
-			if (n > 0) {
-				sl_uint32 m = (sl_uint32)(m_aes.decrypt_CBC_PKCS7Padding(buf, n, bufDec));
-				if (m > 0) {
-					_receiveRemoteMessage(addr, bufDec, m);
-				}
-			} else {
-				break;
+	sl_uint32 m = (sl_uint32)(m_aesUdpServer.decrypt_CBC_PKCS7Padding(data, sizeReceived, bufDec));
+	if (m > 0) {
+		_receiveRemoteMessage(address, bufDec, m);
+	}
+}
+
+void SRouter::_onIdle()
+{
+	{
+		ListLocker< Ref<SRouterDevice> > devices(m_mapDevices.values());
+		for (sl_size i = 0; i < devices.count(); i++) {
+			if (devices[i].isNotNull()) {
+				devices[i]->_idle();
 			}
 		}
-		ev->wait(1000);
-
-		if (tc.getEllapsedMilliseconds() > 1000) {
-			{
-				ListLocker< Ref<SRouterDevice> > devices(m_mapDevices.values());
-				for (sl_size i = 0; i < devices.count(); i++) {
-					if (devices[i].isNotNull()) {
-						devices[i]->_idle();
-					}
-				}
+	}
+	{
+		ListLocker< Ref<SRouterRemote> > remotes(m_mapRemotes.values());
+		for (sl_size i = 0; i < remotes.count(); i++) {
+			if (remotes[i].isNotNull()) {
+				remotes[i]->_idle();
 			}
-			{
-				ListLocker< Ref<SRouterRemote> > remotes(m_mapRemotes.values());
-				for (sl_size i = 0; i < remotes.count(); i++) {
-					if (remotes[i].isNotNull()) {
-						remotes[i]->_idle();
-					}
-				}
-			}
-			tc.reset();
 		}
 	}
 }

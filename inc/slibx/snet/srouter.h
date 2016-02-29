@@ -6,7 +6,7 @@
 #include <slib/network/socket_address.h>
 #include <slib/network/capture.h>
 #include <slib/network/nat.h>
-#include <slib/network/socket.h>
+#include <slib/network/async.h>
 #include <slib/network/ethernet.h>
 
 #include <slib/core/object.h>
@@ -22,14 +22,6 @@ class SRouter;
 
 class SRouterInterface;
 
-class SLIB_EXPORT ISRouterInterfaceListener
-{
-public:
-	// return sl_false when the packet is not allowed
-	virtual sl_bool onWritePacket(SRouterInterface* iface, void* ip, sl_uint32 size) = 0;
-	
-};
-
 class SLIB_EXPORT SRouterInterfaceParam
 {
 public:
@@ -38,10 +30,10 @@ public:
 
 	sl_bool use_nat;
 	IPv4Address nat_ip;
-	sl_uint32 nat_port_begin;
-	sl_uint32 nat_port_end;
+	sl_uint16 nat_port_begin;
+	sl_uint16 nat_port_end;
 
-	Ptr<ISRouterInterfaceListener> listener;
+	Ref<AsyncLoop> loop;
 
 public:
 	SRouterInterfaceParam();
@@ -53,6 +45,7 @@ public:
 
 class SLIB_EXPORT SRouterInterface : public Object
 {
+	SLIB_DECLARE_OBJECT(SRouterInterface, Object)
 public:
 	SRouterInterface();
 
@@ -64,17 +57,12 @@ public:
 	
 	void initWithParam(const SRouterInterfaceParam& param);
 	
-	void setNAT_IP(const IPv4Address& ip);
+	void setNatIp(const IPv4Address& ip);
 	
-	void writePacket(const void* packet, sl_uint32 size);
-	
-	void forwardPacket(const void* packet, sl_uint32 size);
-
-public:
-	SLIB_PTR_PROPERTY(ISRouterInterfaceListener, Listener);
+	void writeIPv4Packet(const void* packet, sl_uint32 size);
 
 protected:
-	virtual void _writePacket(const void* packet, sl_uint32 size) = 0;
+	virtual void _writeIPv4Packet(const void* packet, sl_uint32 size) = 0;
 
 protected:
 	SafeWeakRef<SRouter> m_router;
@@ -82,10 +70,13 @@ protected:
 	sl_uint32 m_mtuOutgoing;
 
 	sl_bool m_flagUseNat;
-	NatTable m_tableNat;
-	
+	NatTable m_nat;
+	NatTableParam m_natParam;
+	sl_bool m_flagNatDynamicTarget;
+
 	IPv4Fragmentation m_fragmentation;
 
+	friend class SRouter;
 };
 
 class SLIB_EXPORT SRouterDeviceParam : public SRouterInterfaceParam
@@ -94,8 +85,10 @@ public:
 	Ref<NetCapture> device;
 
 	String iface_name;
+	sl_bool use_pcap;
 	sl_bool use_raw_socket;
 	sl_bool is_ethernet;
+	IPv4Address subnet_broadcast;
 	MacAddress gateway_mac;
 
 public:
@@ -107,21 +100,29 @@ public:
 
 class SLIB_EXPORT SRouterDevice : public SRouterInterface, public INetCaptureListener
 {
+	SLIB_DECLARE_OBJECT(SRouterDevice, SRouterInterface)
 protected:
 	SRouterDevice();
+	~SRouterDevice();
 
 public:
 	static Ref<SRouterDevice> create(const SRouterDeviceParam& param);
 
-	void processReadFrame(const void* frame, sl_uint32 size);
+	void release();
+
+	void start();
+
+	void processReadL2Frame(void* frame, sl_uint32 size);
 
 	void addMacAddress(const IPv4Address& ipAddress, const MacAddress& macAddress);
+
+	void writeL2Frame(const void* packet, sl_uint32 size);
 
 	String getStatus();
 
 protected:
 	// override
-	void _writePacket(const void* packet, sl_uint32 size);
+	void _writeIPv4Packet(const void* packet, sl_uint32 size);
 	
 	// override
 	void onCapturePacket(NetCapture* capture, NetCapturePacket* packet);
@@ -131,6 +132,7 @@ protected:
 protected:
 	String m_deviceName;
 	IPv4Address m_ipAddressDevice;
+	IPv4Address m_subnetBroadcast;
 	Ref<NetCapture> m_device;
 	
 	MacAddress m_macAddressDevice;
@@ -146,6 +148,10 @@ class SLIB_EXPORT SRouterRemoteParam : public SRouterInterfaceParam
 public:
 	SocketAddress host_address;
 	String key;
+	sl_bool flagCompressPacket;
+
+public:
+	SRouterRemoteParam();
 
 public:
 	void parseConfig(const Variant& varConfig);
@@ -153,6 +159,7 @@ public:
 
 class SLIB_EXPORT SRouterRemote : public SRouterInterface
 {
+	SLIB_DECLARE_OBJECT(SRouterRemote, SRouterInterface)
 protected:
 	SRouterRemote();
 
@@ -164,7 +171,7 @@ public:
 
 protected:
 	// override
-	void _writePacket(const void* packet, sl_uint32 size);
+	void _writeIPv4Packet(const void* packet, sl_uint32 size);
 
 	void _idle();
 
@@ -175,6 +182,7 @@ protected:
 	Time m_timeLastKeepAliveReceive;
 	Time m_timeLastKeepAliveSend;
 	sl_bool m_flagDynamicAddress;
+	sl_bool m_flagCompressPacket;
 
 	AES m_aes;
 
@@ -184,40 +192,85 @@ protected:
 class SLIB_EXPORT SRouterRoute
 {
 public:
+	sl_bool flagCheckProtocol;
+	sl_bool flagTcp;
+	sl_bool flagUdp;
+	sl_bool flagIcmp;
+
+	sl_bool flagCheckDstIp;
 	IPv4Address dst_ip_begin;
+	sl_uint32 dst_port_begin;
+
+	sl_bool flagCheckDstPort;
 	IPv4Address dst_ip_end;
+	sl_uint32 dst_port_end;
+
+	sl_bool flagCheckSrcIp;
 	IPv4Address src_ip_begin;
+	sl_uint32 src_port_begin;
+
+	sl_bool flagCheckSrcPort;
 	IPv4Address src_ip_end;
+	sl_uint32 src_port_end;
 	
-	SafeString interfaceName;
-	SafeRef<SRouterInterface> interfaceDevice;
+	Ref<SRouterInterface>* targets;
+	sl_uint32 countTargets;
+	Array< Ref<SRouterInterface> > arrTargets;
 
 	sl_bool flagBreak;
 
 public:
 	SRouterRoute();
-	SRouterRoute(const SRouterRoute& other);
+	
+public:
+	sl_bool parseConfig(SRouter* router, const Variant& conf);
+
+};
+
+
+class SLIB_EXPORT SRouterArpProxy
+{
+public:
+	IPv4Address ip_begin;
+	IPv4Address ip_end;
+	Ref<SRouterDevice> device;
 
 public:
-	SRouterRoute& operator=(const SRouterRoute& other);
+	SRouterArpProxy();
 
-	sl_bool operator==(const SRouterRoute& other) const;
-	
+public:
+	sl_bool parseConfig(SRouter* router, const Variant& conf);
+
+};
+
+
+class SLIB_EXPORT SRouterListener
+{
+public:
+	// returns true when the packet is consumed and doesn't need more processing
+	virtual sl_bool onForwardIPv4Packet(SRouter* router, SRouterInterface* device, void* packet, sl_uint32 size) = 0;
+
+	// returns true when the packet is consumed and doesn't need more processing
+	virtual sl_bool onForwardEthernetFrame(SRouter* router, SRouterDevice* device, void* frame, sl_uint32 size) = 0;
+
 };
 
 class SLIB_EXPORT SRouterParam
 {
 public:
 	String name;
-	sl_uint32 port;
-	String key;
+
+	sl_uint32 udp_server_port;
+	String udp_key;
+	
+	Ptr<SRouterListener> listener;
 
 public:
 	SRouterParam();
 
 };
 
-class SLIB_EXPORT SRouter : public Object
+class SLIB_EXPORT SRouter : public Object, public IAsyncUdpSocketListener
 {
 protected:
 	SRouter();
@@ -230,6 +283,8 @@ public:
 
 public:
 	void release();
+
+	void start();
 
 	
 	Ref<SRouterInterface> getInterface(const String& name);
@@ -247,43 +302,64 @@ public:
 	void registerRemote(const String& name, const Ref<SRouterRemote>& remote);
 
 	
-	void addRoute(const SRouterRoute& route, sl_bool flagReplace = sl_true);
+	void addRoute(const SRouterRoute& route);
 
-	void forwardPacket(const void* ip, sl_uint32 size);
+
+	void forwardIPv4Packet(SRouterInterface* deviceSource, void* packet, sl_uint32 size, sl_bool flagCheckedHeader = sl_false);
+
+	sl_bool forwardEthernetFrame(SRouterDevice* deviceSource, void* frame, sl_uint32 size);
+
 
 	String getStatusReport();
 	
 protected:
 	void _sendRemoteMessage(SRouterRemote* remote, sl_uint8 method, const void* data, sl_uint32 n);
 	
-	void _receiveRemoteMessage(SocketAddress& address, const void* data, sl_uint32 size);
+	void _receiveRemoteMessage(const SocketAddress& address, void* data, sl_uint32 size);
 
 	
-	void _sendRawPacketToRemote(SRouterRemote* remote, const void* ip, sl_uint32 size);
+	void _sendRawIPv4PacketToRemote(SRouterRemote* remote, const void* packet, sl_uint32 size);
 	
-	void _receiveRawPacketFromRemote(SocketAddress& address, const void* data, sl_uint32 size);
+	void _receiveRawIPv4PacketFromRemote(const SocketAddress& address, void* data, sl_uint32 size);
 
-	
+
+	void _sendCompressedRawIPv4PacketToRemote(SRouterRemote* remote, const void* packet, sl_uint32 size);
+
+	void _receiveCompressedRawIPv4PacketFromRemote(const SocketAddress& address, void* data, sl_uint32 size);
+
+
 	void _sendRouterKeepAlive(SRouterRemote* remote);
 	
-	void _receiveRouterKeepAlive(SocketAddress& address, const void* data, sl_uint32 size);
+	void _receiveRouterKeepAlive(const SocketAddress& address, void* data, sl_uint32 size);
 
-	
-	void _runUdp();
+
+	void _onIdle();
+
+protected:
+	// override
+	void onReceiveFrom(AsyncUdpSocket* socket, const SocketAddress& address, void* data, sl_uint32 sizeReceived);
 
 protected:
 	String m_name;
+	sl_bool m_flagInit;
+	sl_bool m_flagRunning;
 
-	SafeRef<Socket> m_udp;
-	SafeRef<Thread> m_threadUdp;
-	sl_bool m_flagClosed;
+	Ref<AsyncLoop> m_loop;
+	Ref<AsyncIoLoop> m_ioLoop;
 
-	AES m_aes;
+	Ref<AsyncUdpSocket> m_udpServer;
+	AES m_aesUdpServer;
+
+	Ref<AsyncTimer> m_timerIdle;
 
 	HashMap< String, Ref<SRouterInterface> > m_mapInterfaces;
 	HashMap< String, Ref<SRouterDevice> > m_mapDevices;
 	HashMap< String, Ref<SRouterRemote> > m_mapRemotes;
+	HashMap< SocketAddress, Ref<SRouterRemote> > m_mapRemotesBySocketAddress;
 	CList<SRouterRoute> m_listRoutes;
+	CList<SRouterArpProxy> m_listArpProxies;
+
+	Ptr<SRouterListener> m_listener;
 
 	friend class SRouterRemote;
 };

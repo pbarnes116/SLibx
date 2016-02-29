@@ -4,7 +4,7 @@
 /*************************************************
 	DB-IP
 
-Get Country code from ip address using the database updated from http://db-ip.com
+Get Country code from ip address using the database updated from https://db-ip.com/db/download/country
 
 For example,
 
