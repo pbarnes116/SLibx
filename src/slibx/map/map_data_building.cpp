@@ -125,7 +125,7 @@ Ref<VW_Building_Object> VW_Building::readObject(Ref<MapDataLoader> data, VW_Buil
 			return ret;
 		}
 		Memory memThumbnailTexture = reader.readToMemory(nThumbSize);
-		if (memThumbnailTexture.size() != nThumbSize) {
+		if (memThumbnailTexture.getSize() != nThumbSize) {
 			return ret;
 		}
 		mesh.textureThumbnail = Texture::loadFromMemory(memThumbnailTexture);

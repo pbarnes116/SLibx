@@ -18,9 +18,11 @@ class MapDEMTileManager;
 
 class SLIB_EXPORT MapView : public RenderView
 {
-	SLIB_DECLARE_OBJECT(MapView, RenderView)
+	SLIB_DECLARE_OBJECT
+	
 public:
 	MapView();
+	
 	~MapView();
 
 public:

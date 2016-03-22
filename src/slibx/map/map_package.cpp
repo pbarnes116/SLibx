@@ -19,7 +19,7 @@ void MapPackage::create(const String& filePath)
 		sl_int32 offsetTableSize = sizeof(sl_int32)* m_nTilesXNum * m_nTilesYNum;
 		SLIB_SCOPED_BUFFER(sl_int32, 4096, offsetTable, offsetTableSize);
 		Base::zeroMemory(offsetTable, offsetTableSize * sizeof(sl_int32));
-		file->write(header.getBuf(), header.getSize());
+		file->write(header.getData(), header.getSize());
 		file->write(offsetTable, offsetTableSize);
 		file->seekToBegin();
 		file->close();
@@ -31,9 +31,9 @@ Memory MapPackage::getHeader()
 	Memory ret = Memory::create(PACKAGE_HEADER_SIZE);
 	MemoryWriter writer(ret);
 
-	Base::zeroMemory(ret.getBuf(), ret.getSize());
+	Base::zeroMemory(ret.getData(), ret.getSize());
 	String8 packageIdentify = PACKAGE_IDENTIFY;
-	writer.write(packageIdentify.getBuf(), packageIdentify.getLength());
+	writer.write(packageIdentify.getData(), packageIdentify.getLength());
 	writer.writeInt32CVLI(m_nTilesXNum);
 	writer.writeInt32CVLI(m_nTilesYNum);
 	return ret;
@@ -45,8 +45,8 @@ sl_bool MapPackage::checkHeader()
 	if (file.isNotNull()) {
 		Memory originalHeader = getHeader();
 		Memory header = Memory::create(PACKAGE_HEADER_SIZE);
-		file->read(header.getBuf(), header.getSize());
-		if (Base::compareMemory(originalHeader.getBuf(), header.getBuf(), PACKAGE_HEADER_SIZE) == 0) {
+		file->read(header.getData(), header.getSize());
+		if (Base::compareMemory(originalHeader.getData(), header.getData(), PACKAGE_HEADER_SIZE) == 0) {
 			return sl_true;
 		}
 	}
@@ -63,9 +63,9 @@ sl_bool MapPackage::open(const String& filePath, sl_bool flagReadOnly)
 	
 	Ref<File> file;
 	if (flagReadOnly) {
-		file = File::open(filePath, fileMode_Read);
+		file = File::open(filePath, FileMode::Read);
 	} else {
-		file = File::open(filePath, fileMode_RandomAccess);
+		file = File::open(filePath, FileMode::RandomAccess);
 	}
 	
 	if (file.isNotNull()) {
@@ -91,7 +91,7 @@ sl_int32 MapPackage::getItemOffset(sl_int32 x, sl_int32 y)
 	if (file.isNotNull()) {
 		sl_int32 offsetToTable = getTableOffset(x, y);
 		if (offsetToTable + 4 < file->getSize()) {
-			file->seek(offsetToTable, seekPosition_Begin);
+			file->seek(offsetToTable, SeekPosition::Begin);
 			file->readInt32(&ret);
 			file->seekToBegin();
 		}
@@ -105,14 +105,14 @@ Memory MapPackage::getItem(sl_int32 itemOffset)
 	Ref<File> file = m_pkgFile;
 	if (file.isNotNull()) {
 		if (itemOffset + 4 < file->getSize()) {
-			file->seek(itemOffset, seekPosition_Begin);
+			file->seek(itemOffset, SeekPosition::Begin);
 			sl_int32 identify = 0;
 			file->readInt32(&identify);
 			if (identify == PACKAGE_ITEM_IDENTIFY) {
 				sl_int32 itemSize = 0;
 				file->readInt32(&itemSize);
 				ret = Memory::create(itemSize);
-				file->read(ret.getBuf(), itemSize);
+				file->read(ret.getData(), itemSize);
 			}
 		}
 	}
@@ -123,7 +123,7 @@ static SLIB_INLINE void writeString(MemoryWriter& writer, const String& _str) {
 	String8 str = _str;
 	writer.writeUint32CVLI(str.getLength());
 	if (str.getLength() > 0) {
-		writer.write(str.getBuf(), str.getLength());
+		writer.write(str.getData(), str.getLength());
 	}
 }
 
@@ -143,7 +143,7 @@ static inline void writeItemData(MemoryWriter& writer, const String& key, const 
 {
 	writeString(writer, key);
 	writer.writeSizeCVLI(data.getSize());
-	writer.write(data.getBuf(), data.getSize());
+	writer.write(data.getData(), data.getSize());
 }
 
 static inline Memory readItemData(MemoryReader& reader, String& key)
@@ -153,7 +153,7 @@ static inline Memory readItemData(MemoryReader& reader, String& key)
 	sl_int32 itemSize = reader.readInt32CVLI();
 	if (itemSize > 0) {
 		ret = Memory(itemSize);
-		reader.read(ret.getBuf(), itemSize);
+		reader.read(ret.getData(), itemSize);
 	}
 	
 	return ret;
@@ -165,8 +165,8 @@ Map<String, Memory> MapPackage::getDataFromItem(const Memory& encData)
 	Memory item;
 	if (encData.isNotEmpty()) {
 		Memory decData = Memory::create(encData.getSize() + 256);
-		sl_size decSize = m_encryption.decrypt_CBC_PKCS7Padding(encData.getBuf(), encData.getSize(), decData.getBuf());
-		item = Memory(decData.getBuf(), decSize);
+		sl_size decSize = m_encryption.decrypt_CBC_PKCS7Padding(encData.getData(), encData.getSize(), decData.getData());
+		item = Memory(decData.getData(), decSize);
 	}
 	if (item.isNotEmpty()) {
 		MemoryReader reader(item);
@@ -207,9 +207,9 @@ Memory MapPackage::createItem(const Map<String, Memory>& itemData, sl_int32 oldI
 	Memory item = writer.getData();
 
 	Memory encryption = Memory::create(item.getSize() + 256);
-	sl_size encryptSize = m_encryption.encrypt_CBC_PKCS7Padding(item.getBuf(), item.getSize(), encryption.getBuf());
+	sl_size encryptSize = m_encryption.encrypt_CBC_PKCS7Padding(item.getData(), item.getSize(), encryption.getData());
 
-	Memory ret(encryption.getBuf(), encryptSize);
+	Memory ret(encryption.getData(), encryptSize);
 	return ret;
 }
 
@@ -223,7 +223,7 @@ sl_bool MapPackage::write(sl_int32 offsetX, sl_int32 offsetY, const Map<String, 
 			sl_int32 itemPosition = (sl_int32)(file->getSize());
 			sl_int32 tblOffset = getTableOffset(offsetX, offsetY);
 			
-			file->seek(tblOffset, seekPosition_Begin);
+			file->seek(tblOffset, SeekPosition::Begin);
 			if (!file->writeInt32(itemPosition)) {
 				return sl_false;
 			}

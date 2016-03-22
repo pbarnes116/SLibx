@@ -134,7 +134,7 @@ sl_bool SecureFilePackage::createFromFiles(String filePath, const CreateParam& p
 #define FILE_READ_BUFFER_SIZE (1024*256)
 	sl_uint8* block = (sl_uint8*)(Base::createMemory(FILE_READ_BUFFER_SIZE));
 	for (sl_size i = 0; i < nFiles; i++) {
-		String fileName = listSourceFilePaths[i];
+		String fileName = (listSourceFilePaths.getData())[i];
 		String path = pathSourceBase + fileName;
 
 		indexes[i].type = indexTypeEmpty;
@@ -159,7 +159,7 @@ sl_bool SecureFilePackage::createFromFiles(String filePath, const CreateParam& p
 				lenFileName = LEN_FILE_NAME-1;
 				SLIB_LOG(TAG, "Filename length over - " + fileName);
 			}
-			Base::copyMemory(indexes[i].fileName, fileName16.getBuf(), lenFileName * sizeof(sl_char16));
+			Base::copyMemory(indexes[i].fileName, fileName16.getData(), lenFileName * sizeof(sl_char16));
 			indexes[i].fileName[lenFileName] = 0;
 
 			if (File::isDirectory(path)) {
@@ -185,7 +185,7 @@ sl_bool SecureFilePackage::createFromFiles(String filePath, const CreateParam& p
 					contentHeader->size = sizeContentHeader + sizeFile;
 					contentHeader->sizeHeader = sizeContentHeader;
 					contentHeader->lengthFileName = fileName.getLength();
-					Base::copyMemory(contentHeader + 1, fileName16.getBuf(), fileName16.getLength() * sizeof(sl_char16));
+					Base::copyMemory(contentHeader + 1, fileName16.getData(), fileName16.getLength() * sizeof(sl_char16));
 					if (flagPassword) {
 						enc.encryptBlocks(contentHeader, contentHeader, sizeContentHeader);
 					}
@@ -253,7 +253,7 @@ sl_bool SecureFilePackage::createFromFiles(String filePath, const CreateParam& p
 	}
 	Base::freeMemory(block);
 
-	file->seek(posIndexHeader, seekPosition_Begin);
+	file->seek(posIndexHeader, SeekPosition::Begin);
 	if (flagPassword) {
 		enc.encryptBlocks(&indexHeader, &indexHeader, sizeof(indexHeader));
 	}
@@ -264,7 +264,7 @@ sl_bool SecureFilePackage::createFromFiles(String filePath, const CreateParam& p
 		return sl_false;
 	}
 
-	file->seek(posIndexes, seekPosition_Begin);
+	file->seek(posIndexes, SeekPosition::Begin);
 	if (flagPassword) {
 		enc.encryptBlocks(indexes, indexes, sizeIndex);
 	}
@@ -347,7 +347,7 @@ List<SecureFilePackage::FileDesc> SecureFilePackage::getFiles()
 		return list;
 	}
 
-	file->seek(sizeof(_SECURE_FILE_PACKAGE_HEADER), seekPosition_Begin);
+	file->seek(sizeof(_SECURE_FILE_PACKAGE_HEADER), SeekPosition::Begin);
 
 	_SECURE_FILE_PACKAGE_INDEX_HEADER indexHeader;
 	if (file->read(&indexHeader, sizeof(indexHeader)) != sizeof(indexHeader)) {
@@ -405,7 +405,7 @@ sl_bool SecureFilePackage::findFile(String fileName, FileDesc* output)
 		return sl_false;
 	}
 
-	file->seek(sizeof(_SECURE_FILE_PACKAGE_HEADER), seekPosition_Begin);
+	file->seek(sizeof(_SECURE_FILE_PACKAGE_HEADER), SeekPosition::Begin);
 
 	_SECURE_FILE_PACKAGE_INDEX_HEADER indexHeader;
 	if (file->read(&indexHeader, sizeof(indexHeader)) != sizeof(indexHeader)) {
@@ -437,7 +437,7 @@ sl_bool SecureFilePackage::findFile(String fileName, FileDesc* output)
 		int mid = (start + end) / 2;
 
 		_SECURE_FILE_PACKAGE_INDEX index;
-		file->seek(pre + mid * sizeof(_SECURE_FILE_PACKAGE_INDEX), seekPosition_Begin);
+		file->seek(pre + mid * sizeof(_SECURE_FILE_PACKAGE_INDEX), SeekPosition::Begin);
 		if (file->read(&index, sizeof(index)) != sizeof(index)) {
 			SLIB_LOG(TAG, "index " + String::fromUint32(mid) + " read error" + m_filePath);
 			break;
@@ -500,7 +500,7 @@ Memory SecureFilePackage::readFile(sl_int64 position, String* pFileName)
 	AES dec;
 	dec.setKey(m_password, 32);
 
-	file->seek(position, seekPosition_Begin);
+	file->seek(position, SeekPosition::Begin);
 	_SECURE_FILE_CONTENT_HEADER contentHeader;
 	if (file->read(&contentHeader, sizeof(contentHeader)) != sizeof(contentHeader)) {
 		file->close();
@@ -538,7 +538,7 @@ Memory SecureFilePackage::readFile(sl_int64 position, String* pFileName)
 			return ret;
 		}
 	} else {
-		file->seek(contentHeader.sizeHeader - sizeof(_SECURE_FILE_CONTENT_HEADER), seekPosition_Current);
+		file->seek(contentHeader.sizeHeader - sizeof(_SECURE_FILE_CONTENT_HEADER), SeekPosition::Current);
 	}
 
 	int fileSize = (int)(contentHeader.size - contentHeader.sizeHeader);
@@ -548,7 +548,7 @@ Memory SecureFilePackage::readFile(sl_int64 position, String* pFileName)
 		return ret;
 	}
 
-	sl_uint8* bufRet = (sl_uint8*)(ret.getBuf());
+	sl_uint8* bufRet = (sl_uint8*)(ret.getData());
 	sl_uint8* block = (sl_uint8*)Base::createMemory(FILE_READ_BUFFER_SIZE);
 	int nRead = 0;
 	while (nRead < fileSize) {
@@ -584,7 +584,7 @@ sl_bool SecureFilePackage::extract(String pathTargetDirectory, Progress* progres
 	}
 	ListLocker<FileDesc> list(getFiles());
 
-	sl_size n = list.getCount();
+	sl_size n = list.count;
 	for (sl_size i = 0; i < n; i++) {
 		FileDesc& desc = list[i];
 		if (desc.type == indexTypeFile) {
@@ -593,7 +593,7 @@ sl_bool SecureFilePackage::extract(String pathTargetDirectory, Progress* progres
 			if (memory.isNotEmpty()) {
 				String path = pathTargetDirectory + "/" + filePath;
 				File::createDirectories(File::getParentDirectoryPath(path));
-				File::writeAllBytes(path, memory.getBuf(), memory.getSize());
+				File::writeAllBytes(path, memory.getData(), memory.getSize());
 				File::setModifiedTime(path, desc.timeModified);
 				if (progress) {
 					if (progress->flagRequestStop) {

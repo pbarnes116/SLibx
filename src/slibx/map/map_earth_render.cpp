@@ -110,9 +110,9 @@ void MapEarthRenderer::_renderBuilding(RenderEngine* engine, MapBuilding* buildi
 {
 	m_programBuilding->setAmbientColor(Color(120, 120, 120));
 	m_programBuilding->setDiffuseColor(Color(120, 120, 120));
-	m_programBuilding->setViewMatrix(VW_Building::getModelTransformMatrixForMesh(building->info->bound.center()) * m_transformView);
+	m_programBuilding->setViewMatrix(VW_Building::getModelTransformMatrixForMesh(building->info->bound.getCenter()) * m_transformView);
 	List<VW_Building_Mesh> meshes = building->object->meshes;
-	sl_size n = meshes.count();
+	sl_size n = meshes.getCount();
 	for (sl_size i = 0; i < n; i++) {
 		VW_Building_Mesh mesh;
 		if (meshes.getItem(i, &mesh)) {
@@ -132,10 +132,10 @@ void MapEarthRenderer::_renderGISLine(RenderEngine* engine, MapGISLineTile* tile
 {
 	Ref<MapDEMTile> dem = m_tilesDEM->getTileHierarchically(tile->location, sl_null);
 	ListLocker< Ref<MapGISShape> > list(tile->shapes);
-	for (sl_size i = 0; i < list.count(); i++) {
+	for (sl_size i = 0; i < list.count; i++) {
 		Ref<MapGISShape>& s = list[i];
 		ListLocker<MapGISLineData> lines(s->lines);
-		sl_uint32 n = (sl_uint32)(lines.count());
+		sl_uint32 n = (sl_uint32)(lines.count);
 		if (n > 0) {
 			m_programLine->setDiffuseColor(s->color);
 			engine->setLineWidth(s->width);
@@ -155,13 +155,13 @@ void MapEarthRenderer::_renderGISLine(RenderEngine* engine, MapGISLineTile* tile
 						altitude = MapDEMTileManager::getAltitudeFromDEM(
 							(sl_real)(location.x - dem->location.x)
 							, 1 - (sl_real)(location.y - dem->location.y)
-							, dem.get());
+							, dem.ptr);
 						pos[i * 2] = MapEarth::getCartesianPosition(GeoLocation(lines[i].start, altitude));
 						location = getTileLocationFromLatLon(dem->location.level, lines[i].end);
 						altitude = MapDEMTileManager::getAltitudeFromDEM(
 							(sl_real)(location.x - dem->location.x)
 							, 1 - (sl_real)(location.y - dem->location.y)
-							, dem.get());
+							, dem.ptr);
 						pos[i * 2 + 1] = MapEarth::getCartesianPosition(GeoLocation(lines[i].end, altitude));
 					}
 				}
@@ -170,7 +170,7 @@ void MapEarthRenderer::_renderGISLine(RenderEngine* engine, MapGISLineTile* tile
 				vb = s->vb;
 			}
 			if (vb.isNotNull()) {
-				engine->draw(m_programLine, n * 2, vb, primitiveType_Lines);
+				engine->draw(m_programLine, n * 2, vb, PrimitiveType::Lines);
 			}
 		}
 	}
@@ -183,7 +183,7 @@ void MapEarthRenderer::_renderGISPoi(RenderEngine* engine, MapGISPoi* poi, const
 	MapGISPoi& s = *poi;
 	if (s.texture.isNull()) {
 		String text = s.text;
-		if (text.length() > 50) {
+		if (text.getLength() > 50) {
 			text = text.substring(0, 50);
 		}
 		font->setSize((sl_uint32)(s.fontSize * screenRatio));
@@ -231,7 +231,7 @@ void MapEarthRenderer::_renderMarker(RenderEngine* engine, MapMarker* marker)
 		if (text.isNotEmpty() && font.isNotNull()) {
 			Ref<Texture> textureText = marker->_textureText;
 			if (textureText.isNull()) {
-				if (text.length() > 50) {
+				if (text.getLength() > 50) {
 					text = text.substring(0, 50);
 				}
 				font->setSize((sl_uint32)(marker->textFontSize * screenRatio));
@@ -278,8 +278,8 @@ void MapEarthRenderer::_renderIcon(RenderEngine* engine, MapIcon* icon)
 
 void MapEarthRenderer::_renderPolygon(RenderEngine* engine, MapPolygon* polygon)
 {
-	List<GeoLocation> points = polygon->points;
-	sl_size n = points.count();
+	ListLocker<GeoLocation> points = polygon->points;
+	sl_size n = points.count;
 	if (n <= 1) {
 		return;
 	}
@@ -299,7 +299,7 @@ void MapEarthRenderer::_renderPolygon(RenderEngine* engine, MapPolygon* polygon)
 	engine->setLineWidth(polygon->width);
 	m_programLine->setDiffuseColor(polygon->color);
 	Ref<VertexBuffer> vb = VertexBuffer::create(pos, n*sizeof(Vector3));
-	engine->draw(m_programLine, (sl_uint32)n, vb, primitiveType_LineStrip);
+	engine->draw(m_programLine, (sl_uint32)n, vb, PrimitiveType::LineStrip);
 	engine->setLineWidth(1);
 }
 
@@ -363,10 +363,10 @@ void MapEarthRenderer::_renderTiles(RenderEngine* engine)
 				flagExpand = sl_false;
 			}
 			ListLocker< Ref<_Tile> > current(listCurrent);
-			for (sl_size i = 0; i < current.count(); i++) {
+			for (sl_size i = 0; i < current.count; i++) {
 				Ref<_Tile> tile = current[i];
-				if (_checkTileVisible(tile.get())) {
-					if (flagExpand && _checkTileExpandable(tile.get())) {
+				if (_checkTileVisible(tile.ptr)) {
+					if (flagExpand && _checkTileExpandable(tile.ptr)) {
 						listExpand.add(tile);
 					} else {
 						listRender.add(tile);
@@ -378,7 +378,7 @@ void MapEarthRenderer::_renderTiles(RenderEngine* engine)
 		{
 			listCurrent = List< Ref<_Tile> >::null();
 			ListLocker< Ref<_Tile> > expand(listExpand);
-			for (sl_size i = 0; i < expand.count(); i++) {
+			for (sl_size i = 0; i < expand.count; i++) {
 				Ref<_Tile> tile = expand[i];
 				for (sl_uint32 iy = 0; iy < 2; iy++) {
 					for (sl_uint32 ix = 0; ix < 2; ix++) {
@@ -399,12 +399,12 @@ void MapEarthRenderer::_renderTiles(RenderEngine* engine)
 	// prepare render surface tiles
 	{
 		ListLocker< Ref<_Tile> > list(listRender);
-		for (sl_size i = 0; i < list.count(); i++) {
+		for (sl_size i = 0; i < list.count; i++) {
 			const Ref<_Tile>& tile = list[i];
 			if (tile->location.level > nLevelMax) {
 				nLevelMax = tile->location.level;
 			}
-			_renderTile(engine, tile.get());
+			_renderTile(engine, tile.ptr);
 			listRenderedTiles.add(tile->location);
 		}
 	}
@@ -449,28 +449,28 @@ Ref<MapEarthRenderer::_Tile> MapEarthRenderer::_getTile(const MapTileLocationi& 
 		loc.longitude = rectangle.bottomLeft.longitude;
 		loc.altitude = 0;
 		tile->positions[0] = MapEarth::getCartesianPosition(loc);
-		loc.altitude = MapDEMTileManager::getAltitudeFromDEM(rectangleDEM.left, rectangleDEM.bottom, tileDEM.get());
+		loc.altitude = MapDEMTileManager::getAltitudeFromDEM(rectangleDEM.left, rectangleDEM.bottom, tileDEM.ptr);
 		tile->positionsWithDEM[0] = MapEarth::getCartesianPosition(loc);
 		// bottom-right
 		loc.latitude = rectangle.bottomLeft.latitude;
 		loc.longitude = rectangle.topRight.longitude;
 		loc.altitude = 0;
 		tile->positions[1] = MapEarth::getCartesianPosition(loc);
-		loc.altitude = MapDEMTileManager::getAltitudeFromDEM(rectangleDEM.right, rectangleDEM.bottom, tileDEM.get());
+		loc.altitude = MapDEMTileManager::getAltitudeFromDEM(rectangleDEM.right, rectangleDEM.bottom, tileDEM.ptr);
 		tile->positionsWithDEM[1] = MapEarth::getCartesianPosition(loc);
 		// top-left
 		loc.latitude = rectangle.topRight.latitude;
 		loc.longitude = rectangle.bottomLeft.longitude;
 		loc.altitude = 0;
 		tile->positions[2] = MapEarth::getCartesianPosition(loc);
-		loc.altitude = MapDEMTileManager::getAltitudeFromDEM(rectangleDEM.left, rectangleDEM.top, tileDEM.get());
+		loc.altitude = MapDEMTileManager::getAltitudeFromDEM(rectangleDEM.left, rectangleDEM.top, tileDEM.ptr);
 		tile->positionsWithDEM[2] = MapEarth::getCartesianPosition(loc);
 		// top-right
 		loc.latitude = rectangle.topRight.latitude;
 		loc.longitude = rectangle.topRight.longitude;
 		loc.altitude = 0;
 		tile->positions[3] = MapEarth::getCartesianPosition(loc);
-		loc.altitude = MapDEMTileManager::getAltitudeFromDEM(rectangleDEM.right, rectangleDEM.top, tileDEM.get());
+		loc.altitude = MapDEMTileManager::getAltitudeFromDEM(rectangleDEM.right, rectangleDEM.top, tileDEM.ptr);
 		tile->positionsWithDEM[3] = MapEarth::getCartesianPosition(loc);
 		// center
 		loc.latitude = (rectangle.bottomLeft.latitude + rectangle.topRight.latitude) / 2;
@@ -590,7 +590,7 @@ void MapEarthRenderer::_renderBuildings(RenderEngine* engine)
 	List<_Building> buildings;
 	{
 		ListLocker< Ref<MapBuilding> > list(m_tilesBuilding->getBuildings());
-		for (sl_size i = 0; i < list.count(); i++) {
+		for (sl_size i = 0; i < list.count; i++) {
 			Ref<MapBuilding> building = list[i];
 			if (building.isNotNull()) {
 				if (m_viewFrustum.containsBox(building->info->bound)) {
@@ -598,7 +598,7 @@ void MapEarthRenderer::_renderBuildings(RenderEngine* engine)
 					if (building->info->flagBridge) {
 						b.distance = 0;
 					} else {
-						b.distance = (eye - (Vector3)(building->info->bound.center())).getLength2p();
+						b.distance = (eye - (Vector3)(building->info->bound.getCenter())).getLength2p();
 					}
 					b.object = building;
 					buildings.add(b);
@@ -615,15 +615,15 @@ void MapEarthRenderer::_renderBuildings(RenderEngine* engine)
 		}
 	};
 	buildings.sortBy<_Compare>();
-	buildings.setCount(Math::min(m_tilesBuilding->getMaxBuildingsCount(), (sl_uint32)(buildings.count())));
+	buildings.setCount(Math::min(m_tilesBuilding->getMaxBuildingsCount(), (sl_uint32)(buildings.getCount())));
 	{
 		sl_bool flagRequestTexture = sl_false;
 		sl_uint32 maxt = m_tilesBuilding->getMaxDetailedBuildingsCount();
 		sl_uint32 it = 0;
 		ListLocker<_Building> list(buildings);
-		for (sl_size i = 0; i < list.count(); i++) {
+		for (sl_size i = 0; i < list.count; i++) {
 			if (it < maxt && !flagRequestTexture) {
-				sl_size kn = list[i].object->object->meshes.count();
+				sl_size kn = list[i].object->object->meshes.getCount();
 				for (sl_size k = 0; k < kn; k++) {
 					if (it < maxt) {
 						if (!flagRequestTexture) {
@@ -639,7 +639,7 @@ void MapEarthRenderer::_renderBuildings(RenderEngine* engine)
 					}
 				}
 			}
-			_renderBuilding(engine, list[i].object.get());
+			_renderBuilding(engine, list[i].object.ptr);
 		}
 	}
 }
@@ -647,10 +647,10 @@ void MapEarthRenderer::_renderBuildings(RenderEngine* engine)
 void MapEarthRenderer::_renderGISLines(RenderEngine* engine)
 {
 	ListLocker<MapTileLocationi> list(m_listRenderedTiles.duplicate());
-	for (sl_size i = 0; i < list.count(); i++) {
+	for (sl_size i = 0; i < list.count; i++) {
 		Ref<MapGISLineTile> tile = m_tilesGISLine->getTile(list[i]);
 		if (tile.isNotNull()) {
-			_renderGISLine(engine, tile.get());
+			_renderGISLine(engine, tile.ptr);
 		}
 	}
 }
@@ -664,11 +664,11 @@ void MapEarthRenderer::_renderGISPois(RenderEngine* engine)
 	List< Ref<MapGISPoi> > pois[MAX_LEVEL];
 	{
 		ListLocker<MapTileLocationi> list(m_listRenderedTiles.duplicate());
-		for (sl_size i = 0; i < list.count(); i++) {
+		for (sl_size i = 0; i < list.count; i++) {
 			Ref<MapGISPoiTile> tile = m_tilesGISPoi->getTile(list[i]);
 			if (tile.isNotNull()) {
 				ListLocker< Ref<MapGISPoi> > list(tile->pois);
-				for (sl_size k = 0; k < list.count(); k++) {
+				for (sl_size k = 0; k < list.count; k++) {
 					Ref<MapGISPoi> poi = list[k];
 					poi->init(m_poiInfo);
 					if (poi->type != MapGISPoiData::typeNone && poi->text.isNotEmpty() && poi->showMinLevel <= (sl_int32)(poi->level)) {
@@ -683,8 +683,8 @@ void MapEarthRenderer::_renderGISPois(RenderEngine* engine)
 	int n = 0;
 	for (sl_int32 m = MAX_LEVEL - 1; m >= 0; m--) {
 		ListLocker< Ref<MapGISPoi> > list(pois[m]);
-		for (sl_size i = 0; i < list.count(); i++) {
-			_renderGISPoi(engine, list[i].get(), font);
+		for (sl_size i = 0; i < list.count; i++) {
+			_renderGISPoi(engine, list[i].ptr, font);
 			n++;
 			if (n > MAX_RENDER_POIS) {
 				return;
@@ -697,10 +697,10 @@ void MapEarthRenderer::_renderMarkers(RenderEngine* engine)
 {
 	{
 		ListLocker< Ref<MapMarker> > list(markers.values());
-		for (sl_size i = 0; i < list.count(); i++) {
+		for (sl_size i = 0; i < list.count; i++) {
 			Ref<MapMarker> marker = list[i];
 			if (marker.isNotNull() && marker->flagVisible) {
-				_renderMarker(engine, marker.get());
+				_renderMarker(engine, marker.ptr);
 			}
 		}
 	}
@@ -710,10 +710,10 @@ void MapEarthRenderer::_renderIcons(RenderEngine* engine)
 {
 	{
 		ListLocker< Ref<MapIcon> > list(icons.values());
-		for (sl_size i = 0; i < list.count(); i++) {
+		for (sl_size i = 0; i < list.count; i++) {
 			Ref<MapIcon> icon = list[i];
 			if (icon.isNotNull() && icon->flagVisible) {
-				_renderIcon(engine, icon.get());
+				_renderIcon(engine, icon.ptr);
 			}
 		}
 	}
@@ -723,10 +723,10 @@ void MapEarthRenderer::_renderPolygons(RenderEngine* engine)
 {
 	{
 		ListLocker< Ref<MapPolygon> > list(polygons.values());
-		for (sl_size i = 0; i < list.count(); i++) {
+		for (sl_size i = 0; i < list.count; i++) {
 			Ref<MapPolygon> polygon = list[i];
 			if (polygon.isNotNull()) {
-				_renderPolygon(engine, polygon.get());
+				_renderPolygon(engine, polygon.ptr);
 			}
 		}
 	}
@@ -752,7 +752,7 @@ public:
 	{
 		Ref<RenderProgramInfo> ret;
 		RenderEngineType type = engine->getEngineType();
-		if (type == renderEngineType_OpenGL_ES || type == renderEngineType_OpenGL) {
+		if (type == RenderEngineType::OpenGL_ES || type == RenderEngineType::OpenGL) {
 			ret = new MapInfo_GL;
 		}
 		return ret;
@@ -763,7 +763,7 @@ public:
 		RenderProgram3D::onInit(_engine, _info);
 
 		RenderEngineType type = _engine->getEngineType();
-		if (type == renderEngineType_OpenGL_ES || type == renderEngineType_OpenGL) {
+		if (type == RenderEngineType::OpenGL_ES || type == RenderEngineType::OpenGL) {
 			GLRenderEngine* engine = (GLRenderEngine*)_engine;
 			MapInfo_GL* info = (MapInfo_GL*)_info;
 			sl_uint32 program = info->program_GL;
@@ -780,7 +780,7 @@ public:
 	sl_bool onPreRender(RenderEngine* _engine, RenderProgramInfo* _info, Primitive* primitive)
 	{
 		RenderEngineType type = _engine->getEngineType();
-		if (type == renderEngineType_OpenGL_ES || type == renderEngineType_OpenGL) {
+		if (type == RenderEngineType::OpenGL_ES || type == RenderEngineType::OpenGL) {
 			GLRenderEngine* engine = (GLRenderEngine*)_engine;
 			MapInfo_GL* info = (MapInfo_GL*)_info;
 			SLIB_RENDER_GL_SET_VERTEX_FLOAT_ARRAY_ATTRIBUTE(engine, info->attrPosition, DEM_Vertex, position);
@@ -798,7 +798,7 @@ public:
 	void onPostRender(RenderEngine* _engine, RenderProgramInfo* _info, Primitive* primitive)
 	{
 		RenderEngineType type = _engine->getEngineType();
-		if (type == renderEngineType_OpenGL_ES || type == renderEngineType_OpenGL) {
+		if (type == RenderEngineType::OpenGL_ES || type == RenderEngineType::OpenGL) {
 			GLRenderEngine* engine = (GLRenderEngine*)_engine;
 			MapInfo_GL* info = (MapInfo_GL*)_info;
 			engine->disableVertexArrayAttribute(info->attrPosition);

@@ -226,7 +226,7 @@ void MapLayerTileManager::freeOldTiles()
 	for (sl_uint32 layer = 0; layer < SLIB_SMAP_MAX_LAYERS_COUNT; layer++){
 		List< Ref<MapLayerTile> > tiles;
 		ListLocker< Ref<MapLayerTile> > t(m_tiles[layer].values());
-		for (sl_size i = 0; i < t.count(); i++) {
+		for (sl_size i = 0; i < t.count; i++) {
 			Ref<MapLayerTile>& tile = t[i];
 			if (tile.isNotNull()) {
 				if (tile->location.level != 0) {
@@ -241,7 +241,7 @@ void MapLayerTileManager::freeOldTiles()
 		tiles.sortBy<_MapLayerTileManager_Compare>();
 		{
 			ListLocker< Ref<MapLayerTile> > t(tiles);
-			for (sl_size i = tileLimit; i < t.count(); i++) {
+			for (sl_size i = tileLimit; i < t.count; i++) {
 				Ref<MapLayerTile>& tile = t[i];
 				m_tiles[layer].remove(tile->location);
 			}

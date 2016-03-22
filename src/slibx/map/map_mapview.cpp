@@ -12,6 +12,8 @@
 
 SLIB_MAP_NAMESPACE_BEGIN
 
+SLIB_DEFINE_OBJECT(MapView, RenderView)
+
 MapView::MapView()
 {
 	SLIB_REFERABLE_CONSTRUCTOR;
@@ -111,7 +113,7 @@ void MapView::onFrame(RenderEngine* engine)
 		return;
 	}
 	
-	engine->clearColorDepth(Color::black());
+	engine->clearColorDepth(Color::Black);
 	engine->setDepthTest(sl_true);
 	engine->setCullFace(sl_false);
 	engine->setBlending(sl_false);
@@ -133,7 +135,7 @@ void MapView::onFrame(RenderEngine* engine)
 				fontStatus->drawString(
 									   Ref<Image>::from(textureStatus->getSource()), STATUS_WIDTH / 2 - (sl_uint32)(size.x / 2)
 									   , STATUS_HEIGHT / 2 + (sl_uint32)(size.y / 2)
-									   , textStatus, Color::white());
+									   , textStatus, Color::White);
 				textureStatus->update();
 				textureStatus->getSource()->resetPixels(Color(0, 0, 0, 0));
 			}
@@ -196,15 +198,15 @@ void MapView::onMouseEvent(UIEvent* event)
 	}
 
 	Point pt = event->getPoint();
-	Point pt2;
+	Point pt2 = pt;
 	sl_bool flagTouch2 = sl_false;
 	if (event->getTouchPointsCount() >= 2) {
 		pt2 = event->getTouchPoint(1).point;
 		flagTouch2 = sl_true;
 	}
 
-	UIEventAction action = event->getAction();
-	if (action == actionLeftButtonDown || action == actionTouchBegin) {
+	UIAction action = event->getAction();
+	if (action == UIAction::LeftButtonDown || action == UIAction::TouchBegin) {
 
 		getCamera()->clearMotions();
 
@@ -225,18 +227,18 @@ void MapView::onMouseEvent(UIEvent* event)
 		setFocus();
 
 	} else if (
-		action == actionLeftButtonDrag
-		|| action == actionTouchMove
-		|| action == actionLeftButtonUp
-		|| action == actionTouchEnd
-		|| action == actionTouchCancel
+		action == UIAction::LeftButtonDrag
+		|| action == UIAction::TouchMove
+		|| action == UIAction::LeftButtonUp
+		|| action == UIAction::TouchEnd
+		|| action == UIAction::TouchCancel
 		) {
 
 		if (m_flagMouseDown) {
 			if (m_flagCompassHighlight) {
 
 				Vector2 v = pt - getCompassRealPosition();
-				if (v.length2p() > 30) {
+				if (v.getLength2p() > 30) {
 					sl_real r = -Math::getDegreesFromRadian(Transform2::getRotationAngleFromDirToDir(Vector2(0, -1), v));
 					getCamera()->setTargetRotationZ(r);
 				}
@@ -264,9 +266,9 @@ void MapView::onMouseEvent(UIEvent* event)
 							sl_real time = 100;
 							dx *= 1.5;
 							dy *= 1.5;
-							if (action == actionLeftButtonUp
-								|| action == actionTouchEnd
-								|| action == actionTouchCancel) {
+							if (action == UIAction::LeftButtonUp
+								|| action == UIAction::TouchEnd
+								|| action == UIAction::TouchCancel) {
 								if (dt < 400) {
 									time = 4000;
 									dx *= 8;
@@ -329,9 +331,9 @@ void MapView::onMouseEvent(UIEvent* event)
 			}
 		}
 
-		if (action == actionLeftButtonUp
-			|| action == actionTouchEnd
-			|| action == actionTouchCancel) {
+		if (action == UIAction::LeftButtonUp
+			|| action == UIAction::TouchEnd
+			|| action == UIAction::TouchCancel) {
 			
 			double dx = (pt.x - m_pointMouseDown.x);
 			double dy = -(pt.y - m_pointMouseDown.y);
@@ -362,12 +364,12 @@ void MapView::onMouseEvent(UIEvent* event)
 			m_flagMouseDown = sl_false;
 		}
 
-	} else if (action == actionRightButtonDown) {
+	} else if (action == UIAction::RightButtonDown) {
 		
 		getCamera()->clearMotions();
 		setFocus();
 
-	} else if (action == actionRightButtonDrag) {
+	} else if (action == UIAction::RightButtonDrag) {
 
 		sl_real dx = pt.x - m_pointMouseBefore.x;
 		sl_real dy = pt.y - m_pointMouseBefore.y;

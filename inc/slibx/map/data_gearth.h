@@ -25,7 +25,7 @@ public:
 	sl_bool load(const void* data, sl_size size);
 	SLIB_INLINE sl_bool load(Memory mem)
 	{
-		return load(mem.getBuf(), mem.getSize());
+		return load(mem.getData(), mem.getSize());
 	}
 };
 

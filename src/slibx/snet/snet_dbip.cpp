@@ -14,7 +14,7 @@ SLIB_INLINE int Compare<DbIp::IPv4Item, sl_uint32>::compare(const DbIp::IPv4Item
 const char* DbIp::getCountryCode(const IPv4Address& _ipv4)
 {
 	sl_size index = 0;
-	sl_uint32 ipv4 = _ipv4.toInt();
+	sl_uint32 ipv4 = _ipv4.getInt();
 	if (BinarySearch<IPv4Item, sl_uint32>::search(m_ipv4, m_countIPv4, ipv4, &index)) {
 		return m_ipv4[index].code;
 	} else if (index > 0 && index < m_countIPv4) {
@@ -73,7 +73,7 @@ Ref<DbIp> DbIp::create(const void* _data, sl_size _size)
 			}
 			pos = resultParse;
 			if (ip.isIPv4()) {
-				item4.start = ip.getIPv4().toInt();
+				item4.start = ip.getIPv4().getInt();
 			} else {
 				item6.start = ip.getIPv6();
 			}
@@ -96,7 +96,7 @@ Ref<DbIp> DbIp::create(const void* _data, sl_size _size)
 				if (resultParse == SLIB_PARSE_ERROR) {
 					break;
 				}
-				item4.end = ip4.toInt();
+				item4.end = ip4.getInt();
 			} else {
 				IPv6Address ip6;
 				resultParse = IPv6Address::parse(&ip6, sz, pos, len);
@@ -143,18 +143,18 @@ Ref<DbIp> DbIp::create(const void* _data, sl_size _size)
 			pos++;
 		}
 	}
-	if (list4.count() == 0 && list6.count() == 0) {
+	if (list4.getCount() == 0 && list6.getCount() == 0) {
 		return ret;
 	}	
 	ret = new DbIp;
 	if (ret.isNotNull()) {
 		ret->m_listIPv4 = list4;
-		ret->m_ipv4 = list4.data();
-		ret->m_countIPv4 = (sl_uint32)(list4.count());
+		ret->m_ipv4 = list4.getData();
+		ret->m_countIPv4 = (sl_uint32)(list4.getCount());
 
 		ret->m_listIPv6 = list6;
-		ret->m_ipv6 = list6.data();
-		ret->m_countIPv6 = (sl_uint32)(list6.count());
+		ret->m_ipv6 = list6.getData();
+		ret->m_countIPv6 = (sl_uint32)(list6.getCount());
 	}
 	return ret;
 }
@@ -164,7 +164,7 @@ Ref<DbIp> DbIp::create(const String& pathToCSVFile)
 	Ref<DbIp> ret;
 	Memory mem = File::readAllBytes(pathToCSVFile);
 	if (mem.isNotEmpty()) {
-		ret = DbIp::create(mem.getBuf(), mem.getSize());
+		ret = DbIp::create(mem.getData(), mem.getSize());
 	}
 	return ret;
 }

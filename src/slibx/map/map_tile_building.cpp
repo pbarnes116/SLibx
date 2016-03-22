@@ -60,7 +60,7 @@ void MapBuildingTileManager::freeOldTiles()
 	List< Ref<MapBuildingTile> > tiles;
 	{
 		ListLocker< Ref<MapBuildingTile> > t(m_tiles.values());
-		for (sl_size i = 0; i < t.count(); i++) {
+		for (sl_size i = 0; i < t.count; i++) {
 			Ref<MapBuildingTile>& tile = t[i];
 			if (tile.isNotNull()) {
 				if ((now - tile->timeLastAccess).getMillisecondsCount() < timeLimit) {
@@ -82,7 +82,7 @@ void MapBuildingTileManager::freeOldTiles()
 	tiles.sortBy<_Compare>();
 	{
 		ListLocker< Ref<MapBuildingTile> > t(tiles);
-		for (sl_size i = tileLimit; i < t.count(); i++) {
+		for (sl_size i = tileLimit; i < t.count; i++) {
 			Ref<MapBuildingTile>& tile = t[i];
 			m_tiles.remove(tile->location);
 		}
@@ -134,7 +134,7 @@ void MapBuildingTileManager::freeOldBuildings()
 	List< Ref<MapBuilding> > buildings;
 	{
 		ListLocker< Ref<MapBuilding> > t(m_buildings.values());
-		for (sl_size i = 0; i < t.count(); i++) {
+		for (sl_size i = 0; i < t.count; i++) {
 			Ref<MapBuilding>& building = t[i];
 			if (building.isNotNull()) {
 				if ((now - building->timeLastAccess).getMillisecondsCount() < timeLimit) {
@@ -156,7 +156,7 @@ void MapBuildingTileManager::freeOldBuildings()
 	buildings.sortBy<_Compare>();
 	{
 		ListLocker< Ref<MapBuilding> > t(buildings);
-		for (sl_size i = tileLimit; i < t.count(); i++) {
+		for (sl_size i = tileLimit; i < t.count; i++) {
 			Ref<MapBuilding>& building = t[i];
 			m_buildings.remove(building->key);
 		}
@@ -247,7 +247,7 @@ void MapBuildingTileManager::freeOldDetailedTextures()
 	List< Ref<_BuildingTexture> > buildings;
 	{
 		ListLocker< Ref<_BuildingTexture> > t(m_detailedTextures.values());
-		for (sl_size i = 0; i < t.count(); i++) {
+		for (sl_size i = 0; i < t.count; i++) {
 			Ref<_BuildingTexture>& building = t[i];
 			if (building.isNotNull()) {
 				if ((now - building->timeLastAccess).getMillisecondsCount() < timeLimit) {
@@ -269,7 +269,7 @@ void MapBuildingTileManager::freeOldDetailedTextures()
 	buildings.sortBy<_Compare>();
 	{
 		ListLocker< Ref<_BuildingTexture> > t(buildings);
-		for (sl_size i = tileLimit; i < t.count(); i++) {
+		for (sl_size i = tileLimit; i < t.count; i++) {
 			Ref<_BuildingTexture>& building = t[i];
 			m_detailedTextures.remove(building->tkey);
 		}

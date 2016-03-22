@@ -46,7 +46,7 @@ Ref<MapGISLineTile> MapGISLineTileManager::loadTile(const MapTileLocationi& loca
 			tile->flagLoaded = sl_true;
 			{
 				ListLocker< Ref<MapGISShapeData> > ls(shapes.values());
-				for (sl_size i = 0; i < ls.count(); i++) {
+				for (sl_size i = 0; i < ls.count; i++) {
 					Ref<MapGISShapeData> s = ls[i];
 					if (s.isNotNull()) {
 						if (s->showMinLevel <= location.level) {							
@@ -81,7 +81,7 @@ void MapGISLineTileManager::freeOldTiles()
 	List< Ref<MapGISLineTile> > tiles;
 	{
 		ListLocker< Ref<MapGISLineTile> > t(m_tiles.values());
-		for (sl_size i = 0; i < t.count(); i++) {
+		for (sl_size i = 0; i < t.count; i++) {
 			Ref<MapGISLineTile>& tile = t[i];
 			if (tile.isNotNull()) {
 				if ((now - tile->timeLastAccess).getMillisecondsCount() < timeLimit) {
@@ -103,7 +103,7 @@ void MapGISLineTileManager::freeOldTiles()
 	tiles.sortBy<_Compare>();
 	{
 		ListLocker< Ref<MapGISLineTile> > t(tiles);
-		for (sl_size i = tileLimit; i < t.count(); i++) {
+		for (sl_size i = tileLimit; i < t.count; i++) {
 			Ref<MapGISLineTile>& tile = t[i];
 			m_tiles.remove(tile->location);
 		}
@@ -202,7 +202,7 @@ Ref<MapGISPoiTile> MapGISPoiTileManager::loadTile(const MapTileLocationi& locati
 			tile->flagLoaded = sl_true;
 			{
 				ListLocker<MapGISPoiData> list(pois);
-				for (sl_size i = 0; i < list.count(); i++) {
+				for (sl_size i = 0; i < list.count; i++) {
 					Ref<MapGISPoi> p = new MapGISPoi;
 					if (p.isNotNull()) {
 						p->location = list[i].location;
@@ -228,7 +228,7 @@ void MapGISPoiTileManager::freeOldTiles()
 	List< Ref<MapGISPoiTile> > tiles;
 	{
 		ListLocker< Ref<MapGISPoiTile> > t(m_tiles.values());
-		for (sl_size i = 0; i < t.count(); i++) {
+		for (sl_size i = 0; i < t.count; i++) {
 			Ref<MapGISPoiTile>& tile = t[i];
 			if (tile.isNotNull()) {
 				if ((now - tile->timeLastAccess).getMillisecondsCount() < timeLimit) {
@@ -250,7 +250,7 @@ void MapGISPoiTileManager::freeOldTiles()
 	tiles.sortBy<_Compare>();
 	{
 		ListLocker< Ref<MapGISPoiTile> > t(tiles);
-		for (sl_size i = tileLimit; i < t.count(); i++) {
+		for (sl_size i = tileLimit; i < t.count; i++) {
 			Ref<MapGISPoiTile>& tile = t[i];
 			m_tiles.remove(tile->location);
 		}

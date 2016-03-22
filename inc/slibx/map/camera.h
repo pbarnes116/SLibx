@@ -67,7 +67,8 @@ struct SLIB_EXPORT MapCameraMovingTarget
 
 class SLIB_EXPORT MapCamera : public Object
 {
-	SLIB_DECLARE_OBJECT(MapCamera, Object);
+	SLIB_DECLARE_OBJECT
+	
 public:
 	MapCamera();
 

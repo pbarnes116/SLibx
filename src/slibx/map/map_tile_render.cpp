@@ -35,7 +35,7 @@ void MapRenderTileManager::freeOldTiles()
 	List< Ref<MapRenderTile> > tiles;
 	{
 		ListLocker< Ref<MapRenderTile> > t(m_tiles.values());
-		for (sl_size i = 0; i < t.count(); i++) {
+		for (sl_size i = 0; i < t.count; i++) {
 			Ref<MapRenderTile>& tile = t[i];
 			if (tile.isNotNull()) {
 				if ((now - tile->timeLastAccess).getMillisecondsCount() < timeLimit) {
@@ -57,7 +57,7 @@ void MapRenderTileManager::freeOldTiles()
 	tiles.sortBy<_Compare>();
 	{
 		ListLocker< Ref<MapRenderTile> > t(tiles);
-		for (sl_size i = tileLimit; i < t.count(); i++) {
+		for (sl_size i = tileLimit; i < t.count; i++) {
 			Ref<MapRenderTile>& tile = t[i];
 			m_tiles.remove(tile->location);
 		}

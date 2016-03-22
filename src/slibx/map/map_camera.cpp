@@ -1,7 +1,9 @@
 #include "../../../inc/slibx/map/camera.h"
 #include "../../../inc/slibx/map/earth.h"
+#include "../../../inc/slibx/map/earth.h"
 
 #include <slib/math/transform3d.h>
+#include <slib/core/math.h>
 
 SLIB_MAP_NAMESPACE_BEGIN
 
@@ -80,6 +82,7 @@ sl_real MapCameraLocation::getMaxTilt() const
 	}
 }
 
+SLIB_DEFINE_OBJECT(MapCamera, Object);
 
 MapCamera::MapCamera()
 {
@@ -242,7 +245,7 @@ void MapCamera::stepMotions(sl_real dt)
 	MutexLocker lock(getLocker());
 	if (m_flagMoving) {
 		ListLocker<MapCameraMovingTarget> targets(m_listMovingTargets);
-		if (m_indexMovingTargets < targets.count()) {
+		if (m_indexMovingTargets < targets.count) {
 			MapCameraMovingTarget& t = targets[m_indexMovingTargets];
 			GeoLocation tl = t.location;
 			if (tl.altitude < m_targetAltitudeMin) {

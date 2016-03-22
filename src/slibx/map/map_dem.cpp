@@ -1,6 +1,7 @@
 #include "../../../inc/slibx/map/dem.h"
 
 #include <slib/core/io.h>
+#include <slib/core/mio.h>
 #include <slib/core/scoped_pointer.h>
 #include <slib/render/program.h>
 
@@ -9,8 +10,8 @@ sl_bool DEM::initialize(sl_uint32 _N)
 {
 	Array<float> _array = Array<float>::create(_N * _N);
 	if (_array.isNotNull()) {
-		float* _dem = _array.data();
-		for (sl_size i = 0; i < _array.count(); i++) {
+		float* _dem = _array.getData();
+		for (sl_size i = 0; i < _array.getCount(); i++) {
 			_dem[i] = 0;
 		}
 		N = _N;
@@ -141,7 +142,7 @@ void _DEM_makeMesh(const DEM* _dem, const GLOBE& globe, const Vector3lf& positio
 	
 	GeoLocation loc;
 	
-	out.type = primitiveType_Triangles;
+	out.type = PrimitiveType::Triangles;
 	out.countElements = 6 * (M - 1) * (M - 1);
 	SLIB_SCOPED_BUFFER(DEM_Vertex, 4096, vb, M*M);
 	DEM_Vertex* pv = vb;

@@ -78,7 +78,7 @@ Ref<MapPictureTile> MapPictureTileManager::loadTile(const MapTileLocationi& loca
 	}
 	Ref<MapDataLoader> loader = getDataLoader();
 	if (loader.isNotNull()) {
-		ImageFileType type = imageFileType_Unknown;
+		ImageFileType type = ImageFileType::Unknown;
 		Ref<Image> image;
 		// first load x picture
 		{
@@ -88,7 +88,7 @@ Ref<MapPictureTile> MapPictureTileManager::loadTile(const MapTileLocationi& loca
 				image = Image::loadFromMemory(mem);
 			}
 		}
-		if (image.isNull() || type == imageFileType_PNG) {
+		if (image.isNull() || type == ImageFileType::PNG) {
 			Ref<Image> imagex = image;
 			image.setNull();
 			Memory mem;
@@ -110,8 +110,7 @@ Ref<MapPictureTile> MapPictureTileManager::loadTile(const MapTileLocationi& loca
 				image = Image::loadFromMemory(mem);
 				if (imagex.isNotNull()) {
 					image->drawImage(
-						0, 0, image->getWidth(), image->getHeight()
-						, imagex, 0, 0, imagex->getWidth(), imagex->getHeight(), blendMode_SrcAlpha);
+						0, 0, image->getWidth(), image->getHeight(), imagex, 0, 0, imagex->getWidth(), imagex->getHeight(), BlendMode::SrcAlpha);
 				}
 			}
 		}
@@ -190,7 +189,7 @@ void MapPictureTileManager::freeOldTiles()
 	List< Ref<MapPictureTile> > tiles;
 	{
 		ListLocker< Ref<MapPictureTile> > t(m_tiles.values());
-		for (sl_size i = 0; i < t.count(); i++) {
+		for (sl_size i = 0; i < t.count; i++) {
 			Ref<MapPictureTile>& tile = t[i];
 			if (tile.isNotNull()) {
 				if (tile->location.level != 0) {
@@ -215,7 +214,7 @@ void MapPictureTileManager::freeOldTiles()
 	tiles.sortBy<_Compare>();
 	{
 		ListLocker< Ref<MapPictureTile> > t(tiles);
-		for (sl_size i = tileLimit; i < t.count(); i++) {
+		for (sl_size i = tileLimit; i < t.count; i++) {
 			Ref<MapPictureTile>& tile = t[i];
 			m_tiles.remove(tile->location);
 		}

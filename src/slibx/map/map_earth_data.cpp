@@ -57,7 +57,7 @@ void MapEarthRenderer::_runThreadDataStep()
 void MapEarthRenderer::_loadRenderingTilesData()
 {
 	ListLocker<MapTileLocationi> list(m_listRenderedTiles.duplicate());
-	for (sl_size i = 0; i < list.count(); i++) {
+	for (sl_size i = 0; i < list.count; i++) {
 		MapTileLocationi loc = list[i];
 		m_tilesPicture->loadTileHierarchically(loc);
 		m_tilesDEM->loadTileHierarchically(loc);
@@ -95,7 +95,7 @@ void MapEarthRenderer::_runThreadDataBuildingStep()
 		{
 			sl_uint32 nMinBuildingLevel = getMinBuildingLevel();
 			ListLocker<MapTileLocationi> list(m_listRenderedTiles.duplicate());
-			for (sl_size i = 0; i < list.count(); i++) {
+			for (sl_size i = 0; i < list.count; i++) {
 				MapTileLocationi loc = list[i];
 				if (loc.level >= nMinBuildingLevel) {
 					do {
@@ -104,7 +104,7 @@ void MapEarthRenderer::_runThreadDataBuildingStep()
 						}
 						Ref<MapBuildingTile> tile = m_tilesBuilding->loadTile(loc);
 						ListLocker< Ref<VW_Building_ObjectInfo> > objects(tile->objects);
-						for (sl_size k = 0; k < objects.count(); k++) {
+						for (sl_size k = 0; k < objects.count; k++) {
 							Ref<VW_Building_ObjectInfo>& info = objects[k];
 							if (info.isNotNull()) {
 								if (m_viewFrustum.containsBox(info->bound)) {
@@ -115,7 +115,7 @@ void MapEarthRenderer::_runThreadDataBuildingStep()
 										if (info->flagBridge) {
 											o.distance = 0;
 										} else {
-											o.distance = (eye - (Vector3)(info->bound.center())).getLength2p();
+											o.distance = (eye - (Vector3)(info->bound.getCenter())).getLength2p();
 										}
 										infos.add(o);
 									}
@@ -143,7 +143,7 @@ void MapEarthRenderer::_runThreadDataBuildingStep()
 				}
 			};
 			infos.sortBy<_Compare>();
-			infos.setCount(Math::min(10, (sl_int32)(infos.count())));
+			infos.setCount(Math::min(10, (sl_int32)(infos.getCount())));
 		}
 		if (Thread::isStoppingCurrent()) {
 			return;
@@ -151,8 +151,8 @@ void MapEarthRenderer::_runThreadDataBuildingStep()
 		// load objects
 		{
 			ListLocker<_BuildingInfo> list(infos);
-			for (sl_size i = 0; i < list.count(); i++) {
-				m_tilesBuilding->loadBuilding(list[i].info.get());
+			for (sl_size i = 0; i < list.count; i++) {
+				m_tilesBuilding->loadBuilding(list[i].info.ptr);
 			}
 		}
 		if (Thread::isStoppingCurrent()) {
@@ -180,7 +180,7 @@ void MapEarthRenderer::_runThreadDataBuildingStep()
 void MapEarthRenderer::_runThreadDataGISStep()
 {
 	ListLocker<MapTileLocationi> list(m_listRenderedTiles.duplicate());
-	for (sl_size i = 0; i < list.count(); i++) {
+	for (sl_size i = 0; i < list.count; i++) {
 		MapTileLocationi loc = list[i];
 		m_tilesGISLine->loadTile(loc);
 		m_tilesGISPoi->loadTile(loc);

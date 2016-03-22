@@ -45,7 +45,8 @@ public:
 
 class SLIB_EXPORT SRouterInterface : public Object
 {
-	SLIB_DECLARE_OBJECT(SRouterInterface, Object)
+	SLIB_DECLARE_OBJECT
+	
 public:
 	SRouterInterface();
 
@@ -100,9 +101,11 @@ public:
 
 class SLIB_EXPORT SRouterDevice : public SRouterInterface, public INetCaptureListener
 {
-	SLIB_DECLARE_OBJECT(SRouterDevice, SRouterInterface)
+	SLIB_DECLARE_OBJECT
+	
 protected:
 	SRouterDevice();
+	
 	~SRouterDevice();
 
 public:
@@ -159,7 +162,8 @@ public:
 
 class SLIB_EXPORT SRouterRemote : public SRouterInterface
 {
-	SLIB_DECLARE_OBJECT(SRouterRemote, SRouterInterface)
+	SLIB_DECLARE_OBJECT
+	
 protected:
 	SRouterRemote();
 
@@ -274,6 +278,7 @@ class SLIB_EXPORT SRouter : public Object, public IAsyncUdpSocketListener
 {
 protected:
 	SRouter();
+	
 	~SRouter();
 
 public:

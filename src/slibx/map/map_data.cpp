@@ -10,7 +10,7 @@ SLIB_MAP_NAMESPACE_BEGIN
 Memory MapDataLoaderList::loadData(const String& type, const MapTileLocationi& location, sl_uint32 packageDimension, const String& subPath)
 {
 	ListLocker< Ref<MapDataLoader> > loaders(list);
-	for (sl_size i = 0; i < loaders.count(); i++) {
+	for (sl_size i = 0; i < loaders.count; i++) {
 		Ref<MapDataLoader> loader = loaders[i];
 		if (loader.isNotNull()) {
 			Memory ret = loader->loadData(type, location, packageDimension, subPath);
