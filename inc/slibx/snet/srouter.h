@@ -7,6 +7,7 @@
 #include <slib/network/capture.h>
 #include <slib/network/nat.h>
 #include <slib/network/async.h>
+#include <slib/network/datagram.h>
 #include <slib/network/ethernet.h>
 
 #include <slib/core/object.h>
@@ -149,6 +150,7 @@ protected:
 class SLIB_EXPORT SRouterRemoteParam : public SRouterInterfaceParam
 {
 public:
+	sl_bool flagTcp;
 	SocketAddress host_address;
 	String key;
 	sl_bool flagCompressPacket;
@@ -180,12 +182,14 @@ protected:
 	void _idle();
 
 protected:
+	sl_bool m_flagTcp;
+	SafeRef<TcpDatagramClient> m_tcp;
 	SocketAddress m_address;
 	String m_key;
 	
 	Time m_timeLastKeepAliveReceive;
 	Time m_timeLastKeepAliveSend;
-	sl_bool m_flagDynamicAddress;
+	sl_bool m_flagDynamicConnection;
 	sl_bool m_flagCompressPacket;
 
 	AES m_aes;
@@ -265,7 +269,8 @@ public:
 	String name;
 
 	sl_uint32 udp_server_port;
-	String udp_key;
+	sl_uint32 tcp_server_port;
+	String server_key;
 	
 	Ptr<SRouterListener> listener;
 
@@ -274,7 +279,7 @@ public:
 
 };
 
-class SLIB_EXPORT SRouter : public Object, public IAsyncUdpSocketListener
+class SLIB_EXPORT SRouter : public Object, public IAsyncUdpSocketListener, public ITcpDatagramListener
 {
 protected:
 	SRouter();
@@ -320,29 +325,31 @@ public:
 protected:
 	void _sendRemoteMessage(SRouterRemote* remote, sl_uint8 method, const void* data, sl_uint32 n);
 	
-	void _receiveRemoteMessage(const SocketAddress& address, void* data, sl_uint32 size);
+	void _receiveRemoteMessage(const SocketAddress& address, TcpDatagramClient* client, void* data, sl_uint32 size);
 
 	
 	void _sendRawIPv4PacketToRemote(SRouterRemote* remote, const void* packet, sl_uint32 size);
 	
-	void _receiveRawIPv4PacketFromRemote(const SocketAddress& address, void* data, sl_uint32 size);
+	void _receiveRawIPv4PacketFromRemote(SRouterRemote* remote, void* data, sl_uint32 size);
 
 
 	void _sendCompressedRawIPv4PacketToRemote(SRouterRemote* remote, const void* packet, sl_uint32 size);
 
-	void _receiveCompressedRawIPv4PacketFromRemote(const SocketAddress& address, void* data, sl_uint32 size);
+	void _receiveCompressedRawIPv4PacketFromRemote(SRouterRemote* remote, void* data, sl_uint32 size);
 
 
 	void _sendRouterKeepAlive(SRouterRemote* remote);
 	
-	void _receiveRouterKeepAlive(const SocketAddress& address, void* data, sl_uint32 size);
-
+	void _receiveRouterKeepAlive(const SocketAddress& address, TcpDatagramClient* client, void* data, sl_uint32 size);
 
 	void _onIdle();
 
 protected:
 	// override
 	void onReceiveFrom(AsyncUdpSocket* socket, const SocketAddress& address, void* data, sl_uint32 sizeReceived);
+
+	// override
+	void onReceiveFrom(TcpDatagramClient* client, void* data, sl_uint32 sizeReceived);
 
 protected:
 	String m_name;
@@ -353,7 +360,8 @@ protected:
 	Ref<AsyncIoLoop> m_ioLoop;
 
 	Ref<AsyncUdpSocket> m_udpServer;
-	AES m_aesUdpServer;
+	Ref<TcpDatagramServer> m_tcpServer;
+	AES m_aesPacket;
 
 	Ref<AsyncTimer> m_timerIdle;
 
@@ -361,6 +369,7 @@ protected:
 	HashMap< String, Ref<SRouterDevice> > m_mapDevices;
 	HashMap< String, Ref<SRouterRemote> > m_mapRemotes;
 	HashMap< SocketAddress, Ref<SRouterRemote> > m_mapRemotesBySocketAddress;
+	HashMap< TcpDatagramClient*, Ref<SRouterRemote> > m_mapRemotesByTcpClient;
 	CList<SRouterRoute> m_listRoutes;
 	CList<SRouterArpProxy> m_listArpProxies;
 

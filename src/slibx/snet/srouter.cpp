@@ -370,6 +370,7 @@ void SRouterDevice::_idle()
 
 SRouterRemoteParam::SRouterRemoteParam()
 {
+	flagTcp = sl_false;
 	flagCompressPacket = sl_true;
 }
 
@@ -377,6 +378,10 @@ void SRouterRemoteParam::parseConfig(const Variant& varConfig)
 {
 	SRouterInterfaceParam::parseConfig(varConfig);
 
+	String protocol = varConfig.getField("protocol").getString();
+	if (protocol == "tcp") {
+		flagTcp = sl_true;
+	}
 	host_address.setHostAddress(varConfig.getField("host").getString());
 	key = varConfig.getField("key").getString();
 	flagCompressPacket = varConfig.getField("flag_compress_packet").getBoolean(flagCompressPacket);
@@ -386,7 +391,8 @@ SLIB_DEFINE_OBJECT(SRouterRemote, SRouterInterface)
 
 SRouterRemote::SRouterRemote()
 {
-	m_flagDynamicAddress = sl_true;
+	m_flagTcp = sl_false;
+	m_flagDynamicConnection = sl_true;
 	m_timeLastKeepAliveSend.setZero();
 	m_timeLastKeepAliveReceive.setZero();
 }
@@ -397,16 +403,21 @@ Ref<SRouterRemote> SRouterRemote::create(const SRouterRemoteParam& param)
 
 	if (ret.isNotNull()) {
 
+		ret->m_flagTcp = param.flagTcp;
 		ret->m_address = param.host_address;
 		ret->m_key = param.key;
 		ret->m_flagCompressPacket = param.flagCompressPacket;
 
 		ret->m_aes.setKey_SHA256(param.key);
-		ret->m_flagDynamicAddress = ret->m_address.isInvalid();
+		ret->m_flagDynamicConnection = ret->m_address.isInvalid();
 
 		ret->initWithParam(param);
+
+		return ret;
 	}
-	return ret;
+
+	return Ref<SRouterRemote>::null();
+
 }
 
 String SRouterRemote::getStatus()
@@ -432,14 +443,12 @@ void SRouterRemote::_idle()
 
 void SRouterRemote::_writeIPv4Packet(const void* packet, sl_uint32 size)
 {
-	if (m_address.isValid()) {
-		Ref<SRouter> router = getRouter();
-		if (router.isNotNull()) {
-			if (m_flagCompressPacket) {
-				router->_sendCompressedRawIPv4PacketToRemote(this, packet, size);
-			} else {
-				router->_sendRawIPv4PacketToRemote(this, packet, size);
-			}
+	Ref<SRouter> router = getRouter();
+	if (router.isNotNull()) {
+		if (m_flagCompressPacket) {
+			router->_sendCompressedRawIPv4PacketToRemote(this, packet, size);
+		} else {
+			router->_sendRawIPv4PacketToRemote(this, packet, size);
 		}
 	}
 }
@@ -585,6 +594,7 @@ sl_bool SRouterArpProxy::parseConfig(SRouter* router, const Variant& conf)
 SRouterParam::SRouterParam()
 {
 	udp_server_port = 0;
+	tcp_server_port = 0;
 }
 
 SRouter::SRouter()
@@ -617,11 +627,25 @@ Ref<SRouter> SRouter::create(const SRouterParam& param)
 			Ref<AsyncUdpSocket> udpServer = AsyncUdpSocket::create(param.udp_server_port, ret.ptr, MESSAGE_SIZE + 32, ioLoop, sl_false);
 			if (udpServer.isNotNull()) {
 				ret->m_udpServer = udpServer;
-				ret->m_aesUdpServer.setKey_SHA256(param.udp_key);
 			} else {
 				SLIB_LOG_ERROR(TAG, "Failed to create UDP server on port " + String::fromUint32(param.udp_server_port));
 				return Ref<SRouter>::null();
 			}
+			if (param.tcp_server_port > 0) {
+				TcpDatagramServerParam tp;
+				tp.bindAddress.port = param.tcp_server_port;
+				tp.ioLoop = ioLoop;
+				tp.listener = ret.ptr;
+				tp.flagAutoStart = sl_false;
+				Ref<TcpDatagramServer> tcpServer = TcpDatagramServer::create(tp);
+				if (tcpServer.isNotNull()) {
+					ret->m_tcpServer = tcpServer;
+				} else {
+					SLIB_LOG_ERROR(TAG, "Failed to create TCP server on port " + String::fromUint32(param.tcp_server_port));
+					return Ref<SRouter>::null();
+				}
+			}
+			ret->m_aesPacket.setKey_SHA256(param.server_key);
 
 			ret->m_timerIdle = loop->addTimer(SLIB_CALLBACK_CLASS(SRouter, _onIdle, ret.ptr), 1000);
 
@@ -640,11 +664,9 @@ Ref<SRouter> SRouter::createFromConfiguration(const Variant& varConfig)
 
 	sl_uint32 fragment_expiring_seconds = varConfig.getField("fragment_expiring_seconds").getUint32(3600);
 
-	Variant udp_server = varConfig.getField("udp_server");
-	if (udp_server.isNotNull()) {
-		param.udp_server_port = udp_server.getField("port").getUint32(0);
-		param.udp_key = udp_server.getField("key").getString();
-	}
+	param.udp_server_port = varConfig.getField("udp_server_port").getUint32(0);
+	param.tcp_server_port = varConfig.getField("tcp_server_port").getUint32(0);
+	param.server_key = varConfig.getField("server_key").getString();
 
 	Ref<SRouter> ret = SRouter::create(param);
 
@@ -729,6 +751,9 @@ void SRouter::release()
 	if (m_udpServer.isNotNull()) {
 		m_udpServer->close();
 	}
+	if (m_tcpServer.isNotNull()) {
+		m_tcpServer->close();
+	}
 	{
 		ListLocker< Ref<SRouterDevice> > devices(m_mapDevices.values());
 		for (sl_size i = 0; i < devices.count; i++) {
@@ -750,7 +775,12 @@ void SRouter::start()
 		return;
 	}
 
-	m_udpServer->start();
+	if (m_udpServer.isNotNull()) {
+		m_udpServer->start();
+	}
+	if (m_tcpServer.isNotNull()) {
+		m_tcpServer->start();
+	}
 	m_loop->start();
 	m_ioLoop->start();
 
@@ -802,8 +832,24 @@ void SRouter::registerRemote(const String& name, const Ref<SRouterRemote>& remot
 {
 	if (remote.isNotNull()) {
 		m_mapRemotes.put(name, remote);
-		if (!(remote->m_flagDynamicAddress)) {
-			m_mapRemotesBySocketAddress.put(remote->m_address, remote);
+		if (!(remote->m_flagDynamicConnection)) {
+			if (remote->m_flagTcp) {
+				Ref<TcpDatagramClient> tcp = remote->m_tcp;
+				if (tcp.isNull()) {
+					TcpDatagramClientParam tp;
+					tp.serverAddress = remote->m_address;
+					tp.listener = WeakRef<SRouter>(this);
+					tp.flagAutoReconnect = sl_true;
+					tp.autoReconnectIntervalSeconds = 5;
+					tcp = TcpDatagramClient::create(tp);
+					remote->m_tcp = tcp;
+				}
+				if (tcp.isNotNull()) {
+					m_mapRemotesByTcpClient.put(tcp.ptr, remote);
+				}
+			} else {
+				m_mapRemotesBySocketAddress.put(remote->m_address, remote);
+			}
 		}
 		registerInterface(name, remote);
 	}
@@ -1027,23 +1073,48 @@ void SRouter::_sendRemoteMessage(SRouterRemote* remote, sl_uint8 method, const v
 	sl_uint32 m = (sl_uint32)(writer.getPosition());
 	m = (sl_uint32)(remote->m_aes.encrypt_CBC_PKCS7Padding(buf, m, bufEnc));
 	if (m > 0) {
-		m_udpServer->sendTo(remote->m_address, bufEnc, m);
+		Ref<TcpDatagramClient> tcp = remote->m_tcp;
+		if (tcp.isNotNull()) {
+			tcp->send(bufEnc, m);
+		}
+		if (remote->m_address.isValid()) {
+			m_udpServer->sendTo(remote->m_address, bufEnc, m);
+		}
 	}
 }
 
-void SRouter::_receiveRemoteMessage(const SocketAddress& address, void* _data, sl_uint32 size)
+void SRouter::_receiveRemoteMessage(const SocketAddress& address, TcpDatagramClient* client, void* _data, sl_uint32 _size)
 {
-	sl_uint8* data = (sl_uint8*)_data;
+	if (_size > MESSAGE_SIZE + 32) {
+		return;
+	}
+	sl_uint8 data[MESSAGE_SIZE + 16];
+	sl_uint32 size = (sl_uint32)(m_aesPacket.decrypt_CBC_PKCS7Padding(_data, _size, data));
+	if (size == 0) {
+		return;
+	}
+
+	Ref<SRouterRemote> remote;
+	if (client) {
+		m_mapRemotesByTcpClient.get(client, &remote);
+	} else {
+		m_mapRemotesBySocketAddress.get(address, &remote);
+	}
+
 	sl_uint8 method = data[0];
 	switch (method) {
 	case 10: // Compressed Raw IPv4 Packet
-		_receiveCompressedRawIPv4PacketFromRemote(address, data + 1, size - 1);
+		if (remote.isNotNull()) {
+			_receiveCompressedRawIPv4PacketFromRemote(remote.ptr, data + 1, size - 1);
+		}
 		break;
 	case 11: // Not-Compressed Raw IPv4 Packet
-		_receiveRawIPv4PacketFromRemote(address, data + 1, size - 1);
+		if (remote.isNotNull()) {
+			_receiveRawIPv4PacketFromRemote(remote.ptr, data + 1, size - 1);
+		}
 		break;
 	case 50: // Router Keep-Alive Notification
-		_receiveRouterKeepAlive(address, data + 1, size - 1);
+		_receiveRouterKeepAlive(address, client, data + 1, size - 1);
 		break;
 	}
 }
@@ -1057,16 +1128,11 @@ void SRouter::_sendCompressedRawIPv4PacketToRemote(SRouterRemote* remote, const 
 	}
 }
 
-void SRouter::_receiveCompressedRawIPv4PacketFromRemote(const SocketAddress& address, void* data, sl_uint32 size)
+void SRouter::_receiveCompressedRawIPv4PacketFromRemote(SRouterRemote* remote, void* data, sl_uint32 size)
 {
 	Memory mem = Zlib::decompressRaw(data, size);
 	if (mem.isNotEmpty()) {
-		Ref<SRouterRemote> remote;
-		if (m_mapRemotesBySocketAddress.get(address, &remote)) {
-			if (remote.isNotNull()) {
-				forwardIPv4Packet(remote.ptr, mem.getData(), (sl_uint32)(mem.getSize()), sl_false);
-			}
-		}
+		forwardIPv4Packet(remote, mem.getData(), (sl_uint32)(mem.getSize()), sl_false);
 	}
 }
 
@@ -1076,14 +1142,9 @@ void SRouter::_sendRawIPv4PacketToRemote(SRouterRemote* remote, const void* pack
 	_sendRemoteMessage(remote, 11, packet, size);
 }
 
-void SRouter::_receiveRawIPv4PacketFromRemote(const SocketAddress& address, void* data, sl_uint32 size)
+void SRouter::_receiveRawIPv4PacketFromRemote(SRouterRemote* remote, void* data, sl_uint32 size)
 {
-	Ref<SRouterRemote> remote;
-	if (m_mapRemotesBySocketAddress.get(address, &remote)) {
-		if (remote.isNotNull()) {
-			forwardIPv4Packet(remote.ptr, data, size, sl_false);
-		}
-	}
+	forwardIPv4Packet(remote, data, size, sl_false);
 }
 
 
@@ -1097,7 +1158,7 @@ void SRouter::_sendRouterKeepAlive(SRouterRemote* remote)
 	_sendRemoteMessage(remote, 50, buf, (sl_uint32)(writer.getPosition()));
 }
 
-void SRouter::_receiveRouterKeepAlive(const SocketAddress& address, void* data, sl_uint32 size)
+void SRouter::_receiveRouterKeepAlive(const SocketAddress& address, TcpDatagramClient* client, void* data, sl_uint32 size)
 {
 	MemoryReader reader(data, size);
 	String name;
@@ -1106,24 +1167,27 @@ void SRouter::_receiveRouterKeepAlive(const SocketAddress& address, void* data, 
 	}
 	Ref<SRouterRemote> remote = m_mapRemotes.getValue(name, Ref<SRouterRemote>::null());
 	if (remote.isNotNull()) {
-		if (remote->m_flagDynamicAddress) {
+		if (remote->m_flagDynamicConnection) {
 			remote->m_address = address;
+			remote->m_tcp = client;
 		}
-		m_mapRemotesBySocketAddress.put(address, remote);
+		if (client) {
+			m_mapRemotesByTcpClient.put(client, remote);
+		} else {
+			m_mapRemotesBySocketAddress.put(address, remote);
+		}
 		remote->m_timeLastKeepAliveReceive = Time::now();
 	}
 }
 
 void SRouter::onReceiveFrom(AsyncUdpSocket* socket, const SocketAddress& address, void* data, sl_uint32 sizeReceived)
 {
-	if (sizeReceived > MESSAGE_SIZE + 32) {
-		return;
-	}
-	char bufDec[MESSAGE_SIZE + 16];
-	sl_uint32 m = (sl_uint32)(m_aesUdpServer.decrypt_CBC_PKCS7Padding(data, sizeReceived, bufDec));
-	if (m > 0) {
-		_receiveRemoteMessage(address, bufDec, m);
-	}
+	_receiveRemoteMessage(address, sl_null, data, sizeReceived);
+}
+
+void SRouter::onReceiveFrom(TcpDatagramClient* client, void* data, sl_uint32 sizeReceived)
+{
+	_receiveRemoteMessage(SocketAddress::none(), client, data, sizeReceived);
 }
 
 void SRouter::_onIdle()
