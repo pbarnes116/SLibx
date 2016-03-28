@@ -154,6 +154,7 @@ public:
 	SocketAddress host_address;
 	String key;
 	sl_bool flagCompressPacket;
+	sl_uint32 tcp_send_buffer_size;
 
 public:
 	SRouterRemoteParam();
@@ -191,6 +192,7 @@ protected:
 	Time m_timeLastKeepAliveSend;
 	sl_bool m_flagDynamicConnection;
 	sl_bool m_flagCompressPacket;
+	sl_uint32 m_tcpSendBufferSize;
 
 	AES m_aes;
 
@@ -271,6 +273,8 @@ public:
 	sl_uint32 udp_server_port;
 	sl_uint32 tcp_server_port;
 	String server_key;
+
+	sl_uint32 tcp_send_buffer_size;
 	
 	Ptr<SRouterListener> listener;
 

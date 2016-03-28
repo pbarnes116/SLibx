@@ -372,6 +372,7 @@ SRouterRemoteParam::SRouterRemoteParam()
 {
 	flagTcp = sl_false;
 	flagCompressPacket = sl_true;
+	tcp_send_buffer_size = 1024000;
 }
 
 void SRouterRemoteParam::parseConfig(const Variant& varConfig)
@@ -385,6 +386,7 @@ void SRouterRemoteParam::parseConfig(const Variant& varConfig)
 	host_address.setHostAddress(varConfig.getField("host").getString());
 	key = varConfig.getField("key").getString();
 	flagCompressPacket = varConfig.getField("flag_compress_packet").getBoolean(flagCompressPacket);
+	tcp_send_buffer_size = varConfig.getField("tcp_send_buffer_size").getUint32(tcp_send_buffer_size);
 }
 
 SLIB_DEFINE_OBJECT(SRouterRemote, SRouterInterface)
@@ -410,6 +412,7 @@ Ref<SRouterRemote> SRouterRemote::create(const SRouterRemoteParam& param)
 
 		ret->m_aes.setKey_SHA256(param.key);
 		ret->m_flagDynamicConnection = ret->m_address.isInvalid();
+		ret->m_tcpSendBufferSize = param.tcp_send_buffer_size;
 
 		ret->initWithParam(param);
 
@@ -595,6 +598,7 @@ SRouterParam::SRouterParam()
 {
 	udp_server_port = 0;
 	tcp_server_port = 0;
+	tcp_send_buffer_size = 1024000;
 }
 
 SRouter::SRouter()
@@ -636,6 +640,7 @@ Ref<SRouter> SRouter::create(const SRouterParam& param)
 				tp.bindAddress.port = param.tcp_server_port;
 				tp.ioLoop = ioLoop;
 				tp.listener = ret.ptr;
+				tp.maxWaitingBytesForSending = param.tcp_send_buffer_size;
 				tp.flagAutoStart = sl_false;
 				Ref<TcpDatagramServer> tcpServer = TcpDatagramServer::create(tp);
 				if (tcpServer.isNotNull()) {
@@ -664,9 +669,11 @@ Ref<SRouter> SRouter::createFromConfiguration(const Variant& varConfig)
 
 	sl_uint32 fragment_expiring_seconds = varConfig.getField("fragment_expiring_seconds").getUint32(3600);
 
-	param.udp_server_port = varConfig.getField("udp_server_port").getUint32(0);
-	param.tcp_server_port = varConfig.getField("tcp_server_port").getUint32(0);
+	param.udp_server_port = varConfig.getField("udp_server_port").getUint32(param.udp_server_port);
+	param.tcp_server_port = varConfig.getField("tcp_server_port").getUint32(param.tcp_server_port);
 	param.server_key = varConfig.getField("server_key").getString();
+
+	param.tcp_send_buffer_size = varConfig.getField("tcp_send_buffer_size").getUint32(param.tcp_send_buffer_size);
 
 	Ref<SRouter> ret = SRouter::create(param);
 
@@ -692,6 +699,7 @@ Ref<SRouter> SRouter::createFromConfiguration(const Variant& varConfig)
 				SRouterRemoteParam rp;
 				rp.fragment_expiring_seconds = fragment_expiring_seconds;
 				rp.loop = ret->m_loop;
+				rp.tcp_send_buffer_size = param.tcp_send_buffer_size;
 				rp.parseConfig(varRemotes[i].value);
 				Ref<SRouterRemote> remote = SRouterRemote::create(rp);
 				if (remote.isNotNull()) {
@@ -841,6 +849,7 @@ void SRouter::registerRemote(const String& name, const Ref<SRouterRemote>& remot
 					tp.listener = WeakRef<SRouter>(this);
 					tp.flagAutoReconnect = sl_true;
 					tp.autoReconnectIntervalSeconds = 5;
+					tp.maxWaitingBytesForSending = remote->m_tcpSendBufferSize;
 					tcp = TcpDatagramClient::create(tp);
 					remote->m_tcp = tcp;
 				}
