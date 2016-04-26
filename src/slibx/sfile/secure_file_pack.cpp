@@ -154,7 +154,7 @@ sl_bool SecureFilePackage::createFromFiles(String filePath, const CreateParam& p
 		}
 		if (File::exists(path)) {
 			String16 fileName16 = fileName;
-			sl_uint32 lenFileName = fileName16.getLength();
+			sl_uint32 lenFileName = (sl_uint32)(fileName16.getLength());
 			if (lenFileName > LEN_FILE_NAME-1) {
 				lenFileName = LEN_FILE_NAME-1;
 				SLIB_LOG(TAG, "Filename length over - " + fileName);
@@ -179,12 +179,12 @@ sl_bool SecureFilePackage::createFromFiles(String filePath, const CreateParam& p
 					indexes[i].timeModified = File::getModifiedTime(path).getMillisecondsCount();
 					indexes[i].position = file->getPosition();
 
-					int sizeContentHeader = ((((sizeof(_SECURE_FILE_CONTENT_HEADER)+sizeof(sl_char16)*fileName.getLength()) - 1) | 15) + 1);
+					int sizeContentHeader = ((((sizeof(_SECURE_FILE_CONTENT_HEADER)+sizeof(sl_char16)*(sl_uint32)(fileName.getLength())) - 1) | 15) + 1);
 					_SECURE_FILE_CONTENT_HEADER* contentHeader = (_SECURE_FILE_CONTENT_HEADER*)Base::createMemory(sizeContentHeader);
 					Math::randomMemory(contentHeader, sizeContentHeader);
 					contentHeader->size = sizeContentHeader + sizeFile;
 					contentHeader->sizeHeader = sizeContentHeader;
-					contentHeader->lengthFileName = fileName.getLength();
+					contentHeader->lengthFileName = (sl_uint32)(fileName.getLength());
 					Base::copyMemory(contentHeader + 1, fileName16.getData(), fileName16.getLength() * sizeof(sl_char16));
 					if (flagPassword) {
 						enc.encryptBlocks(contentHeader, contentHeader, sizeContentHeader);

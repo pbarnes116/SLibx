@@ -56,8 +56,8 @@ Ref<DbIp> DbIp::create(const void* _data, sl_size _size)
 	List<IPv4Item> list4 = List<IPv4Item>::create(0, len / 64);
 	List<IPv6Item> list6 = List<IPv6Item>::create(0, len / 128);
 
-	sl_uint32 pos = 0;
-	sl_int32 resultParse;
+	sl_size pos = 0;
+	sl_reg resultParse;
 	while (pos < len) {
 		IPv4Item item4;
 		IPv6Item item6;

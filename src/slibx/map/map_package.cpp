@@ -121,7 +121,7 @@ Memory MapPackage::getItem(sl_int32 itemOffset)
 
 static SLIB_INLINE void writeString(MemoryWriter& writer, const String& _str) {
 	String8 str = _str;
-	writer.writeUint32CVLI(str.getLength());
+	writer.writeUint32CVLI((sl_uint32)(str.getLength()));
 	if (str.getLength() > 0) {
 		writer.write(str.getData(), str.getLength());
 	}
