@@ -8,6 +8,8 @@
 
 /* Begin PBXBuildFile section */
 		26ACCB931C4A3AA000330F88 /* srouter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26ACCB921C4A3AA000330F88 /* srouter.cpp */; };
+		26B57FC81D0B1269002FF522 /* dev_sapp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26B57FC71D0B1269002FF522 /* dev_sapp.cpp */; };
+		26FF905A1D21A4D700812F22 /* dev_util.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26FF90591D21A4D700812F22 /* dev_util.cpp */; };
 		A2255B331BBA70B800E4CA9B /* map_tile_layer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A2255B311BBA70B800E4CA9B /* map_tile_layer.cpp */; };
 		A2255B341BBA70B800E4CA9B /* map_tile_layer.h in Headers */ = {isa = PBXBuildFile; fileRef = A2255B321BBA70B800E4CA9B /* map_tile_layer.h */; };
 		A2492A4C1B8C44FC00928EAD /* map_camera.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A2492A2D1B8C44FC00928EAD /* map_camera.cpp */; };
@@ -43,6 +45,8 @@
 
 /* Begin PBXFileReference section */
 		26ACCB921C4A3AA000330F88 /* srouter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = srouter.cpp; sourceTree = "<group>"; };
+		26B57FC71D0B1269002FF522 /* dev_sapp.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = dev_sapp.cpp; path = sdev/dev_sapp.cpp; sourceTree = "<group>"; };
+		26FF90591D21A4D700812F22 /* dev_util.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = dev_util.cpp; path = sdev/dev_util.cpp; sourceTree = "<group>"; };
 		A2255B311BBA70B800E4CA9B /* map_tile_layer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = map_tile_layer.cpp; sourceTree = "<group>"; };
 		A2255B321BBA70B800E4CA9B /* map_tile_layer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = map_tile_layer.h; sourceTree = "<group>"; };
 		A2492A211B8C446400928EAD /* libslibx.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libslibx.a; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -89,6 +93,15 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		26B57FC61D0B0FC1002FF522 /* sdev */ = {
+			isa = PBXGroup;
+			children = (
+				26B57FC71D0B1269002FF522 /* dev_sapp.cpp */,
+				26FF90591D21A4D700812F22 /* dev_util.cpp */,
+			);
+			name = sdev;
+			sourceTree = "<group>";
+		};
 		A2492A181B8C446400928EAD = {
 			isa = PBXGroup;
 			children = (
@@ -126,6 +139,7 @@
 			isa = PBXGroup;
 			children = (
 				A2492A2C1B8C44FC00928EAD /* map */,
+				26B57FC61D0B0FC1002FF522 /* sdev */,
 				A2492A481B8C44FC00928EAD /* sfile */,
 				A2492A4A1B8C44FC00928EAD /* snet */,
 			);
@@ -263,6 +277,7 @@
 			files = (
 				A2492A641B8C44FC00928EAD /* map_tile_render.cpp in Sources */,
 				A2255B331BBA70B800E4CA9B /* map_tile_layer.cpp in Sources */,
+				26B57FC81D0B1269002FF522 /* dev_sapp.cpp in Sources */,
 				A2492A681B8C44FC00928EAD /* snet_dbip.cpp in Sources */,
 				A2492A4D1B8C44FC00928EAD /* map_data.cpp in Sources */,
 				A2492A501B8C44FC00928EAD /* map_data_gearth.cpp in Sources */,
@@ -282,6 +297,7 @@
 				A2492A591B8C44FC00928EAD /* map_mapview.cpp in Sources */,
 				A2492A621B8C44FC00928EAD /* map_tile_picture.cpp in Sources */,
 				A2492A601B8C44FC00928EAD /* map_tile_gis.cpp in Sources */,
+				26FF905A1D21A4D700812F22 /* dev_util.cpp in Sources */,
 				A2492A661B8C44FC00928EAD /* map_util.cpp in Sources */,
 				A2492A561B8C44FC00928EAD /* map_earth_data.cpp in Sources */,
 			);

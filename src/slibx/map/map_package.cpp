@@ -46,7 +46,7 @@ sl_bool MapPackage::checkHeader()
 		Memory originalHeader = getHeader();
 		Memory header = Memory::create(PACKAGE_HEADER_SIZE);
 		file->read(header.getData(), header.getSize());
-		if (Base::compareMemory(originalHeader.getData(), header.getData(), PACKAGE_HEADER_SIZE) == 0) {
+		if (Base::equalsMemory(originalHeader.getData(), header.getData(), PACKAGE_HEADER_SIZE)) {
 			return sl_true;
 		}
 	}

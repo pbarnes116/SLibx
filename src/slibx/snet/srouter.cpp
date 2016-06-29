@@ -1161,7 +1161,7 @@ void SRouter::_sendRouterKeepAlive(SRouterRemote* remote)
 {
 	char buf[512];
 	MemoryWriter writer(buf, 512);
-	if (!(writer.writeString(m_name))) {
+	if (!(writer.writeStringSection(m_name))) {
 		return;
 	}
 	_sendRemoteMessage(remote, 50, buf, (sl_uint32)(writer.getPosition()));
@@ -1171,7 +1171,7 @@ void SRouter::_receiveRouterKeepAlive(const SocketAddress& address, TcpDatagramC
 {
 	MemoryReader reader(data, size);
 	String name;
-	if (!(reader.readString(&name))) {
+	if (!(reader.readStringSection(&name))) {
 		return;
 	}
 	Ref<SRouterRemote> remote = m_mapRemotes.getValue(name, Ref<SRouterRemote>::null());
