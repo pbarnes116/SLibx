@@ -36,11 +36,21 @@ class SAppMenuResourceItem : public Referable
 {
 public:
 	String name;
-	sl_uint32 platformFlags;
+	int type;
+	enum {
+		typeSubmenu = 0,
+		typeItem = 1,
+		typeSeparator = 2
+	};
+	int platformFlags;
 	enum {
 		mac = 1,
 		windows = 2,
-		linux = 4
+		linux = 4,
+		all_platforms = 0xFFFF,
+		no_mac = 0xFFFE,
+		no_windows = 0xFFFD,
+		no_linux = 0xFFFB
 	};
 	SAppStringValue title;
 	KeycodeAndModifiers shortcutKey;
@@ -54,18 +64,16 @@ public:
 	String name;
 	CList< Ref<SAppMenuResourceItem> > children;
 	HashMap<String, Ref<SAppMenuResourceItem> > itemsWindows;
-	HashMap<String, Ref<SAppMenuResourceItem> > itemsNoWindows;
 	HashMap<String, Ref<SAppMenuResourceItem> > itemsLinux;
-	HashMap<String, Ref<SAppMenuResourceItem> > itemsNoLinux;
 	HashMap<String, Ref<SAppMenuResourceItem> > itemsMac;
-	HashMap<String, Ref<SAppMenuResourceItem> > itemsNoMac;
 };
 
 class SAppDocument : public Object
 {
 public:
 	SAppDocument();
-	
+	~SAppDocument();
+
 public:
 	sl_bool open(const String& filePath);
 	
@@ -90,7 +98,11 @@ protected:
 	
 	sl_bool _parseMenuResource(const Ref<XmlElement>& element);
 	
+	Ref<SAppMenuResourceItem> _parseMenuResourceItem(const Ref<XmlElement>& element, SAppMenuResource* menu, int platforms);
+	
 	sl_bool _generateStringsCpp(const String& targetPath);
+	
+	sl_bool _generateMenusCpp(const String& targetPath);
 
 	void _log(const String& text);
 
