@@ -449,7 +449,7 @@ void SAppDocument::_logError(const String& text)
 	SLIB_LOG_ERROR(TAG, text);
 }
 
-void SAppDocument::_logError(sl_uint32 line, sl_uint32 col, const String& text)
+void SAppDocument::_logError(sl_size line, sl_size col, const String& text)
 {
 	SLIB_LOG_ERROR(TAG, String::format("%s(%d:%d)%n%s", m_lastFilePath, line, col, text));
 }

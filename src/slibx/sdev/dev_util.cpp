@@ -23,7 +23,7 @@ sl_bool _SDevUtil_checkName(const CT* sz, sl_reg len)
 			}
 		}
 	} else {
-		for (sl_size i = 1; i < len; i++) {
+		for (sl_reg i = 1; i < len; i++) {
 			ch = sz[i];
 			if (!(SLIB_CHAR_IS_C_NAME(ch))) {
 				return sl_false;

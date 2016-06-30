@@ -96,7 +96,7 @@ protected:
 
 	void _logError(const String& text);
 	
-	void _logError(sl_uint32 line, sl_uint32 col, const String& text);
+	void _logError(sl_size line, sl_size col, const String& text);
 	
 	void _logError(const Ref<XmlElement>& element, const String& text);
 	
