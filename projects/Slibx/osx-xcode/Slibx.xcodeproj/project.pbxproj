@@ -7,8 +7,10 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		262DDA8C1D3F7AD400061CEA /* dev_sapp_resources.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 262DDA8B1D3F7AD400061CEA /* dev_sapp_resources.cpp */; };
+		267E06851D3F731500B1EC97 /* dev_sapp_document.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 267E06831D3F731500B1EC97 /* dev_sapp_document.cpp */; };
+		267E06861D3F731500B1EC97 /* dev_sapp_values.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 267E06841D3F731500B1EC97 /* dev_sapp_values.cpp */; };
 		26ACCB931C4A3AA000330F88 /* srouter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26ACCB921C4A3AA000330F88 /* srouter.cpp */; };
-		26B57FC81D0B1269002FF522 /* dev_sapp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26B57FC71D0B1269002FF522 /* dev_sapp.cpp */; };
 		26FF905A1D21A4D700812F22 /* dev_util.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26FF90591D21A4D700812F22 /* dev_util.cpp */; };
 		A2255B331BBA70B800E4CA9B /* map_tile_layer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A2255B311BBA70B800E4CA9B /* map_tile_layer.cpp */; };
 		A2255B341BBA70B800E4CA9B /* map_tile_layer.h in Headers */ = {isa = PBXBuildFile; fileRef = A2255B321BBA70B800E4CA9B /* map_tile_layer.h */; };
@@ -44,8 +46,10 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		262DDA8B1D3F7AD400061CEA /* dev_sapp_resources.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = dev_sapp_resources.cpp; path = sdev/dev_sapp_resources.cpp; sourceTree = "<group>"; };
+		267E06831D3F731500B1EC97 /* dev_sapp_document.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = dev_sapp_document.cpp; path = sdev/dev_sapp_document.cpp; sourceTree = "<group>"; };
+		267E06841D3F731500B1EC97 /* dev_sapp_values.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = dev_sapp_values.cpp; path = sdev/dev_sapp_values.cpp; sourceTree = "<group>"; };
 		26ACCB921C4A3AA000330F88 /* srouter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = srouter.cpp; sourceTree = "<group>"; };
-		26B57FC71D0B1269002FF522 /* dev_sapp.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = dev_sapp.cpp; path = sdev/dev_sapp.cpp; sourceTree = "<group>"; };
 		26FF90591D21A4D700812F22 /* dev_util.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = dev_util.cpp; path = sdev/dev_util.cpp; sourceTree = "<group>"; };
 		A2255B311BBA70B800E4CA9B /* map_tile_layer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = map_tile_layer.cpp; sourceTree = "<group>"; };
 		A2255B321BBA70B800E4CA9B /* map_tile_layer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = map_tile_layer.h; sourceTree = "<group>"; };
@@ -96,7 +100,9 @@
 		26B57FC61D0B0FC1002FF522 /* sdev */ = {
 			isa = PBXGroup;
 			children = (
-				26B57FC71D0B1269002FF522 /* dev_sapp.cpp */,
+				267E06831D3F731500B1EC97 /* dev_sapp_document.cpp */,
+				262DDA8B1D3F7AD400061CEA /* dev_sapp_resources.cpp */,
+				267E06841D3F731500B1EC97 /* dev_sapp_values.cpp */,
 				26FF90591D21A4D700812F22 /* dev_util.cpp */,
 			);
 			name = sdev;
@@ -275,9 +281,9 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				267E06851D3F731500B1EC97 /* dev_sapp_document.cpp in Sources */,
 				A2492A641B8C44FC00928EAD /* map_tile_render.cpp in Sources */,
 				A2255B331BBA70B800E4CA9B /* map_tile_layer.cpp in Sources */,
-				26B57FC81D0B1269002FF522 /* dev_sapp.cpp in Sources */,
 				A2492A681B8C44FC00928EAD /* snet_dbip.cpp in Sources */,
 				A2492A4D1B8C44FC00928EAD /* map_data.cpp in Sources */,
 				A2492A501B8C44FC00928EAD /* map_data_gearth.cpp in Sources */,
@@ -285,6 +291,7 @@
 				A2492A5A1B8C44FC00928EAD /* map_package.cpp in Sources */,
 				A2492A671B8C44FC00928EAD /* secure_file_pack.cpp in Sources */,
 				A2492A4C1B8C44FC00928EAD /* map_camera.cpp in Sources */,
+				262DDA8C1D3F7AD400061CEA /* dev_sapp_resources.cpp in Sources */,
 				A2492A4E1B8C44FC00928EAD /* map_data_building.cpp in Sources */,
 				A2492A5B1B8C44FC00928EAD /* map_tile_building.cpp in Sources */,
 				A2492A511B8C44FC00928EAD /* map_data_gis.cpp in Sources */,
@@ -300,6 +307,7 @@
 				26FF905A1D21A4D700812F22 /* dev_util.cpp in Sources */,
 				A2492A661B8C44FC00928EAD /* map_util.cpp in Sources */,
 				A2492A561B8C44FC00928EAD /* map_earth_data.cpp in Sources */,
+				267E06861D3F731500B1EC97 /* dev_sapp_values.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
