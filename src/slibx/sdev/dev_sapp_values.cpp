@@ -310,6 +310,17 @@ sl_bool SAppDimensionValue::checkForWindow()
 	return checkGlobal();
 }
 
+sl_bool SAppDimensionValue::checkForWindowSize()
+{
+	if (!flagDefined) {
+		return sl_true;
+	}
+	if (unit == CUSTOM) {
+		unit = PX;
+	}
+	return amount >= 0 && isGlobalUnit(unit);
+}
+
 sl_bool SAppDimensionValue::checkForRootViewPosition()
 {
 	return checkGlobal();
@@ -1189,7 +1200,7 @@ sl_bool SAppDrawableValue::parse(const String& _str)
 					}
 					sl_size posStart = pos;
 					for (; pos < len; pos++) {
-						if (!(SLIB_CHAR_IS_ALNUM(sz[pos]) || sz[pos] == '.' || sz[pos] == '\t' || sz[pos == ' '])) {
+						if (!(SLIB_CHAR_IS_ALNUM(sz[pos]) || sz[pos] == '.' || sz[pos] == '%' || sz[pos] == '\t' || sz[pos] == ' ')) {
 							break;
 						}
 					}
@@ -1279,6 +1290,8 @@ sl_bool SAppDrawableValue::parse(const String& _str)
 		}
 		
 	}
+	
+	flagDefined = sl_true;
 	
 	return sl_true;
 	

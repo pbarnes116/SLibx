@@ -250,6 +250,8 @@ SAppLayoutSimulationWindow::SAppLayoutSimulationWindow()
 
 void SAppLayoutSimulationWindow::open(SAppDocument* doc, SAppLayoutResource* layout)
 {
+	m_document = doc;
+	m_layout = layout;
 	{
 		ListItems<String> radioGroups(layout->radioGroups.keys());
 		for (sl_size i = 0; i < radioGroups.count; i++) {
@@ -259,16 +261,19 @@ void SAppLayoutSimulationWindow::open(SAppDocument* doc, SAppLayoutResource* lay
 			}
 		}
 	}
+	if (layout->type == SAppLayoutResource::typeView || layout->type == SAppLayoutResource::typeMobilePage) {
+		setCenterScreenOnCreate(sl_true);
+		setSize(800, 450);
+		setResizable(sl_true);
+	}
 	Ref<View> viewContent = doc->_simulateLayoutCreateOrLayoutView(this, layout, sl_null, sl_false);
 	if (viewContent.isNotNull()) {
-		if (layout->type == SAppLayoutResource::typeView) {
+		if (layout->type == SAppLayoutResource::typeView || layout->type == SAppLayoutResource::typeMobilePage) {
 			addView(viewContent);
 		}
 		create();
 		doc->_registerLayoutSimulationWindow(this);
 	}
-	m_document = doc;
-	m_layout = layout;
 }
 
 Ref<View> SAppLayoutSimulationWindow::getViewByName(const String& name)

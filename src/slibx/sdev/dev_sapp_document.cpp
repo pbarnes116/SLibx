@@ -427,16 +427,6 @@ sl_bool SAppDocument::_parseConfiguration(const String& filePath, SAppConfigurat
 		}
 		Ref<XmlElement> el_layout = el_generate_cpp->getFirstChildElement("layout");
 		if (el_layout.isNotNull()) {
-			Ref<XmlElement> el_member_variable_prefix = el_generate_cpp->getFirstChildElement("member-variable-prefix");
-			if (el_member_variable_prefix.isNotNull()) {
-				conf.generate_cpp_member_variable_prefix = el_member_variable_prefix->getText();
-				if (conf.generate_cpp_member_variable_prefix.isNotEmpty()) {
-					if (!(SDevUtil::checkName(conf.generate_cpp_member_variable_prefix.getData(), conf.generate_cpp_member_variable_prefix.getLength()))) {
-						_logError(el_member_variable_prefix, _g_sdev_sapp_error_configuration_value_invalid.arg("member-variable-prefix", conf.generate_cpp_member_variable_prefix));
-						return sl_false;
-					}
-				}
-			}
 			ListLocker< Ref<XmlElement> > children(el_layout->getChildElements());
 			for (sl_size i = 0; i < children.count; i++) {
 				Ref<XmlElement> child = children[i];
@@ -1058,8 +1048,8 @@ Ref<Drawable> SAppDocument::_getDrawableValue_Image(SAppDrawableResource* res)
 				if (item.isNotNull()) {
 					Ref<Image> image = item->loadImage();
 					if (image.isNotNull()) {
-						sl_real width = image->getWidth();
-						sl_real height = image->getHeight();
+						sl_real width = (sl_real)(image->getWidth());
+						sl_real height = (sl_real)(image->getHeight());
 						mipmap->addSource(image, width, height);
 						if (width > SLIB_EPSILON && height > SLIB_EPSILON) {
 							defaultWidth = width;
@@ -2227,17 +2217,16 @@ sl_bool SAppDocument::_checkMenuValueAvailable(SAppMenuValue& value, const Ref<X
 		view->FUNC(TO_VALUE##Value(ATTR NAME), sl_false); \
 	}
 
-#define SIMULATE_LAYOUT_SET_LAYOUT_ATTR_ONLAYOUT(ATTR, NAME, FUNC, TO_VALUE) \
+#define SIMULATE_LAYOUT_SET_LAYOUT_ATTR_ONLAYOUT(ATTR, NAME, FUNC) \
 	if (ATTR NAME.flagDefined) { \
-		if (ATTR NAME.isNeededOnLayoutFunction()) { \
-			if (flagOnLayout) { \
-				view->FUNC(TO_VALUE##Value(ATTR NAME), sl_false); \
-			} \
-		} else { \
-			if (!flagOnLayout) { \
-				view->FUNC(TO_VALUE##Value(ATTR NAME), sl_false); \
-			} \
+		if (flagOnLayout) { \
+			view->FUNC(_getDimensionValue(ATTR NAME), sl_false); \
 		} \
+	}
+
+#define SIMULATE_LAYOUT_SET_LAYOUT_ATTR_DRAWABLE(ATTR, NAME, FUNC) \
+	if (flagOnLayout && ATTR NAME.flagDefined) { \
+		view->FUNC(_getDrawableValue(ATTR NAME), sl_false); \
 	}
 
 #define _getValue(x) x.value
@@ -2297,6 +2286,8 @@ sl_bool SAppDocument::_parseLayoutResource(const Ref<XmlElement>& element)
 		type = SAppLayoutResource::typeView;
 	} else if (strType == "window") {
 		type = SAppLayoutResource::typeWindow;
+	} else if (strType == "mobile-page") {
+		type = SAppLayoutResource::typeMobilePage;
 	} else {
 		_logError(element, _g_sdev_sapp_error_resource_layout_type_invalid.arg(strType));
 		return sl_false;
@@ -2351,7 +2342,7 @@ sl_bool SAppDocument::_parseLayoutResourceItem(SAppLayoutResource* layout, SAppL
 			Ref<SAppLayoutStyle> style;
 			m_layoutStyles.get(s, &style);
 			if (style.isNotNull()) {
-				layout->styles.add(style);
+				item->styles.add(style);
 			} else {
 				_logError(element, _g_sdev_sapp_error_layout_style_not_found.arg(s));
 				return sl_false;
@@ -2378,9 +2369,25 @@ sl_bool SAppDocument::_parseLayoutResourceItem(SAppLayoutResource* layout, SAppL
 	}
 	
 	if (item->type == SAppLayoutResource::typeWindow) {
-		item->className = "slib::Window";
 		if (!(_parseLayoutResourceWindowAttributes(layout))) {
 			return sl_false;
+		}
+		if (!(_parseLayoutResourceItemChildren(layout, item))) {
+			return sl_false;
+		}
+	} else if (item->type == SAppLayoutResource::typeMobilePage) {
+		if (!(_parseLayoutResourceViewAttributes(layout, item, parent))) {
+			return sl_false;
+		}
+		if (!(layout->viewAttrs->width.flagDefined)) {
+			layout->viewAttrs->width.flagDefined = sl_true;
+			layout->viewAttrs->width.amount = 1;
+			layout->viewAttrs->width.unit = SAppDimensionValue::SW;
+		}
+		if (!(layout->viewAttrs->height.flagDefined)) {
+			layout->viewAttrs->height.flagDefined = sl_true;
+			layout->viewAttrs->height.amount = 1;
+			layout->viewAttrs->height.unit = SAppDimensionValue::SH;
 		}
 		if (!(_parseLayoutResourceItemChildren(layout, item))) {
 			return sl_false;
@@ -2548,11 +2555,24 @@ sl_bool SAppDocument::_generateLayoutsCpp(const String& targetPath)
 {
 	_log(_g_sdev_sapp_log_generate_cpp_layouts_begin);
 	
-	
 	StringBuffer sbHeader, sbCpp;
 	sbHeader.add(String::format(
 								"#ifndef CHECKHEADER_RESOURCE_UI_%s%n"
 								"#define CHECKHEADER_RESOURCE_UI_%s%n%n"
+								"#include <slib/ui/resource.h>%n"
+								, m_conf.generate_cpp_namespace));
+
+	{
+		ListLocker<String> includes(m_conf.generate_cpp_layout_include_headers);
+		for (sl_size i = 0; i < includes.count; i++) {
+			if (includes[i].isNotEmpty()) {
+				sbHeader.add(String::format("#include \"%s\"%n", includes[i]));
+			}
+		}
+	}
+
+	sbHeader.add(String::format(
+								"%n"
 								"#include <slib/ui/resource.h>%n%n"
 								"namespace %s%n"
 								"{%n\tnamespace ui%n\t{%n%n"
@@ -2579,6 +2599,9 @@ sl_bool SAppDocument::_generateLayoutsCpp(const String& targetPath)
 			if (layout->type == SAppLayoutResource::typeWindow) {
 				sbHeader.add(String::format("\t\tSLIB_DECLARE_WINDOW_LAYOUT_BEGIN(%s)%n", pair.key));
 				sbCpp.add(String::format("\t\tSLIB_DEFINE_WINDOW_LAYOUT(%s)%n%n", pair.key));
+			} else if (layout->type == SAppLayoutResource::typeMobilePage) {
+				sbHeader.add(String::format("\t\tSLIB_DECLARE_MOBILE_PAGE_LAYOUT_BEGIN(%s)%n", pair.key));
+				sbCpp.add(String::format("\t\tSLIB_DEFINE_MOBILE_PAGE_LAYOUT(%s)%n%n", pair.key));
 			} else if (layout->type == SAppLayoutResource::typeView) {
 				sbHeader.add(String::format("\t\tSLIB_DECLARE_VIEW_LAYOUT_BEGIN(%s)%n", pair.key));
 				sbCpp.add(String::format("\t\tSLIB_DEFINE_VIEW_LAYOUT(%s)%n%n", pair.key));
@@ -2748,6 +2771,10 @@ sl_bool SAppDocument::_generateLayoutsCppItem(SAppLayoutResourceItem* parent, SA
 			if (!(_generateLayoutsCppWindowAttributes("this", item, sbDefineInit))) {
 				return sl_false;
 			}
+		} else if (item->type == SAppLayoutResource::typeMobilePage) {
+			if (!(_generateLayoutsCppViewAttributes("this", item, sbDefineInit, sbDefineInit))) {
+				return sl_false;
+			}
 		} else if (item->type == SAppLayoutResource::typeView) {
 			if (!(_generateLayoutsCppViewAttributes("this", item, sbDefineInit, sbDefineInit))) {
 				return sl_false;
@@ -2760,7 +2787,7 @@ sl_bool SAppDocument::_generateLayoutsCppItem(SAppLayoutResourceItem* parent, SA
 		name = "m_contentView";
 	}
 	
-	if (item->type == SAppLayoutResource::typeWindow || item->type == SAppLayoutResource::typeView || item->type == SAppLayoutResource::typeLinear) {
+	if (item->type == SAppLayoutResource::typeWindow || item->type == SAppLayoutResource::typeMobilePage || item->type == SAppLayoutResource::typeView || item->type == SAppLayoutResource::typeViewGroup || item->type == SAppLayoutResource::typeLinear) {
 		ListLocker< Ref<SAppLayoutResourceItem> > children(item->children);
 		for (sl_size i = 0; i < children.count; i++) {
 			Ref<SAppLayoutResourceItem>& child = children[i];
@@ -2965,11 +2992,7 @@ Ref<View> SAppDocument::_simulateLayoutCreateOrLayoutView(SAppLayoutSimulationWi
 			simulator->registerViewByName(item->name, view);
 		}
 	} else {
-		if (item->type == SAppLayoutResource::typeWindow) {
-			
-		} else {
-			
-		}
+		Ref<SAppLayoutResource> layout = simulator->getLayout();
 		if (flagOnLayout) {
 			if (item->type != SAppLayoutResource::typeWindow) {
 				view = simulator->getViewByName("m_contentView");
@@ -2985,6 +3008,9 @@ Ref<View> SAppDocument::_simulateLayoutCreateOrLayoutView(SAppLayoutSimulationWi
 					m_layoutSimulationParams.viewportWidth = view->getWidth();
 					m_layoutSimulationParams.viewportHeight = view->getHeight();
 					m_layoutSimulationParams.customUnit = 1;
+					if (layout.isNotNull() && layout->customUnit.flagDefined && !(layout->customUnit.isNeededOnLayoutFunction())) {
+						m_layoutSimulationParams.customUnit = _getDimensionValue(layout->customUnit);
+					}
 					if (!(_simulateLayoutSetWindowAttributes(simulator, item))) {
 						return Ref<View>::null();
 					}
@@ -2992,8 +3018,12 @@ Ref<View> SAppDocument::_simulateLayoutCreateOrLayoutView(SAppLayoutSimulationWi
 						return Ref<View>::null();
 					}
 				}
+			} else {
+				if (layout.isNotNull() && layout->customUnit.flagDefined && layout->customUnit.isNeededOnLayoutFunction()) {
+					m_layoutSimulationParams.customUnit = _getDimensionValue(layout->customUnit);
+				}
 			}
-		} else if (item->type == SAppLayoutResource::typeView) {
+		} else if (item->type == SAppLayoutResource::typeMobilePage || item->type == SAppLayoutResource::typeView) {
 			if (!flagOnLayout) {
 				view = new ViewGroup;
 			}
@@ -3004,9 +3034,14 @@ Ref<View> SAppDocument::_simulateLayoutCreateOrLayoutView(SAppLayoutSimulationWi
 				m_layoutSimulationParams.viewportWidth = view->getWidth();
 				m_layoutSimulationParams.viewportHeight = view->getHeight();
 				m_layoutSimulationParams.customUnit = 1;
+				if (layout.isNotNull() && layout->customUnit.flagDefined) {
+					m_layoutSimulationParams.customUnit = _getDimensionValue(layout->customUnit);
+				}
 				if (!(_simulateLayoutSetViewAttributes(simulator, view.ptr, item, flagOnLayout))) {
 					return Ref<View>::null();
 				}
+				m_layoutSimulationParams.viewportWidth = view->getWidth();
+				m_layoutSimulationParams.viewportHeight = view->getHeight();
 			}
 		} else {
 			return Ref<View>::null();
@@ -3018,22 +3053,11 @@ Ref<View> SAppDocument::_simulateLayoutCreateOrLayoutView(SAppLayoutSimulationWi
 				}
 			}
 		}
-		Ref<SAppLayoutResource> layout = simulator->getLayout();
-		if (layout.isNotNull() && layout->customUnit.flagDefined) {
-			if (layout->customUnit.isNeededOnLayoutFunction()) {
-				if (flagOnLayout) {
-					m_layoutSimulationParams.customUnit = _getDimensionValue(layout->customUnit);
-				}
-			} else {
-				if (!flagOnLayout) {
-					m_layoutSimulationParams.customUnit = _getDimensionValue(layout->customUnit);
-				}
-			}
-		}
+
 	}
 	
 	if (view.isNotNull()) {
-		if (item->type == SAppLayoutResource::typeWindow || item->type == SAppLayoutResource::typeView || item->type == SAppLayoutResource::typeLinear) {
+		if (item->type == SAppLayoutResource::typeWindow || item->type == SAppLayoutResource::typeMobilePage || item->type == SAppLayoutResource::typeView || item->type == SAppLayoutResource::typeViewGroup || item->type == SAppLayoutResource::typeLinear) {
 			ListLocker< Ref<SAppLayoutResourceItem> > children(item->children);
 			for (sl_size i = 0; i < children.count; i++) {
 				Ref<SAppLayoutResourceItem>& child = children[i];
@@ -3144,6 +3168,8 @@ sl_bool SAppDocument::_parseLayoutResourceRootViewAttributes(SAppLayoutResource*
 
 	PARSE_AND_CHECK_LAYOUT_ATTR(attr->, occurringClick)
 	PARSE_AND_CHECK_LAYOUT_ATTR(attr->, background)
+	PARSE_AND_CHECK_LAYOUT_ATTR(attr->, backgroundScale)
+	PARSE_AND_CHECK_LAYOUT_ATTR(attr->, backgroundAlign)
 	PARSE_AND_CHECK_LAYOUT_ATTR(attr->, backgroundColor)
 	
 	PARSE_AND_CHECK_LAYOUT_ATTR(attr->, fontFamily)
@@ -3202,6 +3228,8 @@ sl_bool SAppDocument::_generateLayoutsCppRootViewAttributes(SAppLayoutResourceIt
 		return sl_false;
 	}
 	GENERATE_CPP_SET_LAYOUT_ATTR_NOREDRAW(attr->, background, setBackground, sbDefineInit)
+	GENERATE_CPP_SET_LAYOUT_ATTR_NOREDRAW(attr->, backgroundScale, setBackgroundScaleMode, sbDefineInit)
+	GENERATE_CPP_SET_LAYOUT_ATTR_NOREDRAW(attr->, backgroundAlign, setBackgroundAlignment, sbDefineInit)
 	GENERATE_CPP_SET_LAYOUT_ATTR_NOREDRAW(attr->, backgroundColor, setBackgroundColor, sbDefineInit)
 
 	if (!(_checkStringValueAvailable(attr->fontFamily, item->element))) {
@@ -3261,6 +3289,8 @@ sl_bool SAppDocument::_simulateLayoutSetRootViewAttributes(View* view, SAppLayou
 		return sl_false;
 	}
 	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_NOREDRAW(attr->, background, setBackground, _getDrawable)
+	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_NOREDRAW(attr->, backgroundScale, setBackgroundScaleMode, _get)
+	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_NOREDRAW(attr->, backgroundAlign, setBackgroundAlignment, _get)
 	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_NOREDRAW(attr->, backgroundColor, setBackgroundColor, _get)
 	
 	if (!(_checkStringValueAvailable(attr->fontFamily, item->element))) {
@@ -3318,23 +3348,23 @@ sl_bool SAppDocument::_parseLayoutResourceWindowAttributes(SAppLayoutResource* i
 	
 	PARSE_AND_CHECK_LAYOUT_ATTR(attr->, menu)
 	PARSE_AND_CHECK_LAYOUT_ATTR(attr->, title)
-	PARSE_AND_CHECK_LAYOUT_ATTR(attr->, x)
-	if (!(attr->x.checkForWindow())) {
-		LOG_ERROR_LAYOUT_ATTR(x)
+	PARSE_AND_CHECK_LAYOUT_ATTR(attr->, left)
+	if (!(attr->left.checkForWindow())) {
+		LOG_ERROR_LAYOUT_ATTR(left)
 		return sl_false;
 	}
-	PARSE_AND_CHECK_LAYOUT_ATTR(attr->, y)
-	if (!(attr->y.checkForWindow())) {
-		LOG_ERROR_LAYOUT_ATTR(y)
+	PARSE_AND_CHECK_LAYOUT_ATTR(attr->, top)
+	if (!(attr->top.checkForWindow())) {
+		LOG_ERROR_LAYOUT_ATTR(top)
 		return sl_false;
 	}
 	PARSE_AND_CHECK_LAYOUT_ATTR(attr->, width)
-	if (!(attr->width.checkForWindow())) {
+	if (!(attr->width.checkForWindowSize())) {
 		LOG_ERROR_LAYOUT_ATTR(width)
 		return sl_false;
 	}
 	PARSE_AND_CHECK_LAYOUT_ATTR(attr->, height)
-	if (!(attr->height.checkForWindow())) {
+	if (!(attr->height.checkForWindowSize())) {
 		LOG_ERROR_LAYOUT_ATTR(height)
 		return sl_false;
 	}
@@ -3379,8 +3409,8 @@ sl_bool SAppDocument::_generateLayoutsCppWindowAttributes(const String& name, SA
 		return sl_false;
 	}
 	GENERATE_CPP_SET_LAYOUT_ATTR(attr->, title, setTitle, sbDefine)
-	GENERATE_CPP_SET_LAYOUT_ATTR(attr->, x, setX, sbDefine)
-	GENERATE_CPP_SET_LAYOUT_ATTR(attr->, y, setY, sbDefine)
+	GENERATE_CPP_SET_LAYOUT_ATTR(attr->, left, setX, sbDefine)
+	GENERATE_CPP_SET_LAYOUT_ATTR(attr->, top, setY, sbDefine)
 	GENERATE_CPP_SET_LAYOUT_ATTR(attr->, width, setWidth, sbDefine)
 	GENERATE_CPP_SET_LAYOUT_ATTR(attr->, height, setHeight, sbDefine)
 	GENERATE_CPP_SET_LAYOUT_ATTR(attr->, minimized, setMinimized, sbDefine)
@@ -3421,8 +3451,8 @@ sl_bool SAppDocument::_simulateLayoutSetWindowAttributes(Window* view, SAppLayou
 		return sl_false;
 	}
 	SIMULATE_LAYOUT_SET_LAYOUT_ATTR(attr->, title, setTitle, _getString)
-	SIMULATE_LAYOUT_SET_LAYOUT_ATTR(attr->, x, setX, _getDimension)
-	SIMULATE_LAYOUT_SET_LAYOUT_ATTR(attr->, y, setY, _getDimension)
+	SIMULATE_LAYOUT_SET_LAYOUT_ATTR(attr->, left, setX, _getDimension)
+	SIMULATE_LAYOUT_SET_LAYOUT_ATTR(attr->, top, setY, _getDimension)
 	SIMULATE_LAYOUT_SET_LAYOUT_ATTR(attr->, width, setWidth, _getDimension)
 	SIMULATE_LAYOUT_SET_LAYOUT_ATTR(attr->, height, setHeight, _getDimension)
 	SIMULATE_LAYOUT_SET_LAYOUT_ATTR(attr->, minimized, setMinimized, _get)
@@ -3669,29 +3699,29 @@ sl_bool SAppDocument::_parseLayoutResourceViewAttributes(SAppLayoutResource* lay
 		}
 	}
 	{
-		PARSE_AND_CHECK_LAYOUT_ATTR(attr->, x)
+		PARSE_AND_CHECK_LAYOUT_ATTR(attr->, left)
 		if (parent) {
-			if (!(attr->x.checkPosition())) {
-				LOG_ERROR_LAYOUT_ATTR(x)
+			if (!(attr->left.checkPosition())) {
+				LOG_ERROR_LAYOUT_ATTR(left)
 				return sl_false;
 			}
 		} else {
-			if (!(attr->x.checkForRootViewPosition())) {
-				LOG_ERROR_LAYOUT_ATTR(x)
+			if (!(attr->left.checkForRootViewPosition())) {
+				LOG_ERROR_LAYOUT_ATTR(left)
 				return sl_false;
 			}
 		}
 	}
 	{
-		PARSE_AND_CHECK_LAYOUT_ATTR(attr->, y)
+		PARSE_AND_CHECK_LAYOUT_ATTR(attr->, top)
 		if (parent) {
-			if (!(attr->y.checkPosition())) {
-				LOG_ERROR_LAYOUT_ATTR(y)
+			if (!(attr->top.checkPosition())) {
+				LOG_ERROR_LAYOUT_ATTR(top)
 				return sl_false;
 			}
 		} else {
-			if (!(attr->y.checkForRootViewPosition())) {
-				LOG_ERROR_LAYOUT_ATTR(y)
+			if (!(attr->top.checkForRootViewPosition())) {
+				LOG_ERROR_LAYOUT_ATTR(top)
 				return sl_false;
 			}
 		}
@@ -3875,6 +3905,8 @@ sl_bool SAppDocument::_parseLayoutResourceViewAttributes(SAppLayoutResource* lay
 	PARSE_AND_CHECK_LAYOUT_ATTR(attr->, occurringClick)
 	
 	PARSE_AND_CHECK_LAYOUT_ATTR(attr->, background)
+	PARSE_AND_CHECK_LAYOUT_ATTR(attr->, backgroundScale)
+	PARSE_AND_CHECK_LAYOUT_ATTR(attr->, backgroundAlign)
 	PARSE_AND_CHECK_LAYOUT_ATTR(attr->, backgroundColor)
 	PARSE_AND_CHECK_LAYOUT_ATTR(attr->, borderWidth)
 	if (parent) {
@@ -3994,8 +4026,8 @@ sl_bool SAppDocument::_generateLayoutsCppViewAttributes(const String& name, SApp
 		}
 	}
 
-	GENERATE_CPP_SET_LAYOUT_ATTR_LAYOUT(attr->, x, setX, sbDefineInit, sbDefineLayout)
-	GENERATE_CPP_SET_LAYOUT_ATTR_LAYOUT(attr->, y, setY, sbDefineInit, sbDefineLayout)
+	GENERATE_CPP_SET_LAYOUT_ATTR_LAYOUT(attr->, left, setX, sbDefineInit, sbDefineLayout)
+	GENERATE_CPP_SET_LAYOUT_ATTR_LAYOUT(attr->, top, setY, sbDefineInit, sbDefineLayout)
 	
 	if (attr->leftMode == PositionMode::CenterInParent) {
 		sbDefineInit.add(String::format("%s%s->setCenterHorizontal(sl_false);%n", strTab, name, attr->leftReferingView));
@@ -4082,6 +4114,8 @@ sl_bool SAppDocument::_generateLayoutsCppViewAttributes(const String& name, SApp
 		return sl_false;
 	}
 	GENERATE_CPP_SET_LAYOUT_ATTR_NOREDRAW(attr->, background, setBackground, sbDefineInit)
+	GENERATE_CPP_SET_LAYOUT_ATTR_NOREDRAW(attr->, backgroundScale, setBackgroundScaleMode, sbDefineInit)
+	GENERATE_CPP_SET_LAYOUT_ATTR_NOREDRAW(attr->, backgroundAlign, setBackgroundAlignment, sbDefineInit)
 	GENERATE_CPP_SET_LAYOUT_ATTR_NOREDRAW(attr->, backgroundColor, setBackgroundColor, sbDefineInit)
 	if (attr->borderWidth.flagDefined) {
 		if (Math::isAlmostZero(attr->borderWidth.amount)) {
@@ -4151,7 +4185,7 @@ sl_bool SAppDocument::_generateLayoutsCppViewAttributes(const String& name, SApp
 	
 	GENERATE_CPP_SET_LAYOUT_ATTR(attr->, instance, setCreatingInstance, sbDefineInit)
 	GENERATE_CPP_SET_LAYOUT_ATTR(attr->, childInstances, setCreatingChildInstances, sbDefineInit)
-	GENERATE_CPP_SET_LAYOUT_ATTR(attr->, nativeWidget, setCreatingInstance, sbDefineInit)
+	GENERATE_CPP_SET_LAYOUT_ATTR(attr->, nativeWidget, setCreatingNativeWidget, sbDefineInit)
 	GENERATE_CPP_SET_LAYOUT_ATTR_NOREDRAW(attr->, doubleBuffering, setDoubleBuffering, sbDefineInit)
 	
 	return sl_true;
@@ -4180,7 +4214,7 @@ sl_bool SAppDocument::_simulateLayoutSetViewAttributes(SAppLayoutSimulationWindo
 				view->setWidthWeight(attr->width.amount, sl_false);
 			}
 		} else {
-			SIMULATE_LAYOUT_SET_LAYOUT_ATTR_ONLAYOUT(attr->, width, setWidth, _getDimension)
+			SIMULATE_LAYOUT_SET_LAYOUT_ATTR_ONLAYOUT(attr->, width, setWidth)
 		}
 	}
 	if (attr->height.flagDefined) {
@@ -4197,12 +4231,12 @@ sl_bool SAppDocument::_simulateLayoutSetViewAttributes(SAppLayoutSimulationWindo
 				view->setHeightWeight(attr->height.amount, sl_false);
 			}
 		} else {
-			SIMULATE_LAYOUT_SET_LAYOUT_ATTR_ONLAYOUT(attr->, height, setHeight, _getDimension)
+			SIMULATE_LAYOUT_SET_LAYOUT_ATTR_ONLAYOUT(attr->, height, setHeight)
 		}
 	}
 	
-	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_ONLAYOUT(attr->, x, setX, _getDimension)
-	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_ONLAYOUT(attr->, y, setY, _getDimension)
+	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_ONLAYOUT(attr->, left, setX)
+	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_ONLAYOUT(attr->, top, setY)
 	
 	if (attr->leftMode == PositionMode::CenterInParent) {
 		if (!flagOnLayout) {
@@ -4284,7 +4318,7 @@ sl_bool SAppDocument::_simulateLayoutSetViewAttributes(SAppLayoutSimulationWindo
 				view->setRelativeMarginLeft(attr->marginLeft.amount, sl_false);
 			}
 		} else {
-			SIMULATE_LAYOUT_SET_LAYOUT_ATTR_ONLAYOUT(attr->, marginLeft, setMarginLeft, _getDimension)
+			SIMULATE_LAYOUT_SET_LAYOUT_ATTR_ONLAYOUT(attr->, marginLeft, setMarginLeft)
 		}
 	}
 	if (attr->marginTop.flagDefined) {
@@ -4293,7 +4327,7 @@ sl_bool SAppDocument::_simulateLayoutSetViewAttributes(SAppLayoutSimulationWindo
 				view->setRelativeMarginTop(attr->marginTop.amount, sl_false);
 			}
 		} else {
-			SIMULATE_LAYOUT_SET_LAYOUT_ATTR_ONLAYOUT(attr->, marginTop, setMarginTop, _getDimension)
+			SIMULATE_LAYOUT_SET_LAYOUT_ATTR_ONLAYOUT(attr->, marginTop, setMarginTop)
 		}
 	}
 	if (attr->marginRight.flagDefined) {
@@ -4302,7 +4336,7 @@ sl_bool SAppDocument::_simulateLayoutSetViewAttributes(SAppLayoutSimulationWindo
 				view->setRelativeMarginRight(attr->marginRight.amount, sl_false);
 			}
 		} else {
-			SIMULATE_LAYOUT_SET_LAYOUT_ATTR_ONLAYOUT(attr->, marginRight, setMarginRight, _getDimension)
+			SIMULATE_LAYOUT_SET_LAYOUT_ATTR_ONLAYOUT(attr->, marginRight, setMarginRight)
 		}
 	}
 	if (attr->marginBottom.flagDefined) {
@@ -4311,14 +4345,14 @@ sl_bool SAppDocument::_simulateLayoutSetViewAttributes(SAppLayoutSimulationWindo
 				view->setRelativeMarginBottom(attr->marginBottom.amount, sl_false);
 			}
 		} else {
-			SIMULATE_LAYOUT_SET_LAYOUT_ATTR_ONLAYOUT(attr->, marginBottom, setMarginBottom, _getDimension)
+			SIMULATE_LAYOUT_SET_LAYOUT_ATTR_ONLAYOUT(attr->, marginBottom, setMarginBottom)
 		}
 	}
 	
-	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_ONLAYOUT(attr->, paddingLeft, setPaddingLeft, _getDimension)
-	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_ONLAYOUT(attr->, paddingTop, setPaddingTop, _getDimension)
-	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_ONLAYOUT(attr->, paddingRight, setPaddingRight, _getDimension)
-	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_ONLAYOUT(attr->, paddingBottom, setPaddingBottom, _getDimension)
+	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_ONLAYOUT(attr->, paddingLeft, setPaddingLeft)
+	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_ONLAYOUT(attr->, paddingTop, setPaddingTop)
+	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_ONLAYOUT(attr->, paddingRight, setPaddingRight)
+	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_ONLAYOUT(attr->, paddingBottom, setPaddingBottom)
 	
 	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_NOREDRAW(attr->, visibility, setVisibility, _get)
 	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_NOREDRAW(attr->, enabled, setEnabled, _get)
@@ -4328,7 +4362,9 @@ sl_bool SAppDocument::_simulateLayoutSetViewAttributes(SAppLayoutSimulationWindo
 	if (!(_checkDrawableValueAvailable(attr->background, item->element))) {
 		return sl_false;
 	}
-	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_NOREDRAW(attr->, background, setBackground, _getDrawable)
+	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_DRAWABLE(attr->, background, setBackground)
+	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_NOREDRAW(attr->, backgroundScale, setBackgroundScaleMode, _get)
+	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_NOREDRAW(attr->, backgroundAlign, setBackgroundAlignment, _get)
 	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_NOREDRAW(attr->, backgroundColor, setBackgroundColor, _get)
 	if (attr->borderWidth.flagDefined) {
 		if (Math::isAlmostZero(attr->borderWidth.amount)) {
@@ -4337,20 +4373,11 @@ sl_bool SAppDocument::_simulateLayoutSetViewAttributes(SAppLayoutSimulationWindo
 			}
 		} else {
 			if (attr->borderColor.flagDefined && attr->borderStyle.flagDefined) {
-				do {
-					if (attr->borderWidth.isNeededOnLayoutFunction()) {
-						if (!flagOnLayout) {
-							break;
-						}
-					} else {
-						if (flagOnLayout) {
-							break;
-						}
-					}
+				if (flagOnLayout) {
 					view->setBorder(Pen::create(attr->borderStyle.value, _getDimensionValue(attr->borderWidth), attr->borderColor.value), sl_false);
-				} while (0);
+				}
 			} else {
-				SIMULATE_LAYOUT_SET_LAYOUT_ATTR_ONLAYOUT(attr->, borderWidth, setBorderWidth, _getDimension)
+				SIMULATE_LAYOUT_SET_LAYOUT_ATTR_ONLAYOUT(attr->, borderWidth, setBorderWidth)
 				SIMULATE_LAYOUT_SET_LAYOUT_ATTR_NOREDRAW(attr->, borderColor, setBorderColor, _get)
 				SIMULATE_LAYOUT_SET_LAYOUT_ATTR_NOREDRAW(attr->, borderStyle, setBorderStyle, _get)
 			}
@@ -4360,20 +4387,22 @@ sl_bool SAppDocument::_simulateLayoutSetViewAttributes(SAppLayoutSimulationWindo
 		SIMULATE_LAYOUT_SET_LAYOUT_ATTR_NOREDRAW(attr->, borderStyle, setBorderStyle, _get)
 	}
 	
-	if (!(_checkStringValueAvailable(attr->fontFamily, item->element))) {
-		return sl_false;
-	}
-	if (attr->fontFamily.flagDefined || attr->fontSize.flagDefined || attr->fontBold.flagDefined || attr->fontItalic.flagDefined || attr->fontUnderline.flagDefined) {
-		sl_real fontSize;
-		if (attr->finalFontSize.flagDefined) {
-			fontSize = _getDimensionValue(attr->finalFontSize);
-		} else {
-			fontSize = UI::getDefaultFontSize();
+	if (flagOnLayout) {
+		if (!(_checkStringValueAvailable(attr->fontFamily, item->element))) {
+			return sl_false;
 		}
-		if (attr->finalFontFamily.flagDefined) {
-			view->setFont(_getStringValue(attr->finalFontFamily), fontSize, attr->finalFontBold, attr->finalFontItalic, attr->finalFontUnderline, sl_false);
-		} else {
-			view->setFontAttributes(fontSize, attr->finalFontBold, attr->finalFontItalic, attr->finalFontUnderline, sl_false);
+		if (attr->fontFamily.flagDefined || attr->fontSize.flagDefined || attr->fontBold.flagDefined || attr->fontItalic.flagDefined || attr->fontUnderline.flagDefined) {
+			sl_real fontSize;
+			if (attr->finalFontSize.flagDefined) {
+				fontSize = _getDimensionValue(attr->finalFontSize);
+			} else {
+				fontSize = UI::getDefaultFontSize();
+			}
+			if (attr->finalFontFamily.flagDefined) {
+				view->setFont(_getStringValue(attr->finalFontFamily), fontSize, attr->finalFontBold, attr->finalFontItalic, attr->finalFontUnderline, sl_false);
+			} else {
+				view->setFontAttributes(fontSize, attr->finalFontBold, attr->finalFontItalic, attr->finalFontUnderline, sl_false);
+			}
 		}
 	}
 	
@@ -4399,7 +4428,7 @@ sl_bool SAppDocument::_simulateLayoutSetViewAttributes(SAppLayoutSimulationWindo
 	
 	SIMULATE_LAYOUT_SET_LAYOUT_ATTR(attr->, instance, setCreatingInstance, _get)
 	SIMULATE_LAYOUT_SET_LAYOUT_ATTR(attr->, childInstances, setCreatingChildInstances, _get)
-	SIMULATE_LAYOUT_SET_LAYOUT_ATTR(attr->, nativeWidget, setCreatingInstance, _get)
+	SIMULATE_LAYOUT_SET_LAYOUT_ATTR(attr->, nativeWidget, setCreatingNativeWidget, _get)
 	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_NOREDRAW(attr->, doubleBuffering, setDoubleBuffering, _get)
 	
 	return sl_true;
@@ -4545,6 +4574,11 @@ sl_bool SAppDocument::_parseLayoutResourceButtonAttributes(SAppLayoutResource* l
 					_logError(element, _g_sdev_sapp_error_resource_layout_attribute_invalid.arg("textColor" + suffix, _strTextColor));
 					return sl_false;
 				}
+				String _strIcon = item->getXmlAttribute("icon" + suffix);
+				if (!(category.icon[k].parse(_strIcon))) {
+					_logError(element, _g_sdev_sapp_error_resource_layout_attribute_invalid.arg("icon" + suffix, _strIcon));
+					return sl_false;
+				}
 				String _strBackgroundColor = item->getXmlAttribute("backgroundColor" + suffix);
 				if (!(category.backgroundColor[k].parse(_strBackgroundColor))) {
 					_logError(element, _g_sdev_sapp_error_resource_layout_attribute_invalid.arg("backgroundColor" + suffix, _strBackgroundColor));
@@ -4553,11 +4587,6 @@ sl_bool SAppDocument::_parseLayoutResourceButtonAttributes(SAppLayoutResource* l
 				String _strBackground = item->getXmlAttribute("background" + suffix);
 				if (!(category.background[k].parse(_strBackground))) {
 					_logError(element, _g_sdev_sapp_error_resource_layout_attribute_invalid.arg("background" + suffix, _strBackground));
-					return sl_false;
-				}
-				String _strIcon = item->getXmlAttribute("icon" + suffix);
-				if (!(category.icon[k].parse(_strIcon))) {
-					_logError(element, _g_sdev_sapp_error_resource_layout_attribute_invalid.arg("icon" + suffix, _strIcon));
 					return sl_false;
 				}
 				String _strBorderStyle = item->getXmlAttribute("borderStyle" + suffix);
@@ -4678,6 +4707,22 @@ sl_bool SAppDocument::_generateLayoutsCppButton(const String& name, SAppLayoutRe
 		flagRequireNoNative = sl_true;
 	}
 	
+	if (attr->textColor.flagDefined) {
+		sbDefineInit.add(String::format("%s%s->resetStateTextColors(sl_false);%n", strTab, name));
+	}
+	if (attr->icon.flagDefined) {
+		sbDefineInit.add(String::format("%s%s->resetStateIcons(sl_false);%n", strTab, name));
+	}
+	if (item->viewAttrs->backgroundColor.flagDefined) {
+		sbDefineInit.add(String::format("%s%s->resetStateBackgroundColors(sl_false);%n", strTab, name));
+	}
+	if (item->viewAttrs->background.flagDefined) {
+		sbDefineInit.add(String::format("%s%s->resetStateBackgrounds(sl_false);%n", strTab, name));
+	}
+	if (item->viewAttrs->borderWidth.flagDefined || item->viewAttrs->borderColor.flagDefined || item->viewAttrs->borderStyle.flagDefined) {
+		sbDefineInit.add(String::format("%s%s->resetStateBorders(sl_false);%n", strTab, name));
+	}
+
 	{
 		String strStates[] = {"Normal", "Hover", "Down", "Disabled"};
 		for (sl_uint32 i = 0; i < SLIB_SAPP_LAYOUT_BUTTON_CATEGORY_MAX; i++) {
@@ -4685,6 +4730,13 @@ sl_bool SAppDocument::_generateLayoutsCppButton(const String& name, SAppLayoutRe
 			for (sl_uint32 k = 0; k < (sl_uint32)(ButtonState::Count); k++) {
 				if (category.textColor[k].flagDefined) {
 					sbDefineInit.add(String::format("%s%s->setTextColor(%s, slib::ButtonState::%s, %d, sl_false);%n", strTab, name, category.textColor[k].getAccessString(), strStates[k], i));
+					flagRequireNoNative = sl_true;
+				}
+				if (category.icon[k].flagDefined) {
+					if (!(_checkDrawableValueAvailable(category.icon[k], item->element))) {
+						return sl_false;
+					}
+					sbDefineInit.add(String::format("%s%s->setIcon(%s, slib::ButtonState::%s, %d, sl_false);%n", strTab, name, category.icon[k].getAccessString(), strStates[k], i));
 					flagRequireNoNative = sl_true;
 				}
 				if (category.backgroundColor[k].flagDefined) {
@@ -4696,13 +4748,6 @@ sl_bool SAppDocument::_generateLayoutsCppButton(const String& name, SAppLayoutRe
 						return sl_false;
 					}
 					sbDefineInit.add(String::format("%s%s->setBackground(%s, slib::ButtonState::%s, %d, sl_false);%n", strTab, name, category.background[k].getAccessString(), strStates[k], i));
-					flagRequireNoNative = sl_true;
-				}
-				if (category.icon[k].flagDefined) {
-					if (!(_checkDrawableValueAvailable(category.icon[k], item->element))) {
-						return sl_false;
-					}
-					sbDefineInit.add(String::format("%s%s->setIcon(%s, slib::ButtonState::%s, %d, sl_false);%n", strTab, name, category.icon[k].getAccessString(), strStates[k], i));
 					flagRequireNoNative = sl_true;
 				}
 				if (category.borderWidth[k].flagDefined || category.borderColor[k].flagDefined || category.borderStyle[k].flagDefined) {
@@ -4774,16 +4819,16 @@ sl_bool SAppDocument::_simulateLayoutSetButtonAttributes(SAppLayoutSimulationWin
 	if (!(_checkDrawableValueAvailable(attr->icon, item->element))) {
 		return sl_false;
 	}
-	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_NOREDRAW(attr->, icon, setIcon, _getDrawable)
+	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_DRAWABLE(attr->, icon, setIcon)
 	if (attr->icon.flagDefined) {
 		flagRequireNoNative = sl_true;
 	}
 	
-	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_ONLAYOUT(attr->, iconWidth, setIconWidth, _getDimension)
+	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_ONLAYOUT(attr->, iconWidth, setIconWidth)
 	if (attr->iconWidth.flagDefined) {
 		flagRequireNoNative = sl_true;
 	}
-	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_ONLAYOUT(attr->, iconHeight, setIconHeight, _getDimension)
+	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_ONLAYOUT(attr->, iconHeight, setIconHeight)
 	if (attr->iconHeight.flagDefined) {
 		flagRequireNoNative = sl_true;
 	}
@@ -4808,39 +4853,65 @@ sl_bool SAppDocument::_simulateLayoutSetButtonAttributes(SAppLayoutSimulationWin
 		flagRequireNoNative = sl_true;
 	}
 	
-	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_ONLAYOUT(attr->, iconMarginLeft, setIconMarginLeft, _getDimension)
+	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_ONLAYOUT(attr->, iconMarginLeft, setIconMarginLeft)
 	if (attr->iconMarginLeft.flagDefined) {
 		flagRequireNoNative = sl_true;
 	}
-	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_ONLAYOUT(attr->, iconMarginTop, setIconMarginTop, _getDimension)
+	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_ONLAYOUT(attr->, iconMarginTop, setIconMarginTop)
 	if (attr->iconMarginTop.flagDefined) {
 		flagRequireNoNative = sl_true;
 	}
-	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_ONLAYOUT(attr->, iconMarginRight, setIconMarginRight, _getDimension)
+	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_ONLAYOUT(attr->, iconMarginRight, setIconMarginRight)
 	if (attr->iconMarginRight.flagDefined) {
 		flagRequireNoNative = sl_true;
 	}
-	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_ONLAYOUT(attr->, iconMarginBottom, setIconMarginBottom, _getDimension)
+	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_ONLAYOUT(attr->, iconMarginBottom, setIconMarginBottom)
 	if (attr->iconMarginBottom.flagDefined) {
 		flagRequireNoNative = sl_true;
 	}
-	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_ONLAYOUT(attr->, textMarginLeft, setTextMarginLeft, _getDimension)
+	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_ONLAYOUT(attr->, textMarginLeft, setTextMarginLeft)
 	if (attr->textMarginLeft.flagDefined) {
 		flagRequireNoNative = sl_true;
 	}
-	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_ONLAYOUT(attr->, textMarginTop, setTextMarginTop, _getDimension)
+	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_ONLAYOUT(attr->, textMarginTop, setTextMarginTop)
 	if (attr->textMarginTop.flagDefined) {
 		flagRequireNoNative = sl_true;
 	}
-	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_ONLAYOUT(attr->, textMarginRight, setTextMarginRight, _getDimension)
+	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_ONLAYOUT(attr->, textMarginRight, setTextMarginRight)
 	if (attr->textMarginRight.flagDefined) {
 		flagRequireNoNative = sl_true;
 	}
-	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_ONLAYOUT(attr->, textMarginBottom, setTextMarginBottom, _getDimension)
+	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_ONLAYOUT(attr->, textMarginBottom, setTextMarginBottom)
 	if (attr->textMarginBottom.flagDefined) {
 		flagRequireNoNative = sl_true;
 	}
 	
+	if (attr->textColor.flagDefined) {
+		if (!flagOnLayout) {
+			view->resetStateTextColors(sl_false);
+		}
+	}
+	if (attr->icon.flagDefined) {
+		if (!flagOnLayout) {
+			view->resetStateIcons(sl_false);
+		}
+	}
+	if (item->viewAttrs->backgroundColor.flagDefined) {
+		if (!flagOnLayout) {
+			view->resetStateBackgroundColors(sl_false);
+		}
+	}
+	if (item->viewAttrs->background.flagDefined) {
+		if (!flagOnLayout) {
+			view->resetStateBackgrounds(sl_false);
+		}
+	}
+	if (item->viewAttrs->borderWidth.flagDefined || item->viewAttrs->borderColor.flagDefined || item->viewAttrs->borderStyle.flagDefined) {
+		if (!flagOnLayout) {
+			view->resetStateBorders(sl_false);
+		}
+	}
+
 	{
 		ButtonState states[] = {ButtonState::Normal, ButtonState::Hover, ButtonState::Down, ButtonState::Disabled};
 		for (sl_uint32 i = 0; i < SLIB_SAPP_LAYOUT_BUTTON_CATEGORY_MAX; i++) {
@@ -4862,7 +4933,7 @@ sl_bool SAppDocument::_simulateLayoutSetButtonAttributes(SAppLayoutSimulationWin
 					if (!(_checkDrawableValueAvailable(category.background[k], item->element))) {
 						return sl_false;
 					}
-					if (!flagOnLayout) {
+					if (flagOnLayout) {
 						view->setBackground(_getDrawableValue(category.background[k]), states[k], i, sl_false);
 					}
 					flagRequireNoNative = sl_true;
@@ -4871,7 +4942,7 @@ sl_bool SAppDocument::_simulateLayoutSetButtonAttributes(SAppLayoutSimulationWin
 					if (!(_checkDrawableValueAvailable(category.icon[k], item->element))) {
 						return sl_false;
 					}
-					if (!flagOnLayout) {
+					if (flagOnLayout) {
 						view->setIcon(_getDrawableValue(category.icon[k]), states[k], i, sl_false);
 					}
 					flagRequireNoNative = sl_true;
@@ -4882,16 +4953,7 @@ sl_bool SAppDocument::_simulateLayoutSetButtonAttributes(SAppLayoutSimulationWin
 							view->setBorder(Ref<Pen>::null(), states[k], i, sl_false);
 						}
 					} else {
-						do {
-							if (category.borderWidth[k].isNeededOnLayoutFunction()) {
-								if (!flagOnLayout) {
-									break;
-								}
-							} else {
-								if (flagOnLayout) {
-									break;
-								}
-							}
+						if (flagOnLayout) {
 							sl_real _borderWidth;
 							Color _borderColor;
 							PenStyle _borderStyle;
@@ -4911,7 +4973,7 @@ sl_bool SAppDocument::_simulateLayoutSetButtonAttributes(SAppLayoutSimulationWin
 								_borderStyle = PenStyle::Solid;
 							}
 							view->setBorder(Pen::create(_borderStyle, _borderWidth, _borderColor), states[k], i, sl_false);
-						} while (0);
+						}
 					}
 					flagRequireNoNative = sl_true;
 				}
@@ -5254,7 +5316,7 @@ sl_bool SAppDocument::_simulateLayoutSetImageAttributes(SAppLayoutSimulationWind
 	if (!(_checkDrawableValueAvailable(attr->src, item->element))) {
 		return sl_false;
 	}
-	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_NOREDRAW(attr->, src, setSource, _getDrawable)
+	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_DRAWABLE(attr->, src, setSource)
 	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_NOREDRAW(attr->, gravity, setGravity, _get)
 	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_NOREDRAW(attr->, scale, setScaleMode, _get)
 	
@@ -5406,7 +5468,7 @@ sl_bool SAppDocument::_simulateLayoutSetSelectAttributes(SAppLayoutSimulationWin
 	if (!(_checkDrawableValueAvailable(attr->leftIcon, item->element))) {
 		return sl_false;
 	}
-	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_NOREDRAW(attr->, leftIcon, setLeftIcon, _getDrawable)
+	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_DRAWABLE(attr->, leftIcon, setLeftIcon)
 	if (attr->leftIcon.flagDefined) {
 		flagRequireNoNative = sl_true;
 	}
@@ -5414,16 +5476,16 @@ sl_bool SAppDocument::_simulateLayoutSetSelectAttributes(SAppLayoutSimulationWin
 	if (!(_checkDrawableValueAvailable(attr->rightIcon, item->element))) {
 		return sl_false;
 	}
-	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_NOREDRAW(attr->, rightIcon, setRightIcon, _getDrawable)
+	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_DRAWABLE(attr->, rightIcon, setRightIcon)
 	if (attr->rightIcon.flagDefined) {
 		flagRequireNoNative = sl_true;
 	}
 	
-	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_ONLAYOUT(attr->, iconWidth, setIconWidth, _getDimension)
+	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_ONLAYOUT(attr->, iconWidth, setIconWidth)
 	if (attr->iconWidth.flagDefined) {
 		flagRequireNoNative = sl_true;
 	}
-	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_ONLAYOUT(attr->, iconHeight, setIconHeight, _getDimension)
+	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_ONLAYOUT(attr->, iconHeight, setIconHeight)
 	if (attr->iconHeight.flagDefined) {
 		flagRequireNoNative = sl_true;
 	}
@@ -5788,14 +5850,8 @@ sl_bool SAppDocument::_simulateLayoutSetListReportAttributes(SAppLayoutSimulatio
 				}
 			}
 			if (column.width.flagDefined) {
-				if (column.width.isNeededOnLayoutFunction()) {
-					if (flagOnLayout) {
-						view->setColumnWidth(i, _getDimensionValue(column.width), sl_false);
-					}
-				} else {
-					if (!flagOnLayout) {
-						view->setColumnWidth(i, _getDimensionValue(column.width), sl_false);
-					}
+				if (flagOnLayout) {
+					view->setColumnWidth(i, _getDimensionValue(column.width), sl_false);
 				}
 			}
 		}

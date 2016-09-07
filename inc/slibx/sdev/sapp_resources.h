@@ -164,8 +164,8 @@ public:
 	SAppMenuValue menu;
 	SAppStringValue title;
 	
-	SAppDimensionValue x;
-	SAppDimensionValue y;
+	SAppDimensionValue left;
+	SAppDimensionValue top;
 	SAppDimensionValue width;
 	SAppDimensionValue height;
 	
@@ -205,8 +205,8 @@ public:
 	String rightReferingView;
 	String bottomReferingView;
 	
-	SAppDimensionValue x;
-	SAppDimensionValue y;
+	SAppDimensionValue left;
+	SAppDimensionValue top;
 
 	SAppDimensionValue marginLeft;
 	SAppDimensionValue marginTop;
@@ -224,6 +224,8 @@ public:
 	SAppBooleanValue occurringClick;
 	
 	SAppDrawableValue background;
+	SAppScaleModeValue backgroundScale;
+	SAppAlignmentValue backgroundAlign;
 	SAppColorValue backgroundColor;
 	SAppDimensionValue borderWidth;
 	SAppColorValue borderColor;
@@ -415,6 +417,7 @@ public:
 	enum {
 		typeUnknown = 0,
 		typeWindow = 0x0100,
+		typeMobilePage = 0x0101,
 		typeView = 0x0200,
 		typeViewGroup = 0x0201,
 		typeButton = 0x0202,

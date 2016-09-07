@@ -63,6 +63,8 @@ public:
 	
 	sl_bool checkForWindow();
 	
+	sl_bool checkForWindowSize();
+	
 	sl_bool checkForRootViewPosition();
 	
 	sl_bool checkForRootViewSize();

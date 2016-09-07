@@ -13,7 +13,6 @@ class SAppConfiguration
 public:
 	String generate_cpp_target_path;
 	String generate_cpp_namespace;
-	String generate_cpp_member_variable_prefix;
 	CList<String> generate_cpp_layout_include_headers;
 	
 };
