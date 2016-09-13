@@ -69,6 +69,8 @@ public:
 	
 	sl_bool checkForRootViewSize();
 	
+	sl_bool checkForRootViewScalarSize();
+	
 	sl_bool checkForRootViewMargin();
 
 	sl_bool isNeededOnLayoutFunction();
@@ -78,6 +80,13 @@ public:
 	static sl_bool isGlobalUnit(int unit);
 	
 	static sl_bool isViewportUnit(int unit);
+	
+};
+
+class SAppDimensionFloatValue : public SAppDimensionValue
+{
+public:
+	String getAccessString();
 	
 };
 
@@ -309,6 +318,9 @@ class SAppDrawableValue
 public:
 	sl_bool flagDefined;
 	sl_bool flagNull;
+	sl_bool flagColor;
+	
+	Color color;
 	String resourceName;
 	
 	sl_bool flagWhole;
@@ -318,17 +330,17 @@ public:
 	sl_real height;
 	
 	enum {
-		FUNC_NONE, FUNC_NINEPATCH
+		FUNC_NONE, FUNC_NINEPATCH, FUNC_THREEPATCH_HORIZONTAL, FUNC_THREEPATCH_VERTICAL
 	};
 	int func;
-	SAppDimensionValue ninePatch_leftWidthDst;
-	SAppDimensionValue ninePatch_rightWidthDst;
-	SAppDimensionValue ninePatch_topHeightDst;
-	SAppDimensionValue ninePatch_bottomHeightDst;
-	sl_real ninePatch_leftWidth;
-	sl_real ninePatch_rightWidth;
-	sl_real ninePatch_topHeight;
-	sl_real ninePatch_bottomHeight;
+	SAppDimensionValue patchLeftWidthDst;
+	SAppDimensionValue patchRightWidthDst;
+	SAppDimensionValue patchTopHeightDst;
+	SAppDimensionValue patchBottomHeightDst;
+	sl_real patchLeftWidth;
+	sl_real patchRightWidth;
+	sl_real patchTopHeight;
+	sl_real patchBottomHeight;
 	
 public:
 	SAppDrawableValue();

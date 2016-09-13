@@ -102,7 +102,8 @@ protected:
 	void _registerLayoutSimulationWindow(const Ref<SAppLayoutSimulationWindow>& window);
 	void _removeLayoutSimulationWindow(const Ref<SAppLayoutSimulationWindow>& window);
 	Ref<View> _simulateLayoutCreateOrLayoutView(SAppLayoutSimulationWindow* simulator, SAppLayoutResourceItem* item, View* parent, sl_bool flagOnLayout);
-	sl_real _getDimensionValue(SAppDimensionValue& value);
+	sl_ui_pos _getDimensionIntValue(SAppDimensionValue& value);
+	sl_real _getDimensionFloatValue(SAppDimensionFloatValue& value);
 	
 	sl_bool _parseLayoutResourceRootViewAttributes(SAppLayoutResource* layout);
 	sl_bool _generateLayoutsCppRootViewAttributes(SAppLayoutResourceItem* item, StringBuffer& sbDefineInit);
@@ -159,6 +160,18 @@ protected:
 	sl_bool _parseLayoutResourceListReportAttributes(SAppLayoutResource* layout, SAppLayoutResourceItem* item, SAppLayoutResourceItem* parent);
 	sl_bool _generateLayoutsCppListReportView(const String& name, SAppLayoutResourceItem* item, StringBuffer& sbDeclare, StringBuffer& sbDefineInit, StringBuffer& sbDefineLayout, const String& addStatement);
 	sl_bool _simulateLayoutSetListReportAttributes(SAppLayoutSimulationWindow* simulator, ListReportView* view, SAppLayoutResourceItem* item, sl_bool flagOnLayout);
+	
+	sl_bool _parseLayoutResourceTabAttributes(SAppLayoutResource* layout, SAppLayoutResourceItem* item, SAppLayoutResourceItem* parent);
+	sl_bool _generateLayoutsCppTabView(const String& name, SAppLayoutResourceItem* item, StringBuffer& sbDeclare, StringBuffer& sbDefineInit, StringBuffer& sbDefineLayout, const String& addStatement);
+	sl_bool _simulateLayoutSetTabAttributes(SAppLayoutSimulationWindow* simulator, TabView* view, SAppLayoutResourceItem* item, sl_bool flagOnLayout);
+	
+	sl_bool _parseLayoutResourceSplitAttributes(SAppLayoutResource* layout, SAppLayoutResourceItem* item, SAppLayoutResourceItem* parent);
+	sl_bool _generateLayoutsCppSplitView(const String& name, SAppLayoutResourceItem* item, StringBuffer& sbDeclare, StringBuffer& sbDefineInit, StringBuffer& sbDefineLayout, const String& addStatement);
+	sl_bool _simulateLayoutSetSplitAttributes(SAppLayoutSimulationWindow* simulator, SplitView* view, SAppLayoutResourceItem* item, sl_bool flagOnLayout);
+	
+	sl_bool _parseLayoutResourceProgressAttributes(SAppLayoutResource* layout, SAppLayoutResourceItem* item, SAppLayoutResourceItem* parent);
+	sl_bool _generateLayoutsCppProgressBar(const String& name, SAppLayoutResourceItem* item, StringBuffer& sbDeclare, StringBuffer& sbDefineInit, StringBuffer& sbDefineLayout, const String& addStatement);
+	sl_bool _simulateLayoutSetProgressAttributes(SAppLayoutSimulationWindow* simulator, ProgressBar* view, SAppLayoutResourceItem* item, sl_bool flagOnLayout);
 	
 private:
 	sl_bool m_flagOpened;

@@ -86,25 +86,127 @@ String SAppDimensionValue::getAccessString()
 	}
 	switch (unit) {
 		case CUSTOM:
-			return String::format("%ff*getCustomUnitLength()", amount);
+			if (Math::isAlmostZero(amount - 1)) {
+				return "(sl_ui_pos)(getCustomUnitLength())";
+			} else {
+				return String::format("(sl_ui_pos)(%ff*getCustomUnitLength())", amount);
+			}
+		case PX:
+			return String::format("%d", (int)amount);
+		case SW:
+			if (Math::isAlmostZero(amount - 1)) {
+				return "slib::UIResource::getScreenWidth()";
+			} else {
+				return String::format("(sl_ui_pos)(%ff*slib::UIResource::getScreenWidth())", amount);
+			}
+		case SH:
+			if (Math::isAlmostZero(amount - 1)) {
+				return "slib::UIResource::getScreenHeight()";
+			} else {
+				return String::format("(sl_ui_pos)(%ff*slib::UIResource::getScreenHeight())", amount);
+			}
+		case SMIN:
+			if (Math::isAlmostZero(amount - 1)) {
+				return "slib::UIResource::getScreenMinimum()";
+			} else {
+				return String::format("(sl_ui_pos)(%ff*slib::UIResource::getScreenMinimum())", amount);
+			}
+		case SMAX:
+			if (Math::isAlmostZero(amount - 1)) {
+				return "slib::UIResource::getScreenMaximum()";
+			} else {
+				return String::format("(sl_ui_pos)(%ff*slib::UIResource::getScreenMaximum())", amount);
+			}
+		case VW:
+			if (Math::isAlmostZero(amount - 1)) {
+				return "CONTENT_WIDTH";
+			} else {
+				return String::format("(sl_ui_pos)(%ff*CONTENT_WIDTH)", amount);
+			}
+		case VH:
+			if (Math::isAlmostZero(amount - 1)) {
+				return "CONTENT_HEIGHT";
+			} else {
+				return String::format("(sl_ui_pos)(%ff*CONTENT_HEIGHT)", amount);
+			}
+		case VMIN:
+			if (Math::isAlmostZero(amount - 1)) {
+				return "SLIB_MIN(CONTENT_WIDTH, CONTENT_HEIGHT)";
+			} else {
+				return String::format("(sl_ui_pos)(%ff*SLIB_MIN(CONTENT_WIDTH, CONTENT_HEIGHT))", amount);
+			}
+		case VMAX:
+			if (Math::isAlmostZero(amount - 1)) {
+				return "SLIB_MAX(CONTENT_WIDTH, CONTENT_HEIGHT)";
+			} else {
+				return String::format("(sl_ui_pos)(%ff*SLIB_MAX(CONTENT_WIDTH, CONTENT_HEIGHT))", amount);
+			}
+	}
+	return "0";
+}
+
+String SAppDimensionFloatValue::getAccessString()
+{
+	if (!flagDefined) {
+		return "0";
+	}
+	switch (unit) {
+		case CUSTOM:
+			if (Math::isAlmostZero(amount - 1)) {
+				return "(sl_real)(getCustomUnitLength())";
+			} else {
+				return String::format("%ff*getCustomUnitLength()", amount);
+			}
 		case PX:
 			return String::format("%ff", amount);
 		case SW:
-			return String::format("%ff*slib::UIResource::getScreenWidth()", amount);
+			if (Math::isAlmostZero(amount - 1)) {
+				return "(sl_real)(slib::UIResource::getScreenWidth())";
+			} else {
+				return String::format("%ff*(sl_real)(slib::UIResource::getScreenWidth())", amount);
+			}
 		case SH:
-			return String::format("%ff*slib::UIResource::getScreenHeight()", amount);
+			if (Math::isAlmostZero(amount - 1)) {
+				return "(sl_real)(slib::UIResource::getScreenHeight())";
+			} else {
+				return String::format("%ff*(sl_real)(slib::UIResource::getScreenHeight())", amount);
+			}
 		case SMIN:
-			return String::format("%ff*slib::UIResource::getScreenMinimum()", amount);
+			if (Math::isAlmostZero(amount - 1)) {
+				return "(sl_real)(slib::UIResource::getScreenMinimum())";
+			} else {
+				return String::format("%ff*(sl_real)(slib::UIResource::getScreenMinimum())", amount);
+			}
 		case SMAX:
-			return String::format("%ff*slib::UIResource::getScreenMaximum()", amount);
+			if (Math::isAlmostZero(amount - 1)) {
+				return "(sl_real)(slib::UIResource::getScreenMaximum())";
+			} else {
+				return String::format("%ff*(sl_real)(slib::UIResource::getScreenMaximum())", amount);
+			}
 		case VW:
-			return String::format("%ff*CONTENT_WIDTH", amount);
+			if (Math::isAlmostZero(amount - 1)) {
+				return "(sl_real)(CONTENT_WIDTH)";
+			} else {
+				return String::format("%ff*(sl_real)(CONTENT_WIDTH)", amount);
+			}
 		case VH:
-			return String::format("%ff*CONTENT_HEIGHT", amount);
+			if (Math::isAlmostZero(amount - 1)) {
+				return "(sl_real)(CONTENT_HEIGHT)";
+			} else {
+				return String::format("%ff*(sl_real)(CONTENT_HEIGHT)", amount);
+			}
 		case VMIN:
-			return String::format("%ff*SLIB_MIN(CONTENT_WIDTH, CONTENT_HEIGHT)", amount);
+			if (Math::isAlmostZero(amount - 1)) {
+				return "(sl_real)(SLIB_MIN(CONTENT_WIDTH, CONTENT_HEIGHT))";
+			} else {
+				return String::format("%ff*(sl_real)(SLIB_MIN(CONTENT_WIDTH, CONTENT_HEIGHT))", amount);
+			}
 		case VMAX:
-			return String::format("%ff*SLIB_MAX(CONTENT_WIDTH, CONTENT_HEIGHT)", amount);
+			if (Math::isAlmostZero(amount - 1)) {
+				return "(sl_real)(SLIB_MAX(CONTENT_WIDTH, CONTENT_HEIGHT))";
+			} else {
+				return String::format("%ff*(sl_real)(SLIB_MAX(CONTENT_WIDTH, CONTENT_HEIGHT))", amount);
+			}
 	}
 	return "0";
 }
@@ -300,7 +402,7 @@ sl_bool SAppDimensionValue::checkMargin()
 		return sl_true;
 	}
 	if (unit == WEIGHT) {
-		return amount >= 0;
+		return sl_true;
 	}
 	return checkPosition();
 }
@@ -343,13 +445,27 @@ sl_bool SAppDimensionValue::checkForRootViewSize()
 	return sl_false;
 }
 
+sl_bool SAppDimensionValue::checkForRootViewScalarSize()
+{
+	if (!flagDefined) {
+		return sl_true;
+	}
+	if (unit == CUSTOM) {
+		unit = PX;
+	}
+	if (isGlobalUnit(unit)) {
+		return amount >= 0;
+	}
+	return sl_false;
+}
+
 sl_bool SAppDimensionValue::checkForRootViewMargin()
 {
 	if (!flagDefined) {
 		return sl_true;
 	}
 	if (unit == WEIGHT) {
-		return amount >= 0;
+		return sl_true;
 	}
 	return isGlobalUnit(unit);
 }
@@ -1003,7 +1119,7 @@ sl_bool SAppNameValue::parse(const String& _str)
 ************************************************/
 
 SAppDrawableValue::SAppDrawableValue()
-: flagDefined(sl_false), flagNull(sl_false), flagWhole(sl_false), func(FUNC_NONE)
+: flagDefined(sl_false), flagNull(sl_false), flagColor(sl_false), color(Color::None), flagWhole(sl_false), func(FUNC_NONE)
 {
 }
 
@@ -1015,6 +1131,9 @@ String SAppDrawableValue::getAccessString()
 	if (flagNull) {
 		return "slib::Ref<slib::Drawable>::null()";
 	}
+	if (flagColor) {
+		return String::format("slib::Drawable::createColorDrawable(slib::Color(%d, %d, %d, %d))", color.r, color.g, color.b, color.a);
+	}
 	String str;
 	if (flagWhole) {
 		str = String::format("drawable::%s::get()", resourceName);
@@ -1022,14 +1141,18 @@ String SAppDrawableValue::getAccessString()
 		str = String::format("slib::Drawable::createSubDrawable(drawable::%s::get(), %ff, %ff, %ff, %ff)", resourceName, x, y, width, height);
 	}
 	if (func == FUNC_NINEPATCH) {
-		str = String::format("slib::NinePatchDrawable::create(%s, %s, %s, %s, %s, %ff, %ff, %ff, %ff)", ninePatch_leftWidthDst.getAccessString(), ninePatch_rightWidthDst.getAccessString(), ninePatch_topHeightDst.getAccessString(), ninePatch_bottomHeightDst.getAccessString(), str, ninePatch_leftWidth, ninePatch_rightWidth, ninePatch_topHeight, ninePatch_bottomHeight);
+		str = String::format("slib::NinePatchDrawable::create(%s, %s, %s, %s, %s, %ff, %ff, %ff, %ff)", patchLeftWidthDst.getAccessString(), patchRightWidthDst.getAccessString(), patchTopHeightDst.getAccessString(), patchBottomHeightDst.getAccessString(), str, patchLeftWidth, patchRightWidth, patchTopHeight, patchBottomHeight);
+	} else if (func == FUNC_THREEPATCH_HORIZONTAL) {
+		str = String::format("slib::HorizontalThreePatchDrawable::create(%s, %s, %s, %ff, %ff)", patchLeftWidthDst.getAccessString(), patchRightWidthDst.getAccessString(), str, patchLeftWidth, patchRightWidth);
+	} else if (func == FUNC_THREEPATCH_VERTICAL) {
+		str = String::format("slib::VerticalThreePatchDrawable::create(%s, %s, %s,%ff, %ff)", patchTopHeightDst.getAccessString(), patchBottomHeightDst.getAccessString(), str, patchTopHeight, patchBottomHeight);
 	}
 	return str;
 }
 
 String SAppDrawableValue::getImageAccessString()
 {
-	if (!flagDefined || flagNull || !flagWhole || func != FUNC_NONE) {
+	if (!flagDefined || flagNull || flagColor || !flagWhole || func != FUNC_NONE) {
 		return "slib::Ref<slib::Image>::null()";
 	}
 	return String::format("drawable::%s::getImage()", resourceName);
@@ -1045,6 +1168,12 @@ sl_bool SAppDrawableValue::parse(const String& _str)
 	if (str == "@null") {
 		flagDefined = sl_true;
 		flagNull = sl_true;
+		return sl_true;
+	}
+	if (Color::parse(str, &color)) {
+		flagDefined = sl_true;
+		flagNull = sl_false;
+		flagColor = sl_true;
 		return sl_true;
 	}
 	if (!(str.startsWith("@drawable/"))) {
@@ -1167,13 +1296,24 @@ sl_bool SAppDrawableValue::parse(const String& _str)
 			if (pos >= len) {
 				return sl_false;
 			}
-			if (Base::equalsMemory(sz + pos, "nine-patch", 10)) {
+			
+			sl_uint32 nFuncParams = 0;
+			if (pos + 10 < len && Base::equalsMemory(sz + pos, "nine-patch", 10)) {
 				func = FUNC_NINEPATCH;
+				nFuncParams = 8;
 				pos += 10;
+			} else if (pos + 22 < len && Base::equalsMemory(sz + pos, "horizontal-three-patch", 22)) {
+				func = FUNC_THREEPATCH_HORIZONTAL;
+				nFuncParams = 4;
+				pos += 22;
+			} else if (pos + 20 < len && Base::equalsMemory(sz + pos, "vertical-three-patch", 20)) {
+				func = FUNC_THREEPATCH_VERTICAL;
+				nFuncParams = 4;
+				pos += 20;
 			} else {
 				return sl_false;
 			}
-			if (func == FUNC_NINEPATCH) {
+			if (func == FUNC_NINEPATCH || func == FUNC_THREEPATCH_HORIZONTAL || func == FUNC_THREEPATCH_VERTICAL) {
 				for (; pos < len; pos++) {
 					if (!(SLIB_CHAR_IS_SPACE_TAB(sz[pos]))) {
 						break;
@@ -1189,7 +1329,7 @@ sl_bool SAppDrawableValue::parse(const String& _str)
 				
 				SAppDimensionValue f[8];
 				sl_size i = 0;
-				for (; i < 8; i++) {
+				for (; i < nFuncParams; i++) {
 					for (; pos < len; pos++) {
 						if (!(SLIB_CHAR_IS_SPACE_TAB(sz[pos]))) {
 							break;
@@ -1235,47 +1375,80 @@ sl_bool SAppDrawableValue::parse(const String& _str)
 					return sl_false;
 				}
 				pos++;
-				if (i != 4 && i != 8) {
-					return sl_false;
+				if (func == FUNC_NINEPATCH) {
+					if (i != 4 && i != 8) {
+						return sl_false;
+					}
+					if (i == 4) {
+						f[4] = f[0];
+						f[5] = f[1];
+						f[6] = f[2];
+						f[7] = f[3];
+					}
+					if (f[4].unit != SAppDimensionValue::CUSTOM || f[4].amount < 0) {
+						return sl_false;
+					}
+					if (f[5].unit != SAppDimensionValue::CUSTOM || f[5].amount < 0) {
+						return sl_false;
+					}
+					if (f[6].unit != SAppDimensionValue::CUSTOM || f[6].amount < 0) {
+						return sl_false;
+					}
+					if (f[7].unit != SAppDimensionValue::CUSTOM || f[7].amount < 0) {
+						return sl_false;
+					}
+					if (!(f[0].checkGlobal()) || f[0].amount < 0) {
+						return sl_false;
+					}
+					if (!(f[1].checkGlobal()) || f[1].amount < 0) {
+						return sl_false;
+					}
+					if (!(f[2].checkGlobal()) || f[2].amount < 0) {
+						return sl_false;
+					}
+					if (!(f[3].checkGlobal()) || f[3].amount < 0) {
+						return sl_false;
+					}
+					patchLeftWidthDst = f[0];
+					patchRightWidthDst = f[1];
+					patchTopHeightDst = f[2];
+					patchBottomHeightDst = f[3];
+					patchLeftWidth = f[4].amount;
+					patchRightWidth = f[5].amount;
+					patchTopHeight = f[6].amount;
+					patchBottomHeight = f[7].amount;
+				} else {
+					if (i != 2 && i != 4) {
+						return sl_false;
+					}
+					if (i == 2) {
+						f[2] = f[0];
+						f[3] = f[1];
+					}
+					if (f[2].unit != SAppDimensionValue::CUSTOM || f[2].amount < 0) {
+						return sl_false;
+					}
+					if (f[3].unit != SAppDimensionValue::CUSTOM || f[3].amount < 0) {
+						return sl_false;
+					}
+					if (!(f[0].checkGlobal()) || f[0].amount < 0) {
+						return sl_false;
+					}
+					if (!(f[1].checkGlobal()) || f[1].amount < 0) {
+						return sl_false;
+					}
+					if (func == FUNC_THREEPATCH_HORIZONTAL) {
+						patchLeftWidthDst = f[0];
+						patchRightWidthDst = f[1];
+						patchLeftWidth = f[2].amount;
+						patchRightWidth = f[3].amount;
+					} else {
+						patchTopHeightDst = f[0];
+						patchBottomHeightDst = f[1];
+						patchTopHeight = f[2].amount;
+						patchBottomHeight = f[3].amount;
+					}
 				}
-				if (i == 4) {
-					f[4] = f[0];
-					f[5] = f[1];
-					f[6] = f[2];
-					f[7] = f[3];
-				}
-				if (f[4].unit != SAppDimensionValue::CUSTOM || f[4].amount < 0) {
-					return sl_false;
-				}
-				if (f[5].unit != SAppDimensionValue::CUSTOM || f[5].amount < 0) {
-					return sl_false;
-				}
-				if (f[6].unit != SAppDimensionValue::CUSTOM || f[6].amount < 0) {
-					return sl_false;
-				}
-				if (f[7].unit != SAppDimensionValue::CUSTOM || f[7].amount < 0) {
-					return sl_false;
-				}
-				if (!(f[0].checkGlobal()) || f[0].amount < 0) {
-					return sl_false;
-				}
-				if (!(f[1].checkGlobal()) || f[1].amount < 0) {
-					return sl_false;
-				}
-				if (!(f[2].checkGlobal()) || f[2].amount < 0) {
-					return sl_false;
-				}
-				if (!(f[3].checkGlobal()) || f[3].amount < 0) {
-					return sl_false;
-				}
-				ninePatch_leftWidthDst = f[0];
-				ninePatch_rightWidthDst = f[1];
-				ninePatch_topHeightDst = f[2];
-				ninePatch_bottomHeightDst = f[3];
-				ninePatch_leftWidth = f[4].amount;
-				ninePatch_rightWidth = f[5].amount;
-				ninePatch_topHeight = f[6].amount;
-				ninePatch_bottomHeight = f[7].amount;
 			}
 		}
 		

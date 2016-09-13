@@ -1,4 +1,5 @@
 #include "../../../inc/slibx/sdev/sapp.h"
+#include <slib/ui.h>
 
 SLIB_SDEV_NAMESPACE_BEGIN
 
@@ -90,6 +91,8 @@ SAppLayoutResource::SAppLayoutResource()
 	nAutoIncreaseNameTab = 0;
 	nAutoIncreaseNameTree = 0;
 	nAutoIncreaseNameWeb = 0;
+	nAutoIncreaseNameSplit = 0;
+	nAutoIncreaseNameProgress = 0;
 	nAutoIncreaseNameOther = 0;
 }
 
@@ -174,6 +177,14 @@ String SAppLayoutResource::getAutoIncreasingName(int type)
 			prefix = "web";
 			pN = &nAutoIncreaseNameWeb;
 			break;
+		case typeSplit:
+			prefix = "split";
+			pN = &nAutoIncreaseNameSplit;
+			break;
+		case typeProgress:
+			prefix = "progress";
+			pN = &nAutoIncreaseNameProgress;
+			break;
 		default:
 			prefix = "other";
 			pN = &nAutoIncreaseNameOther;
@@ -230,6 +241,10 @@ int SAppLayoutResource::getTypeFromName(const String &strType)
 		type = SAppLayoutResource::typeTree;
 	} else if (strType == "web") {
 		type = SAppLayoutResource::typeWeb;
+	} else if (strType == "split") {
+		type = SAppLayoutResource::typeSplit;
+	} else if (strType == "progress") {
+		type = SAppLayoutResource::typeProgress;
 	}
 	return type;
 }
@@ -271,6 +286,7 @@ void SAppLayoutSimulationWindow::open(SAppDocument* doc, SAppLayoutResource* lay
 		if (layout->type == SAppLayoutResource::typeView || layout->type == SAppLayoutResource::typeMobilePage) {
 			addView(viewContent);
 		}
+		doc->_simulateLayoutCreateOrLayoutView(this, layout, sl_null, sl_true);
 		create();
 		doc->_registerLayoutSimulationWindow(this);
 	}
@@ -301,7 +317,7 @@ Ref<SAppLayoutResource> SAppLayoutSimulationWindow::getLayout()
 	return m_layout;
 }
 
-void SAppLayoutSimulationWindow::layoutViews(sl_real width, sl_real height)
+void SAppLayoutSimulationWindow::layoutViews(sl_ui_len width, sl_ui_len height)
 {
 	Ref<SAppDocument> doc = m_document;
 	Ref<SAppLayoutResource> layout = m_layout;

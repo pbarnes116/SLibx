@@ -6,7 +6,7 @@
 #include <slib/core/log.h>
 #include <slib/core/resource.h>
 #include <slib/core/scoped_pointer.h>
-#include <slib/ui/core.h>
+#include <slib/ui.h>
 
 #define TAG "SApp"
 
@@ -84,6 +84,7 @@ SLIB_STATIC_STRING(_g_sdev_sapp_error_resource_layout_name_invalid, "Layout Reso
 SLIB_STATIC_STRING(_g_sdev_sapp_error_resource_layout_name_redefined, "Layout Resource: name is redefined: %s")
 SLIB_STATIC_STRING(_g_sdev_sapp_error_resource_layout_attribute_invalid, "Layout Resource: Invalid %s attribute value: %s")
 SLIB_STATIC_STRING(_g_sdev_sapp_error_resource_layout_scrollview_must_contain_one_child, "Layout Resource: ScrollView can contain only one child")
+SLIB_STATIC_STRING(_g_sdev_sapp_error_resource_layout_item_must_contain_one_child, "Layout Resource: item can contain only one child")
 SLIB_STATIC_STRING(_g_sdev_sapp_log_generate_cpp_layouts_begin, "Generating: layouts.h, layouts.cpp")
 
 #define RAW_MAX_SIZE 0x1000000 // 16MB
@@ -756,6 +757,9 @@ Ref<Drawable> SAppDocument::_getDrawableValue(SAppDrawableValue& value)
 	if (value.flagNull) {
 		return Ref<Drawable>::null();
 	}
+	if (value.flagColor) {
+		return Drawable::createColorDrawable(value.color);
+	}
 	Ref<SAppDrawableResource> res = m_drawables.getValue(value.resourceName, Ref<SAppDrawableResource>::null());
 	if (res.isNull()) {
 		_logError(_g_sdev_sapp_error_drawable_not_found.arg(value.resourceName));
@@ -775,7 +779,11 @@ Ref<Drawable> SAppDocument::_getDrawableValue(SAppDrawableValue& value)
 			drawable = Drawable::createSubDrawable(drawable, value.x, value.y, value.width, value.height);
 		}
 		if (value.func == SAppDrawableValue::FUNC_NINEPATCH) {
-			drawable = NinePatchDrawable::create(_getDimensionValue(value.ninePatch_leftWidthDst), _getDimensionValue(value.ninePatch_rightWidthDst), _getDimensionValue(value.ninePatch_topHeightDst), _getDimensionValue(value.ninePatch_bottomHeightDst), drawable, value.ninePatch_leftWidth, value.ninePatch_rightWidth, value.ninePatch_topHeight, value.ninePatch_bottomHeight);
+			drawable = NinePatchDrawable::create(_getDimensionIntValue(value.patchLeftWidthDst), _getDimensionIntValue(value.patchRightWidthDst), _getDimensionIntValue(value.patchTopHeightDst), _getDimensionIntValue(value.patchBottomHeightDst), drawable, value.patchLeftWidth, value.patchRightWidth, value.patchTopHeight, value.patchBottomHeight);
+		} else if (value.func == SAppDrawableValue::FUNC_THREEPATCH_HORIZONTAL) {
+			drawable = HorizontalThreePatchDrawable::create(_getDimensionIntValue(value.patchLeftWidthDst), _getDimensionIntValue(value.patchRightWidthDst), drawable, value.patchLeftWidth, value.patchRightWidth);
+		} else if (value.func == SAppDrawableValue::FUNC_THREEPATCH_VERTICAL) {
+			drawable = VerticalThreePatchDrawable::create(_getDimensionIntValue(value.patchTopHeightDst), _getDimensionIntValue(value.patchBottomHeightDst), drawable, value.patchTopHeight, value.patchBottomHeight);
 		}
 	}
 	return drawable;
@@ -784,7 +792,7 @@ Ref<Drawable> SAppDocument::_getDrawableValue(SAppDrawableValue& value)
 
 Ref<Image> SAppDocument::_getImageValue(SAppDrawableValue& value)
 {
-	if (!(value.flagDefined) || value.flagNull || !(value.flagWhole) || value.func != SAppDrawableValue::FUNC_NONE) {
+	if (!(value.flagDefined) || value.flagNull || value.flagColor || !(value.flagWhole) || value.func != SAppDrawableValue::FUNC_NONE) {
 		return Ref<Image>::null();
 	}
 	Ref<Drawable> drawable = _getDrawableValue(value);
@@ -1230,7 +1238,7 @@ Ref<Drawable> SAppDocument::_getDrawableValue_NinePieces(SAppDrawableResource* r
 			break;
 		}
 		
-		return NinePiecesDrawable::create(_getDimensionValue(attr->leftWidth), _getDimensionValue(attr->rightWidth), _getDimensionValue(attr->topHeight), _getDimensionValue(attr->bottomHeight), _getDrawableValue(attr->topLeft), _getDrawableValue(attr->top), _getDrawableValue(attr->topRight), _getDrawableValue(attr->left), _getDrawableValue(attr->center), _getDrawableValue(attr->right), _getDrawableValue(attr->bottomLeft), _getDrawableValue(attr->bottom), _getDrawableValue(attr->bottomRight));
+		return NinePiecesDrawable::create(_getDimensionIntValue(attr->leftWidth), _getDimensionIntValue(attr->rightWidth), _getDimensionIntValue(attr->topHeight), _getDimensionIntValue(attr->bottomHeight), _getDrawableValue(attr->topLeft), _getDrawableValue(attr->top), _getDrawableValue(attr->topRight), _getDrawableValue(attr->left), _getDrawableValue(attr->center), _getDrawableValue(attr->right), _getDrawableValue(attr->bottomLeft), _getDrawableValue(attr->bottom), _getDrawableValue(attr->bottomRight));
 		
 	} while (0);
 	
@@ -1379,7 +1387,7 @@ Ref<Drawable> SAppDocument::_getDrawableValue_NinePatch(SAppDrawableResource* re
 	if (!(_checkDrawableValueAvailable(attr->src, attr->element))) {
 		return Ref<Drawable>::null();
 	}
-	return NinePatchDrawable::create(_getDimensionValue(attr->dstLeftWidth), _getDimensionValue(attr->dstRightWidth), _getDimensionValue(attr->dstTopHeight), _getDimensionValue(attr->dstBottomHeight), _getDrawableValue(attr->src), attr->leftWidth, attr->rightWidth, attr->topHeight, attr->bottomHeight);
+	return NinePatchDrawable::create(_getDimensionIntValue(attr->dstLeftWidth), _getDimensionIntValue(attr->dstRightWidth), _getDimensionIntValue(attr->dstTopHeight), _getDimensionIntValue(attr->dstBottomHeight), _getDrawableValue(attr->src), attr->leftWidth, attr->rightWidth, attr->topHeight, attr->bottomHeight);
 }
 
 sl_bool SAppDocument::_checkDrawableValueAvailable(SAppDrawableValue& value, const Ref<XmlElement>& elementError)
@@ -1388,6 +1396,9 @@ sl_bool SAppDocument::_checkDrawableValueAvailable(SAppDrawableValue& value, con
 		return sl_true;
 	}
 	if (value.flagNull) {
+		return sl_true;
+	}
+	if (value.flagColor) {
 		return sl_true;
 	}
 	if (m_drawables.contains(value.resourceName)) {
@@ -1406,7 +1417,7 @@ sl_bool SAppDocument::_checkDrawableValueImage(SAppDrawableValue& value, const R
 	if (value.flagNull) {
 		return sl_true;
 	}
-	if (!(value.flagWhole) || value.func != SAppDrawableValue::FUNC_NONE) {
+	if (value.flagColor || !(value.flagWhole) || value.func != SAppDrawableValue::FUNC_NONE) {
 		_logError(elementError, _g_sdev_sapp_error_drawable_not_image.arg(value.resourceName));
 		return sl_false;
 	}
@@ -2217,10 +2228,17 @@ sl_bool SAppDocument::_checkMenuValueAvailable(SAppMenuValue& value, const Ref<X
 		view->FUNC(TO_VALUE##Value(ATTR NAME), sl_false); \
 	}
 
-#define SIMULATE_LAYOUT_SET_LAYOUT_ATTR_ONLAYOUT(ATTR, NAME, FUNC) \
+#define SIMULATE_LAYOUT_SET_LAYOUT_ATTR_INT(ATTR, NAME, FUNC) \
 	if (ATTR NAME.flagDefined) { \
 		if (flagOnLayout) { \
-			view->FUNC(_getDimensionValue(ATTR NAME), sl_false); \
+			view->FUNC(_getDimensionIntValue(ATTR NAME), sl_false); \
+		} \
+	}
+
+#define SIMULATE_LAYOUT_SET_LAYOUT_ATTR_FLOAT(ATTR, NAME, FUNC) \
+	if (ATTR NAME.flagDefined) { \
+		if (flagOnLayout) { \
+			view->FUNC(_getDimensionFloatValue(ATTR NAME), sl_false); \
 		} \
 	}
 
@@ -2368,121 +2386,158 @@ sl_bool SAppDocument::_parseLayoutResourceItem(SAppLayoutResource* layout, SAppL
 		item->name = name;
 	}
 	
-	if (item->type == SAppLayoutResource::typeWindow) {
-		if (!(_parseLayoutResourceWindowAttributes(layout))) {
+	switch (item->type) {
+		case SAppLayoutResource::typeWindow:
+			if (!(_parseLayoutResourceWindowAttributes(layout))) {
+				return sl_false;
+			}
+			if (!(_parseLayoutResourceItemChildren(layout, item))) {
+				return sl_false;
+			}
+			break;
+		case SAppLayoutResource::typeMobilePage:
+			if (!(_parseLayoutResourceViewAttributes(layout, item, parent))) {
+				return sl_false;
+			}
+			if (!(layout->viewAttrs->width.flagDefined)) {
+				layout->viewAttrs->width.flagDefined = sl_true;
+				layout->viewAttrs->width.amount = 1;
+				layout->viewAttrs->width.unit = SAppDimensionValue::SW;
+			}
+			if (!(layout->viewAttrs->height.flagDefined)) {
+				layout->viewAttrs->height.flagDefined = sl_true;
+				layout->viewAttrs->height.amount = 1;
+				layout->viewAttrs->height.unit = SAppDimensionValue::SH;
+			}
+			if (!(_parseLayoutResourceItemChildren(layout, item))) {
+				return sl_false;
+			}
+			break;
+		case SAppLayoutResource::typeView:
+			item->className = "slib::View";
+			if (!(_parseLayoutResourceViewAttributes(layout, item, parent))) {
+				return sl_false;
+			}
+			if (!(_parseLayoutResourceItemChildren(layout, item))) {
+				return sl_false;
+			}
+			break;
+		case SAppLayoutResource::typeViewGroup:
+			item->className = "slib::ViewGroup";
+			if (!(_parseLayoutResourceViewAttributes(layout, item, parent))) {
+				return sl_false;
+			}
+			if (!(_parseLayoutResourceItemChildren(layout, item))) {
+				return sl_false;
+			}
+			break;
+		case SAppLayoutResource::typeButton:
+			item->className = "slib::Button";
+			if (!(_parseLayoutResourceButtonAttributes(layout, item, parent))) {
+				return sl_false;
+			}
+			break;
+		case SAppLayoutResource::typeLabel:
+			item->className = "slib::LabelView";
+			if (!(_parseLayoutResourceLabelAttributes(layout, item, parent))) {
+				return sl_false;
+			}
+			break;
+		case SAppLayoutResource::typeCheck:
+			item->className = "slib::CheckBox";
+			if (!(_parseLayoutResourceCheckAttributes(layout, item, parent))) {
+				return sl_false;
+			}
+			break;
+		case SAppLayoutResource::typeRadio:
+			item->className = "slib::RadioButton";
+			if (!(_parseLayoutResourceRadioAttributes(layout, item, parent))) {
+				return sl_false;
+			}
+			break;
+		case SAppLayoutResource::typeEdit:
+			item->className = "slib::EditView";
+			if (!(_parseLayoutResourceEditAttributes(layout, item, parent))) {
+				return sl_false;
+			}
+			break;
+		case SAppLayoutResource::typePassword:
+			item->className = "slib::PasswordView";
+			if (!(_parseLayoutResourceEditAttributes(layout, item, parent))) {
+				return sl_false;
+			}
+			break;
+		case SAppLayoutResource::typeTextArea:
+			item->className = "slib::TextArea";
+			if (!(_parseLayoutResourceEditAttributes(layout, item, parent))) {
+				return sl_false;
+			}
+			break;
+		case SAppLayoutResource::typeImage:
+			item->className = "slib::ImageView";
+			if (!(_parseLayoutResourceImageAttributes(layout, item, parent))) {
+				return sl_false;
+			}
+			break;
+		case SAppLayoutResource::typeSelect:
+			item->className = "slib::SelectView";
+			if (!(_parseLayoutResourceSelectAttributes(layout, item, parent))) {
+				return sl_false;
+			}
+			break;
+		case SAppLayoutResource::typeScroll:
+			item->className = "slib::ScrollView";
+			if (!(_parseLayoutResourceScrollAttributes(layout, item, parent))) {
+				return sl_false;
+			}
+			break;
+		case SAppLayoutResource::typeLinear:
+			item->className = "slib::LinearView";
+			if (!(_parseLayoutResourceLinearAttributes(layout, item, parent))) {
+				return sl_false;
+			}
+			break;
+		case SAppLayoutResource::typeList:
+			item->className = "slib::ListView";
+			if (!(_parseLayoutResourceListAttributes(layout, item, parent))) {
+				return sl_false;
+			}
+			break;
+		case SAppLayoutResource::typeListReport:
+			item->className = "slib::ListReportView";
+			if (!(_parseLayoutResourceListReportAttributes(layout, item, parent))) {
+				return sl_false;
+			}
+			break;
+		case SAppLayoutResource::typeRender:
+			item->className = "slib::RenderView";
+			break;
+		case SAppLayoutResource::typeTab:
+			item->className = "slib::TabView";
+			if (!(_parseLayoutResourceTabAttributes(layout, item, parent))) {
+				return sl_false;
+			}
+			break;
+		case SAppLayoutResource::typeTree:
+			item->className = "slib::TreeView";
+			break;
+		case SAppLayoutResource::typeWeb:
+			item->className = "slib::WebView";
+			break;
+		case SAppLayoutResource::typeSplit:
+			item->className = "slib::SplitView";
+			if (!(_parseLayoutResourceSplitAttributes(layout, item, parent))) {
+				return sl_false;
+			}
+			break;
+		case SAppLayoutResource::typeProgress:
+			item->className = "slib::ProgressBar";
+			if (!(_parseLayoutResourceProgressAttributes(layout, item, parent))) {
+				return sl_false;
+			}
+			break;
+		default:
 			return sl_false;
-		}
-		if (!(_parseLayoutResourceItemChildren(layout, item))) {
-			return sl_false;
-		}
-	} else if (item->type == SAppLayoutResource::typeMobilePage) {
-		if (!(_parseLayoutResourceViewAttributes(layout, item, parent))) {
-			return sl_false;
-		}
-		if (!(layout->viewAttrs->width.flagDefined)) {
-			layout->viewAttrs->width.flagDefined = sl_true;
-			layout->viewAttrs->width.amount = 1;
-			layout->viewAttrs->width.unit = SAppDimensionValue::SW;
-		}
-		if (!(layout->viewAttrs->height.flagDefined)) {
-			layout->viewAttrs->height.flagDefined = sl_true;
-			layout->viewAttrs->height.amount = 1;
-			layout->viewAttrs->height.unit = SAppDimensionValue::SH;
-		}
-		if (!(_parseLayoutResourceItemChildren(layout, item))) {
-			return sl_false;
-		}
-	} else if (item->type == SAppLayoutResource::typeView) {
-		item->className = "slib::View";
-		if (!(_parseLayoutResourceViewAttributes(layout, item, parent))) {
-			return sl_false;
-		}
-		if (!(_parseLayoutResourceItemChildren(layout, item))) {
-			return sl_false;
-		}
-	} else if (item->type == SAppLayoutResource::typeViewGroup) {
-		item->className = "slib::ViewGroup";
-		if (!(_parseLayoutResourceViewAttributes(layout, item, parent))) {
-			return sl_false;
-		}
-		if (!(_parseLayoutResourceItemChildren(layout, item))) {
-			return sl_false;
-		}
-	} else if (item->type == SAppLayoutResource::typeButton) {
-		item->className = "slib::Button";
-		if (!(_parseLayoutResourceButtonAttributes(layout, item, parent))) {
-			return sl_false;
-		}
-	} else if (item->type == SAppLayoutResource::typeLabel) {
-		item->className = "slib::LabelView";
-		if (!(_parseLayoutResourceLabelAttributes(layout, item, parent))) {
-			return sl_false;
-		}
-	} else if (item->type == SAppLayoutResource::typeCheck) {
-		item->className = "slib::CheckBox";
-		if (!(_parseLayoutResourceCheckAttributes(layout, item, parent))) {
-			return sl_false;
-		}
-	} else if (item->type == SAppLayoutResource::typeRadio) {
-		item->className = "slib::RadioButton";
-		if (!(_parseLayoutResourceRadioAttributes(layout, item, parent))) {
-			return sl_false;
-		}
-	} else if (item->type == SAppLayoutResource::typeEdit) {
-		item->className = "slib::EditView";
-		if (!(_parseLayoutResourceEditAttributes(layout, item, parent))) {
-			return sl_false;
-		}
-	} else if (item->type == SAppLayoutResource::typePassword) {
-		item->className = "slib::PasswordView";
-		if (!(_parseLayoutResourceEditAttributes(layout, item, parent))) {
-			return sl_false;
-		}
-	} else if (item->type == SAppLayoutResource::typeTextArea) {
-		item->className = "slib::TextArea";
-		if (!(_parseLayoutResourceEditAttributes(layout, item, parent))) {
-			return sl_false;
-		}
-	} else if (item->type == SAppLayoutResource::typeImage) {
-		item->className = "slib::ImageView";
-		if (!(_parseLayoutResourceImageAttributes(layout, item, parent))) {
-			return sl_false;
-		}
-	} else if (item->type == SAppLayoutResource::typeSelect) {
-		item->className = "slib::SelectView";
-		if (!(_parseLayoutResourceSelectAttributes(layout, item, parent))) {
-			return sl_false;
-		}
-	} else if (item->type == SAppLayoutResource::typeScroll) {
-		item->className = "slib::ScrollView";
-		if (!(_parseLayoutResourceScrollAttributes(layout, item, parent))) {
-			return sl_false;
-		}
-	} else if (item->type == SAppLayoutResource::typeLinear) {
-		item->className = "slib::LinearView";
-		if (!(_parseLayoutResourceLinearAttributes(layout, item, parent))) {
-			return sl_false;
-		}
-	} else if (item->type == SAppLayoutResource::typeList) {
-		item->className = "slib::ListView";
-		if (!(_parseLayoutResourceListAttributes(layout, item, parent))) {
-			return sl_false;
-		}
-	} else if (item->type == SAppLayoutResource::typeListReport) {
-		item->className = "slib::ListReportView";
-		if (!(_parseLayoutResourceListReportAttributes(layout, item, parent))) {
-			return sl_false;
-		}
-	} else if (item->type == SAppLayoutResource::typeRender) {
-		item->className = "slib::RenderView";
-	} else if (item->type == SAppLayoutResource::typeTab) {
-		item->className = "slib::TabView";
-	} else if (item->type == SAppLayoutResource::typeTree) {
-		item->className = "slib::TreeView";
-	} else if (item->type == SAppLayoutResource::typeWeb) {
-		item->className = "slib::WebView";
-	} else {
-		return sl_false;
 	}
 	
 	String customClassName = item->getXmlAttribute("class").trim();
@@ -2573,12 +2628,12 @@ sl_bool SAppDocument::_generateLayoutsCpp(const String& targetPath)
 
 	sbHeader.add(String::format(
 								"%n"
-								"#include <slib/ui/resource.h>%n%n"
 								"namespace %s%n"
 								"{%n\tnamespace ui%n\t{%n%n"
 								, m_conf.generate_cpp_namespace));
 	
 	sbCpp.add(String::format(
+							"#include <slib/ui.h>%n"
 							 "#include \"layouts.h\"%n"
 							 "#include \"strings.h\"%n"
 							 "#include \"drawables.h\"%n"
@@ -2637,7 +2692,7 @@ sl_bool SAppDocument::_generateLayoutsCpp(const String& targetPath)
 				return sl_false;
 			}
 			
-			sbCpp.add(String::format("\t\t}%n%n\t\tvoid %s::layoutViews(sl_real CONTENT_WIDTH, sl_real CONTENT_HEIGHT)%n\t\t{%n", pair.key));
+			sbCpp.add(String::format("\t\t}%n%n\t\tvoid %s::layoutViews(sl_ui_len CONTENT_WIDTH, sl_ui_len CONTENT_HEIGHT)%n\t\t{%n", pair.key));
 			sbCpp.link(sbLayout);
 			static sl_char8 strEndCpp[] = "\t\t}\r\n\r\n";
 			sbCpp.addStatic(strEndCpp, sizeof(strEndCpp)-1);
@@ -2757,10 +2812,23 @@ sl_bool SAppDocument::_generateLayoutsCppItem(SAppLayoutResourceItem* parent, SA
 			case SAppLayoutResource::typeRender:
 				break;
 			case SAppLayoutResource::typeTab:
+				if (!(_generateLayoutsCppTabView(name, item, sbDeclare, sbDefineInit, sbDefineLayout, addStatement))) {
+					return sl_false;
+				}
 				break;
 			case SAppLayoutResource::typeTree:
 				break;
 			case SAppLayoutResource::typeWeb:
+				break;
+			case SAppLayoutResource::typeSplit:
+				if (!(_generateLayoutsCppSplitView(name, item, sbDeclare, sbDefineInit, sbDefineLayout, addStatement))) {
+					return sl_false;
+				}
+				break;
+			case SAppLayoutResource::typeProgress:
+				if (!(_generateLayoutsCppProgressBar(name, item, sbDeclare, sbDefineInit, sbDefineLayout, addStatement))) {
+					return sl_false;
+				}
 				break;
 			default:
 				return sl_false;
@@ -2977,10 +3045,38 @@ Ref<View> SAppDocument::_simulateLayoutCreateOrLayoutView(SAppLayoutSimulationWi
 			case SAppLayoutResource::typeRender:
 				break;
 			case SAppLayoutResource::typeTab:
+				if (!flagOnLayout) {
+					view = new TabView;
+				}
+				if (view.isNotNull()) {
+					if (!(_simulateLayoutSetTabAttributes(simulator, (TabView*)(view.ptr), item, flagOnLayout))) {
+						return Ref<View>::null();
+					}
+				}
 				break;
 			case SAppLayoutResource::typeTree:
 				break;
 			case SAppLayoutResource::typeWeb:
+				break;
+			case SAppLayoutResource::typeSplit:
+				if (!flagOnLayout) {
+					view = new SplitView;
+				}
+				if (view.isNotNull()) {
+					if (!(_simulateLayoutSetSplitAttributes(simulator, (SplitView*)(view.ptr), item, flagOnLayout))) {
+						return Ref<View>::null();
+					}
+				}
+				break;
+			case SAppLayoutResource::typeProgress:
+				if (!flagOnLayout) {
+					view = new ProgressBar;
+				}
+				if (view.isNotNull()) {
+					if (!(_simulateLayoutSetProgressAttributes(simulator, (ProgressBar*)(view.ptr), item, flagOnLayout))) {
+						return Ref<View>::null();
+					}
+				}
 				break;
 			default:
 				return Ref<View>::null();
@@ -3009,7 +3105,7 @@ Ref<View> SAppDocument::_simulateLayoutCreateOrLayoutView(SAppLayoutSimulationWi
 					m_layoutSimulationParams.viewportHeight = view->getHeight();
 					m_layoutSimulationParams.customUnit = 1;
 					if (layout.isNotNull() && layout->customUnit.flagDefined && !(layout->customUnit.isNeededOnLayoutFunction())) {
-						m_layoutSimulationParams.customUnit = _getDimensionValue(layout->customUnit);
+						m_layoutSimulationParams.customUnit = _getDimensionFloatValue(layout->customUnit);
 					}
 					if (!(_simulateLayoutSetWindowAttributes(simulator, item))) {
 						return Ref<View>::null();
@@ -3020,7 +3116,7 @@ Ref<View> SAppDocument::_simulateLayoutCreateOrLayoutView(SAppLayoutSimulationWi
 				}
 			} else {
 				if (layout.isNotNull() && layout->customUnit.flagDefined && layout->customUnit.isNeededOnLayoutFunction()) {
-					m_layoutSimulationParams.customUnit = _getDimensionValue(layout->customUnit);
+					m_layoutSimulationParams.customUnit = _getDimensionFloatValue(layout->customUnit);
 				}
 			}
 		} else if (item->type == SAppLayoutResource::typeMobilePage || item->type == SAppLayoutResource::typeView) {
@@ -3035,7 +3131,7 @@ Ref<View> SAppDocument::_simulateLayoutCreateOrLayoutView(SAppLayoutSimulationWi
 				m_layoutSimulationParams.viewportHeight = view->getHeight();
 				m_layoutSimulationParams.customUnit = 1;
 				if (layout.isNotNull() && layout->customUnit.flagDefined) {
-					m_layoutSimulationParams.customUnit = _getDimensionValue(layout->customUnit);
+					m_layoutSimulationParams.customUnit = _getDimensionFloatValue(layout->customUnit);
 				}
 				if (!(_simulateLayoutSetViewAttributes(simulator, view.ptr, item, flagOnLayout))) {
 					return Ref<View>::null();
@@ -3077,7 +3173,37 @@ Ref<View> SAppDocument::_simulateLayoutCreateOrLayoutView(SAppLayoutSimulationWi
 	
 }
 
-sl_real SAppDocument::_getDimensionValue(SAppDimensionValue& value)
+sl_ui_pos SAppDocument::_getDimensionIntValue(SAppDimensionValue& value)
+{
+	if (!(value.flagDefined)) {
+		return 0;
+	}
+	switch (value.unit) {
+		case SAppDimensionValue::CUSTOM:
+			return (sl_ui_pos)(value.amount * m_layoutSimulationParams.customUnit);
+		case SAppDimensionValue::PX:
+			return (sl_ui_pos)(value.amount);
+		case SAppDimensionValue::SW:
+			return (sl_ui_pos)(value.amount * m_layoutSimulationParams.screenWidth);
+		case SAppDimensionValue::SH:
+			return (sl_ui_pos)(value.amount * m_layoutSimulationParams.screenHeight);
+		case SAppDimensionValue::SMIN:
+			return (sl_ui_pos)(value.amount * SLIB_MIN(m_layoutSimulationParams.screenWidth, m_layoutSimulationParams.screenHeight));
+		case SAppDimensionValue::SMAX:
+			return (sl_ui_pos)(value.amount * SLIB_MAX(m_layoutSimulationParams.screenWidth, m_layoutSimulationParams.screenHeight));
+		case SAppDimensionValue::VW:
+			return (sl_ui_pos)(value.amount * m_layoutSimulationParams.viewportWidth);
+		case SAppDimensionValue::VH:
+			return (sl_ui_pos)(value.amount * m_layoutSimulationParams.viewportHeight);
+		case SAppDimensionValue::VMIN:
+			return (sl_ui_pos)(value.amount * SLIB_MIN(m_layoutSimulationParams.viewportWidth, m_layoutSimulationParams.viewportHeight));
+		case SAppDimensionValue::VMAX:
+			return (sl_ui_pos)(value.amount * SLIB_MAX(m_layoutSimulationParams.viewportWidth, m_layoutSimulationParams.viewportHeight));
+	}
+	return 0;
+}
+
+sl_real SAppDocument::_getDimensionFloatValue(SAppDimensionFloatValue& value)
 {
 	if (!(value.flagDefined)) {
 		return 0;
@@ -3088,21 +3214,21 @@ sl_real SAppDocument::_getDimensionValue(SAppDimensionValue& value)
 		case SAppDimensionValue::PX:
 			return value.amount;
 		case SAppDimensionValue::SW:
-			return value.amount * m_layoutSimulationParams.screenWidth;
+			return value.amount * (sl_real)(m_layoutSimulationParams.screenWidth);
 		case SAppDimensionValue::SH:
-			return value.amount * m_layoutSimulationParams.screenHeight;
+			return value.amount * (sl_real)(m_layoutSimulationParams.screenHeight);
 		case SAppDimensionValue::SMIN:
-			return value.amount * SLIB_MIN(m_layoutSimulationParams.screenWidth, m_layoutSimulationParams.screenHeight);
+			return value.amount * (sl_real)(SLIB_MIN(m_layoutSimulationParams.screenWidth, m_layoutSimulationParams.screenHeight));
 		case SAppDimensionValue::SMAX:
-			return value.amount * SLIB_MAX(m_layoutSimulationParams.screenWidth, m_layoutSimulationParams.screenHeight);
+			return value.amount * (sl_real)(SLIB_MAX(m_layoutSimulationParams.screenWidth, m_layoutSimulationParams.screenHeight));
 		case SAppDimensionValue::VW:
-			return value.amount * m_layoutSimulationParams.viewportWidth;
+			return value.amount * (sl_real)(m_layoutSimulationParams.viewportWidth);
 		case SAppDimensionValue::VH:
-			return value.amount * m_layoutSimulationParams.viewportHeight;
+			return value.amount * (sl_real)(m_layoutSimulationParams.viewportHeight);
 		case SAppDimensionValue::VMIN:
-			return value.amount * SLIB_MIN(m_layoutSimulationParams.viewportWidth, m_layoutSimulationParams.viewportHeight);
+			return value.amount * (sl_real)(SLIB_MIN(m_layoutSimulationParams.viewportWidth, m_layoutSimulationParams.viewportHeight));
 		case SAppDimensionValue::VMAX:
-			return value.amount * SLIB_MAX(m_layoutSimulationParams.viewportWidth, m_layoutSimulationParams.viewportHeight);
+			return value.amount * (sl_real)(SLIB_MAX(m_layoutSimulationParams.viewportWidth, m_layoutSimulationParams.viewportHeight));
 	}
 	return 0;
 }
@@ -3279,10 +3405,10 @@ sl_bool SAppDocument::_simulateLayoutSetRootViewAttributes(View* view, SAppLayou
 	SAppLayoutViewAttributes* attr = item->viewAttrs.ptr;
 	sl_bool flagOnLayout = sl_false;
 	
-	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_NOREDRAW(attr->, paddingLeft, setPaddingLeft, _getDimension)
-	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_NOREDRAW(attr->, paddingTop, setPaddingTop, _getDimension)
-	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_NOREDRAW(attr->, paddingRight, setPaddingRight, _getDimension)
-	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_NOREDRAW(attr->, paddingBottom, setPaddingBottom, _getDimension)
+	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_NOREDRAW(attr->, paddingLeft, setPaddingLeft, _getDimensionInt)
+	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_NOREDRAW(attr->, paddingTop, setPaddingTop, _getDimensionInt)
+	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_NOREDRAW(attr->, paddingRight, setPaddingRight, _getDimensionInt)
+	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_NOREDRAW(attr->, paddingBottom, setPaddingBottom, _getDimensionInt)
 	
 	SIMULATE_LAYOUT_SET_LAYOUT_ATTR(attr->, occurringClick, setOccurringClick, _get)
 	if (!(_checkDrawableValueAvailable(attr->background, item->element))) {
@@ -3299,7 +3425,7 @@ sl_bool SAppDocument::_simulateLayoutSetRootViewAttributes(View* view, SAppLayou
 	if (attr->fontFamily.flagDefined || attr->fontSize.flagDefined || attr->fontBold.flagDefined || attr->fontItalic.flagDefined || attr->fontUnderline.flagDefined) {
 		sl_real fontSize;
 		if (attr->finalFontSize.flagDefined) {
-			fontSize = _getDimensionValue(attr->finalFontSize);
+			fontSize = _getDimensionFloatValue(attr->finalFontSize);
 		} else {
 			fontSize = UI::getDefaultFontSize();
 		}
@@ -3409,8 +3535,8 @@ sl_bool SAppDocument::_generateLayoutsCppWindowAttributes(const String& name, SA
 		return sl_false;
 	}
 	GENERATE_CPP_SET_LAYOUT_ATTR(attr->, title, setTitle, sbDefine)
-	GENERATE_CPP_SET_LAYOUT_ATTR(attr->, left, setX, sbDefine)
-	GENERATE_CPP_SET_LAYOUT_ATTR(attr->, top, setY, sbDefine)
+	GENERATE_CPP_SET_LAYOUT_ATTR(attr->, left, setLeft, sbDefine)
+	GENERATE_CPP_SET_LAYOUT_ATTR(attr->, top, setTop, sbDefine)
 	GENERATE_CPP_SET_LAYOUT_ATTR(attr->, width, setWidth, sbDefine)
 	GENERATE_CPP_SET_LAYOUT_ATTR(attr->, height, setHeight, sbDefine)
 	GENERATE_CPP_SET_LAYOUT_ATTR(attr->, minimized, setMinimized, sbDefine)
@@ -3451,10 +3577,10 @@ sl_bool SAppDocument::_simulateLayoutSetWindowAttributes(Window* view, SAppLayou
 		return sl_false;
 	}
 	SIMULATE_LAYOUT_SET_LAYOUT_ATTR(attr->, title, setTitle, _getString)
-	SIMULATE_LAYOUT_SET_LAYOUT_ATTR(attr->, left, setX, _getDimension)
-	SIMULATE_LAYOUT_SET_LAYOUT_ATTR(attr->, top, setY, _getDimension)
-	SIMULATE_LAYOUT_SET_LAYOUT_ATTR(attr->, width, setWidth, _getDimension)
-	SIMULATE_LAYOUT_SET_LAYOUT_ATTR(attr->, height, setHeight, _getDimension)
+	SIMULATE_LAYOUT_SET_LAYOUT_ATTR(attr->, left, setLeft, _getDimensionInt)
+	SIMULATE_LAYOUT_SET_LAYOUT_ATTR(attr->, top, setTop, _getDimensionInt)
+	SIMULATE_LAYOUT_SET_LAYOUT_ATTR(attr->, width, setWidth, _getDimensionInt)
+	SIMULATE_LAYOUT_SET_LAYOUT_ATTR(attr->, height, setHeight, _getDimensionInt)
 	SIMULATE_LAYOUT_SET_LAYOUT_ATTR(attr->, minimized, setMinimized, _get)
 	SIMULATE_LAYOUT_SET_LAYOUT_ATTR(attr->, maximized, setMaximized, _get)
 	SIMULATE_LAYOUT_SET_LAYOUT_ATTR(attr->, visible, setVisible, _get)
@@ -3908,14 +4034,15 @@ sl_bool SAppDocument::_parseLayoutResourceViewAttributes(SAppLayoutResource* lay
 	PARSE_AND_CHECK_LAYOUT_ATTR(attr->, backgroundScale)
 	PARSE_AND_CHECK_LAYOUT_ATTR(attr->, backgroundAlign)
 	PARSE_AND_CHECK_LAYOUT_ATTR(attr->, backgroundColor)
+	PARSE_AND_CHECK_LAYOUT_ATTR(attr->, border)
 	PARSE_AND_CHECK_LAYOUT_ATTR(attr->, borderWidth)
 	if (parent) {
-		if (!(attr->borderWidth.checkPosition())) {
+		if (!(attr->borderWidth.checkScalarSize())) {
 			LOG_ERROR_LAYOUT_ATTR(borderWidth)
 			return sl_false;
 		}
 	} else {
-		if (!(attr->borderWidth.checkForRootViewPosition())) {
+		if (!(attr->borderWidth.checkForRootViewScalarSize())) {
 			LOG_ERROR_LAYOUT_ATTR(borderWidth)
 			return sl_false;
 		}
@@ -4026,8 +4153,8 @@ sl_bool SAppDocument::_generateLayoutsCppViewAttributes(const String& name, SApp
 		}
 	}
 
-	GENERATE_CPP_SET_LAYOUT_ATTR_LAYOUT(attr->, left, setX, sbDefineInit, sbDefineLayout)
-	GENERATE_CPP_SET_LAYOUT_ATTR_LAYOUT(attr->, top, setY, sbDefineInit, sbDefineLayout)
+	GENERATE_CPP_SET_LAYOUT_ATTR_LAYOUT(attr->, left, setLeft, sbDefineInit, sbDefineLayout)
+	GENERATE_CPP_SET_LAYOUT_ATTR_LAYOUT(attr->, top, setTop, sbDefineInit, sbDefineLayout)
 	
 	if (attr->leftMode == PositionMode::CenterInParent) {
 		sbDefineInit.add(String::format("%s%s->setCenterHorizontal(sl_false);%n", strTab, name, attr->leftReferingView));
@@ -4117,6 +4244,7 @@ sl_bool SAppDocument::_generateLayoutsCppViewAttributes(const String& name, SApp
 	GENERATE_CPP_SET_LAYOUT_ATTR_NOREDRAW(attr->, backgroundScale, setBackgroundScaleMode, sbDefineInit)
 	GENERATE_CPP_SET_LAYOUT_ATTR_NOREDRAW(attr->, backgroundAlign, setBackgroundAlignment, sbDefineInit)
 	GENERATE_CPP_SET_LAYOUT_ATTR_NOREDRAW(attr->, backgroundColor, setBackgroundColor, sbDefineInit)
+	GENERATE_CPP_SET_LAYOUT_ATTR_NOREDRAW(attr->, border, setBorder, sbDefineInit)
 	if (attr->borderWidth.flagDefined) {
 		if (Math::isAlmostZero(attr->borderWidth.amount)) {
 			sbDefineInit.add(String::format("%s%s->setBorder(slib::Ref<slib::Pen>::null(), sl_false);%n", strTab, name));
@@ -4214,7 +4342,7 @@ sl_bool SAppDocument::_simulateLayoutSetViewAttributes(SAppLayoutSimulationWindo
 				view->setWidthWeight(attr->width.amount, sl_false);
 			}
 		} else {
-			SIMULATE_LAYOUT_SET_LAYOUT_ATTR_ONLAYOUT(attr->, width, setWidth)
+			SIMULATE_LAYOUT_SET_LAYOUT_ATTR_INT(attr->, width, setWidth)
 		}
 	}
 	if (attr->height.flagDefined) {
@@ -4231,12 +4359,12 @@ sl_bool SAppDocument::_simulateLayoutSetViewAttributes(SAppLayoutSimulationWindo
 				view->setHeightWeight(attr->height.amount, sl_false);
 			}
 		} else {
-			SIMULATE_LAYOUT_SET_LAYOUT_ATTR_ONLAYOUT(attr->, height, setHeight)
+			SIMULATE_LAYOUT_SET_LAYOUT_ATTR_INT(attr->, height, setHeight)
 		}
 	}
 	
-	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_ONLAYOUT(attr->, left, setX)
-	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_ONLAYOUT(attr->, top, setY)
+	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_INT(attr->, left, setLeft)
+	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_INT(attr->, top, setTop)
 	
 	if (attr->leftMode == PositionMode::CenterInParent) {
 		if (!flagOnLayout) {
@@ -4318,7 +4446,7 @@ sl_bool SAppDocument::_simulateLayoutSetViewAttributes(SAppLayoutSimulationWindo
 				view->setRelativeMarginLeft(attr->marginLeft.amount, sl_false);
 			}
 		} else {
-			SIMULATE_LAYOUT_SET_LAYOUT_ATTR_ONLAYOUT(attr->, marginLeft, setMarginLeft)
+			SIMULATE_LAYOUT_SET_LAYOUT_ATTR_INT(attr->, marginLeft, setMarginLeft)
 		}
 	}
 	if (attr->marginTop.flagDefined) {
@@ -4327,7 +4455,7 @@ sl_bool SAppDocument::_simulateLayoutSetViewAttributes(SAppLayoutSimulationWindo
 				view->setRelativeMarginTop(attr->marginTop.amount, sl_false);
 			}
 		} else {
-			SIMULATE_LAYOUT_SET_LAYOUT_ATTR_ONLAYOUT(attr->, marginTop, setMarginTop)
+			SIMULATE_LAYOUT_SET_LAYOUT_ATTR_INT(attr->, marginTop, setMarginTop)
 		}
 	}
 	if (attr->marginRight.flagDefined) {
@@ -4336,7 +4464,7 @@ sl_bool SAppDocument::_simulateLayoutSetViewAttributes(SAppLayoutSimulationWindo
 				view->setRelativeMarginRight(attr->marginRight.amount, sl_false);
 			}
 		} else {
-			SIMULATE_LAYOUT_SET_LAYOUT_ATTR_ONLAYOUT(attr->, marginRight, setMarginRight)
+			SIMULATE_LAYOUT_SET_LAYOUT_ATTR_INT(attr->, marginRight, setMarginRight)
 		}
 	}
 	if (attr->marginBottom.flagDefined) {
@@ -4345,14 +4473,14 @@ sl_bool SAppDocument::_simulateLayoutSetViewAttributes(SAppLayoutSimulationWindo
 				view->setRelativeMarginBottom(attr->marginBottom.amount, sl_false);
 			}
 		} else {
-			SIMULATE_LAYOUT_SET_LAYOUT_ATTR_ONLAYOUT(attr->, marginBottom, setMarginBottom)
+			SIMULATE_LAYOUT_SET_LAYOUT_ATTR_INT(attr->, marginBottom, setMarginBottom)
 		}
 	}
 	
-	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_ONLAYOUT(attr->, paddingLeft, setPaddingLeft)
-	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_ONLAYOUT(attr->, paddingTop, setPaddingTop)
-	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_ONLAYOUT(attr->, paddingRight, setPaddingRight)
-	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_ONLAYOUT(attr->, paddingBottom, setPaddingBottom)
+	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_INT(attr->, paddingLeft, setPaddingLeft)
+	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_INT(attr->, paddingTop, setPaddingTop)
+	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_INT(attr->, paddingRight, setPaddingRight)
+	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_INT(attr->, paddingBottom, setPaddingBottom)
 	
 	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_NOREDRAW(attr->, visibility, setVisibility, _get)
 	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_NOREDRAW(attr->, enabled, setEnabled, _get)
@@ -4366,6 +4494,7 @@ sl_bool SAppDocument::_simulateLayoutSetViewAttributes(SAppLayoutSimulationWindo
 	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_NOREDRAW(attr->, backgroundScale, setBackgroundScaleMode, _get)
 	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_NOREDRAW(attr->, backgroundAlign, setBackgroundAlignment, _get)
 	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_NOREDRAW(attr->, backgroundColor, setBackgroundColor, _get)
+	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_NOREDRAW(attr->, border, setBorder, _get)
 	if (attr->borderWidth.flagDefined) {
 		if (Math::isAlmostZero(attr->borderWidth.amount)) {
 			if (!flagOnLayout) {
@@ -4374,10 +4503,10 @@ sl_bool SAppDocument::_simulateLayoutSetViewAttributes(SAppLayoutSimulationWindo
 		} else {
 			if (attr->borderColor.flagDefined && attr->borderStyle.flagDefined) {
 				if (flagOnLayout) {
-					view->setBorder(Pen::create(attr->borderStyle.value, _getDimensionValue(attr->borderWidth), attr->borderColor.value), sl_false);
+					view->setBorder(Pen::create(attr->borderStyle.value, _getDimensionFloatValue(attr->borderWidth), attr->borderColor.value), sl_false);
 				}
 			} else {
-				SIMULATE_LAYOUT_SET_LAYOUT_ATTR_ONLAYOUT(attr->, borderWidth, setBorderWidth)
+				SIMULATE_LAYOUT_SET_LAYOUT_ATTR_FLOAT(attr->, borderWidth, setBorderWidth)
 				SIMULATE_LAYOUT_SET_LAYOUT_ATTR_NOREDRAW(attr->, borderColor, setBorderColor, _get)
 				SIMULATE_LAYOUT_SET_LAYOUT_ATTR_NOREDRAW(attr->, borderStyle, setBorderStyle, _get)
 			}
@@ -4394,7 +4523,7 @@ sl_bool SAppDocument::_simulateLayoutSetViewAttributes(SAppLayoutSimulationWindo
 		if (attr->fontFamily.flagDefined || attr->fontSize.flagDefined || attr->fontBold.flagDefined || attr->fontItalic.flagDefined || attr->fontUnderline.flagDefined) {
 			sl_real fontSize;
 			if (attr->finalFontSize.flagDefined) {
-				fontSize = _getDimensionValue(attr->finalFontSize);
+				fontSize = _getDimensionFloatValue(attr->finalFontSize);
 			} else {
 				fontSize = UI::getDefaultFontSize();
 			}
@@ -4722,6 +4851,16 @@ sl_bool SAppDocument::_generateLayoutsCppButton(const String& name, SAppLayoutRe
 	if (item->viewAttrs->borderWidth.flagDefined || item->viewAttrs->borderColor.flagDefined || item->viewAttrs->borderStyle.flagDefined) {
 		sbDefineInit.add(String::format("%s%s->resetStateBorders(sl_false);%n", strTab, name));
 	}
+	
+	if (item->viewAttrs->backgroundColor.flagDefined) {
+		flagRequireNoNative = sl_true;
+	}
+	if (item->viewAttrs->background.flagDefined) {
+		flagRequireNoNative = sl_true;
+	}
+	if (item->viewAttrs->borderWidth.flagDefined || item->viewAttrs->borderColor.flagDefined || item->viewAttrs->borderStyle.flagDefined) {
+		flagRequireNoNative = sl_true;
+	}
 
 	{
 		String strStates[] = {"Normal", "Hover", "Down", "Disabled"};
@@ -4785,6 +4924,9 @@ sl_bool SAppDocument::_generateLayoutsCppButton(const String& name, SAppLayoutRe
 	}
 	
 	if (flagRequireNoNative) {
+		if (!(item->viewAttrs->instance.flagDefined) && !(item->viewAttrs->nativeWidget.value)) {
+			sbDefineInit.add(String::format("%s%s->setCreatingInstance(sl_false);%n", strTab, name));
+		}
 		if (!(item->viewAttrs->nativeWidget.flagDefined)) {
 			sbDefineInit.add(String::format("%s%s->setCreatingNativeWidget(sl_false);%n", strTab, name));
 		}
@@ -4824,11 +4966,11 @@ sl_bool SAppDocument::_simulateLayoutSetButtonAttributes(SAppLayoutSimulationWin
 		flagRequireNoNative = sl_true;
 	}
 	
-	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_ONLAYOUT(attr->, iconWidth, setIconWidth)
+	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_INT(attr->, iconWidth, setIconWidth)
 	if (attr->iconWidth.flagDefined) {
 		flagRequireNoNative = sl_true;
 	}
-	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_ONLAYOUT(attr->, iconHeight, setIconHeight)
+	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_INT(attr->, iconHeight, setIconHeight)
 	if (attr->iconHeight.flagDefined) {
 		flagRequireNoNative = sl_true;
 	}
@@ -4853,35 +4995,35 @@ sl_bool SAppDocument::_simulateLayoutSetButtonAttributes(SAppLayoutSimulationWin
 		flagRequireNoNative = sl_true;
 	}
 	
-	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_ONLAYOUT(attr->, iconMarginLeft, setIconMarginLeft)
+	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_INT(attr->, iconMarginLeft, setIconMarginLeft)
 	if (attr->iconMarginLeft.flagDefined) {
 		flagRequireNoNative = sl_true;
 	}
-	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_ONLAYOUT(attr->, iconMarginTop, setIconMarginTop)
+	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_INT(attr->, iconMarginTop, setIconMarginTop)
 	if (attr->iconMarginTop.flagDefined) {
 		flagRequireNoNative = sl_true;
 	}
-	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_ONLAYOUT(attr->, iconMarginRight, setIconMarginRight)
+	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_INT(attr->, iconMarginRight, setIconMarginRight)
 	if (attr->iconMarginRight.flagDefined) {
 		flagRequireNoNative = sl_true;
 	}
-	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_ONLAYOUT(attr->, iconMarginBottom, setIconMarginBottom)
+	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_INT(attr->, iconMarginBottom, setIconMarginBottom)
 	if (attr->iconMarginBottom.flagDefined) {
 		flagRequireNoNative = sl_true;
 	}
-	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_ONLAYOUT(attr->, textMarginLeft, setTextMarginLeft)
+	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_INT(attr->, textMarginLeft, setTextMarginLeft)
 	if (attr->textMarginLeft.flagDefined) {
 		flagRequireNoNative = sl_true;
 	}
-	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_ONLAYOUT(attr->, textMarginTop, setTextMarginTop)
+	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_INT(attr->, textMarginTop, setTextMarginTop)
 	if (attr->textMarginTop.flagDefined) {
 		flagRequireNoNative = sl_true;
 	}
-	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_ONLAYOUT(attr->, textMarginRight, setTextMarginRight)
+	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_INT(attr->, textMarginRight, setTextMarginRight)
 	if (attr->textMarginRight.flagDefined) {
 		flagRequireNoNative = sl_true;
 	}
-	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_ONLAYOUT(attr->, textMarginBottom, setTextMarginBottom)
+	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_INT(attr->, textMarginBottom, setTextMarginBottom)
 	if (attr->textMarginBottom.flagDefined) {
 		flagRequireNoNative = sl_true;
 	}
@@ -4900,16 +5042,19 @@ sl_bool SAppDocument::_simulateLayoutSetButtonAttributes(SAppLayoutSimulationWin
 		if (!flagOnLayout) {
 			view->resetStateBackgroundColors(sl_false);
 		}
+		flagRequireNoNative = sl_true;
 	}
 	if (item->viewAttrs->background.flagDefined) {
 		if (!flagOnLayout) {
 			view->resetStateBackgrounds(sl_false);
 		}
+		flagRequireNoNative = sl_true;
 	}
 	if (item->viewAttrs->borderWidth.flagDefined || item->viewAttrs->borderColor.flagDefined || item->viewAttrs->borderStyle.flagDefined) {
 		if (!flagOnLayout) {
 			view->resetStateBorders(sl_false);
 		}
+		flagRequireNoNative = sl_true;
 	}
 
 	{
@@ -4958,7 +5103,7 @@ sl_bool SAppDocument::_simulateLayoutSetButtonAttributes(SAppLayoutSimulationWin
 							Color _borderColor;
 							PenStyle _borderStyle;
 							if (category.borderWidth[k].flagDefined) {
-								_borderWidth = _getDimensionValue(category.borderWidth[k]);
+								_borderWidth = _getDimensionFloatValue(category.borderWidth[k]);
 							} else {
 								_borderWidth = 1;
 							}
@@ -4982,8 +5127,11 @@ sl_bool SAppDocument::_simulateLayoutSetButtonAttributes(SAppLayoutSimulationWin
 	}
 	
 	if (flagRequireNoNative) {
-		if (!(item->viewAttrs->nativeWidget.flagDefined)) {
-			if (!flagOnLayout) {
+		if (!flagOnLayout) {
+			if (!(item->viewAttrs->instance.flagDefined) && !(item->viewAttrs->nativeWidget.value)) {
+				view->setCreatingInstance(sl_false);
+			}
+			if (!(item->viewAttrs->nativeWidget.flagDefined)) {
 				view->setCreatingNativeWidget(sl_false);
 			}
 		}
@@ -5356,16 +5504,16 @@ sl_bool SAppDocument::_parseLayoutResourceSelectAttributes(SAppLayoutResource* l
 	PARSE_AND_CHECK_LAYOUT_ATTR(attr->, rightIcon)
 	PARSE_AND_CHECK_LAYOUT_ATTR(attr->, textColor)
 	
-	ListItems< Ref<XmlElement> > itemXmls = item->getChildElements("item");
+	ListItems< Ref<XmlElement> > itemXmls(item->getChildElements("item"));
 	for (sl_size i = 0; i < itemXmls.count; i++) {
 		Ref<XmlElement>& itemXml = itemXmls[i];
 		if (itemXml.isNotNull()) {
-			SAppLayoutSelectItem item;
-			PARSE_AND_CHECK_LAYOUT_XML_ATTR(itemXml, item., title)
-			PARSE_AND_CHECK_LAYOUT_XML_ATTR(itemXml, item., value)
-			PARSE_AND_CHECK_LAYOUT_XML_ATTR(itemXml, item., selected)
+			SAppLayoutSelectItem subItem;
+			PARSE_AND_CHECK_LAYOUT_XML_ATTR(itemXml, subItem., title)
+			PARSE_AND_CHECK_LAYOUT_XML_ATTR(itemXml, subItem., value)
+			PARSE_AND_CHECK_LAYOUT_XML_ATTR(itemXml, subItem., selected)
 			
-			if (!(attr->items.add(item))) {
+			if (!(attr->items.add(subItem))) {
 				_logError(itemXml, _g_sdev_sapp_error_out_of_memory);
 				return sl_false;
 			}
@@ -5415,9 +5563,24 @@ sl_bool SAppDocument::_generateLayoutsCppSelectView(const String& name, SAppLayo
 		flagRequireNoNative = sl_true;
 	}
 	
+	if (item->viewAttrs->backgroundColor.flagDefined) {
+		flagRequireNoNative = sl_true;
+	}
+	if (item->viewAttrs->background.flagDefined) {
+		flagRequireNoNative = sl_true;
+	}
+	if (item->viewAttrs->borderWidth.flagDefined || item->viewAttrs->borderColor.flagDefined || item->viewAttrs->borderStyle.flagDefined) {
+		flagRequireNoNative = sl_true;
+	}
+	
 	if (flagRequireNoNative) {
 		if (!(item->viewAttrs->nativeWidget.flagDefined)) {
-			sbDefineInit.add(String::format("%s%s->setCreatingNativeWidget(sl_false);%n", strTab, name));
+			if (!(item->viewAttrs->instance.flagDefined) && !(item->viewAttrs->nativeWidget.value)) {
+				sbDefineInit.add(String::format("%s%s->setCreatingInstance(sl_false);%n", strTab, name));
+			}
+			if (!(item->viewAttrs->nativeWidget.flagDefined)) {
+				sbDefineInit.add(String::format("%s%s->setCreatingNativeWidget(sl_false);%n", strTab, name));
+			}
 		}
 	}
 	
@@ -5481,11 +5644,11 @@ sl_bool SAppDocument::_simulateLayoutSetSelectAttributes(SAppLayoutSimulationWin
 		flagRequireNoNative = sl_true;
 	}
 	
-	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_ONLAYOUT(attr->, iconWidth, setIconWidth)
+	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_INT(attr->, iconWidth, setIconWidth)
 	if (attr->iconWidth.flagDefined) {
 		flagRequireNoNative = sl_true;
 	}
-	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_ONLAYOUT(attr->, iconHeight, setIconHeight)
+	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_INT(attr->, iconHeight, setIconHeight)
 	if (attr->iconHeight.flagDefined) {
 		flagRequireNoNative = sl_true;
 	}
@@ -5494,9 +5657,22 @@ sl_bool SAppDocument::_simulateLayoutSetSelectAttributes(SAppLayoutSimulationWin
 		flagRequireNoNative = sl_true;
 	}
 	
+	if (item->viewAttrs->backgroundColor.flagDefined) {
+		flagRequireNoNative = sl_true;
+	}
+	if (item->viewAttrs->background.flagDefined) {
+		flagRequireNoNative = sl_true;
+	}
+	if (item->viewAttrs->borderWidth.flagDefined || item->viewAttrs->borderColor.flagDefined || item->viewAttrs->borderStyle.flagDefined) {
+		flagRequireNoNative = sl_true;
+	}
+	
 	if (flagRequireNoNative) {
-		if (!(item->viewAttrs->nativeWidget.flagDefined)) {
-			if (!flagOnLayout) {
+		if (!flagOnLayout) {
+			if (!(item->viewAttrs->instance.flagDefined) && !(item->viewAttrs->nativeWidget.value)) {
+				view->setCreatingInstance(sl_false);
+			}
+			if (!(item->viewAttrs->nativeWidget.flagDefined)) {
 				view->setCreatingNativeWidget(sl_false);
 			}
 		}
@@ -5529,7 +5705,9 @@ sl_bool SAppDocument::_simulateLayoutSetSelectAttributes(SAppLayoutSimulationWin
 				}
 			}
 			if (flagSelected) {
-				view->selectIndex(indexSelected, sl_false);
+				if (!flagOnLayout) {
+					view->selectIndex(indexSelected, sl_false);
+				}
 			}
 		}
 	}
@@ -5754,7 +5932,7 @@ sl_bool SAppDocument::_parseLayoutResourceListReportAttributes(SAppLayoutResourc
 		return sl_false;
 	}
 	
-	ListLocker< Ref<XmlElement> > columnXmls = item->getChildElements("column");
+	ListLocker< Ref<XmlElement> > columnXmls(item->getChildElements("column"));
 	for (sl_size i = 0; i < columnXmls.count; i++) {
 		Ref<XmlElement>& columnXml = columnXmls[i];
 		if (columnXml.isNotNull()) {
@@ -5851,7 +6029,7 @@ sl_bool SAppDocument::_simulateLayoutSetListReportAttributes(SAppLayoutSimulatio
 			}
 			if (column.width.flagDefined) {
 				if (flagOnLayout) {
-					view->setColumnWidth(i, _getDimensionValue(column.width), sl_false);
+					view->setColumnWidth(i, _getDimensionIntValue(column.width), sl_false);
 				}
 			}
 		}
@@ -5859,5 +6037,775 @@ sl_bool SAppDocument::_simulateLayoutSetListReportAttributes(SAppLayoutSimulatio
 	
 	return sl_true;
 }
+
+sl_bool SAppDocument::_parseLayoutResourceTabAttributes(SAppLayoutResource* layout, SAppLayoutResourceItem* item, SAppLayoutResourceItem* parent)
+{
+	Ref<XmlElement> element = item->element;
+	if (element.isNull()) {
+		return sl_false;
+	}
+	
+	Ref<SAppLayoutTabAttributes> attr = new SAppLayoutTabAttributes;
+	if (attr.isNull()) {
+		_logError(element, _g_sdev_sapp_error_out_of_memory);
+		return sl_false;
+	}
+	
+	item->tabAttrs = attr;
+	
+	if (!(_parseLayoutResourceViewAttributes(layout, item, parent))) {
+		return sl_false;
+	}
+	
+	PARSE_AND_CHECK_LAYOUT_ATTR(attr->, orientation)
+	PARSE_AND_CHECK_LAYOUT_ATTR(attr->, tabWidth)
+	if (!(attr->tabWidth.checkScalarSize())) {
+		LOG_ERROR_LAYOUT_ATTR(tabWidth)
+		return sl_false;
+	}
+	PARSE_AND_CHECK_LAYOUT_ATTR(attr->, tabHeight)
+	if (!(attr->tabHeight.checkScalarSize())) {
+		LOG_ERROR_LAYOUT_ATTR(tabWidth)
+		return sl_false;
+	}
+	PARSE_AND_CHECK_LAYOUT_ATTR(attr->, barBackground)
+	PARSE_AND_CHECK_LAYOUT_ATTR(attr->, contentBackground)
+	PARSE_AND_CHECK_LAYOUT_ATTR(attr->, tabBackground)
+	PARSE_AND_CHECK_LAYOUT_ATTR(attr->, selectedTabBackground)
+	PARSE_AND_CHECK_LAYOUT_ATTR(attr->, hoverTabBackground)
+	PARSE_AND_CHECK_LAYOUT_ATTR(attr->, labelColor)
+	PARSE_AND_CHECK_LAYOUT_ATTR(attr->, selectedLabelColor)
+	PARSE_AND_CHECK_LAYOUT_ATTR(attr->, hoverLabelColor)
+	
+	PARSE_AND_CHECK_LAYOUT_ATTR(attr->, labelAlign)
+	PARSE_AND_CHECK_LAYOUT_ATTR(attr->, labelMarginLeft)
+	if (!(attr->labelMarginLeft.checkPosition())) {
+		LOG_ERROR_LAYOUT_ATTR(labelMarginLeft)
+		return sl_false;
+	}
+	PARSE_AND_CHECK_LAYOUT_ATTR(attr->, labelMarginTop)
+	if (!(attr->labelMarginTop.checkPosition())) {
+		LOG_ERROR_LAYOUT_ATTR(labelMarginTop)
+		return sl_false;
+	}
+	PARSE_AND_CHECK_LAYOUT_ATTR(attr->, labelMarginRight)
+	if (!(attr->labelMarginRight.checkPosition())) {
+		LOG_ERROR_LAYOUT_ATTR(labelMarginRight)
+		return sl_false;
+	}
+	PARSE_AND_CHECK_LAYOUT_ATTR(attr->, labelMarginBottom)
+	if (!(attr->labelMarginBottom.checkPosition())) {
+		LOG_ERROR_LAYOUT_ATTR(labelMarginBottom)
+		return sl_false;
+	}
+	SAppDimensionValue labelMargin;
+	PARSE_AND_CHECK_LAYOUT_ATTR(, labelMargin)
+	if (!(labelMargin.checkPosition())) {
+		LOG_ERROR_LAYOUT_ATTR(labelMargin)
+		return sl_false;
+	}
+	if (labelMargin.flagDefined) {
+		if (!(attr->labelMarginLeft.flagDefined)) {
+			attr->labelMarginLeft = labelMargin;
+		}
+		if (!(attr->labelMarginTop.flagDefined)) {
+			attr->labelMarginTop = labelMargin;
+		}
+		if (!(attr->labelMarginRight.flagDefined)) {
+			attr->labelMarginRight = labelMargin;
+		}
+		if (!(attr->labelMarginBottom.flagDefined)) {
+			attr->labelMarginBottom = labelMargin;
+		}
+	}
+	
+	ListLocker< Ref<XmlElement> > itemXmls(item->getChildElements("item"));
+	for (sl_size i = 0; i < itemXmls.count; i++) {
+		Ref<XmlElement>& itemXml = itemXmls[i];
+		if (itemXml.isNotNull()) {
+			SAppLayoutTabItem subItem;
+			PARSE_AND_CHECK_LAYOUT_XML_ATTR(itemXml, subItem., label)
+			PARSE_AND_CHECK_LAYOUT_XML_ATTR(itemXml, subItem., selected)
+			
+			sl_size nViews = itemXml->getChildElementsCount();
+			if (nViews > 0) {
+				if (nViews != 1) {
+					_logError(itemXml, _g_sdev_sapp_error_resource_layout_item_must_contain_one_child);
+					return sl_false;
+				}
+				Ref<XmlElement> xmlView= itemXml->getFirstChildElement();
+				if (xmlView.isNotNull()) {
+					Ref<SAppLayoutResourceItem> subItemView = _parseLayoutResourceItemChild(layout, item, xmlView);
+					if (subItemView.isNull()) {
+						return sl_false;
+					}
+					subItem.view = subItemView;
+				}
+			}
+			
+			subItem.element = itemXml;
+			
+			if (!(attr->items.add(subItem))) {
+				_logError(itemXml, _g_sdev_sapp_error_out_of_memory);
+				return sl_false;
+			}
+		}
+	}
+	
+	return sl_true;
+}
+
+sl_bool SAppDocument::_generateLayoutsCppTabView(const String& name, SAppLayoutResourceItem* item, StringBuffer& sbDeclare, StringBuffer& sbDefineInit, StringBuffer& sbDefineLayout, const String& addStatement)
+{
+	SAppLayoutTabAttributes* attr = item->tabAttrs.ptr;
+	String strTab = "\t\t\t";
+	
+	if (!(_generateLayoutsCppViewAttributes(name, item, sbDefineInit, sbDefineLayout))) {
+		return sl_false;
+	}
+	
+	sl_bool flagRequireNoNative = sl_false;
+	GENERATE_CPP_SET_LAYOUT_ATTR_NOREDRAW(attr->, orientation, setOrientation, sbDefineInit)
+	if (attr->orientation.flagDefined) {
+		flagRequireNoNative = sl_true;
+	}
+	GENERATE_CPP_SET_LAYOUT_ATTR_LAYOUT(attr->, tabWidth, setTabWidth, sbDefineInit, sbDefineLayout)
+	if (attr->tabWidth.flagDefined) {
+		flagRequireNoNative = sl_true;
+	}
+	GENERATE_CPP_SET_LAYOUT_ATTR_LAYOUT(attr->, tabHeight, setTabHeight, sbDefineInit, sbDefineLayout)
+	if (attr->tabWidth.flagDefined) {
+		flagRequireNoNative = sl_true;
+	}
+	
+	if (attr->barBackground.flagDefined) {
+		if (!(_checkDrawableValueAvailable(attr->barBackground, item->element))) {
+			return sl_false;
+		}
+		GENERATE_CPP_SET_LAYOUT_ATTR_NOREDRAW(attr->, barBackground, setBarBackground, sbDefineInit)
+		flagRequireNoNative = sl_true;
+	}
+	if (attr->contentBackground.flagDefined) {
+		if (!(_checkDrawableValueAvailable(attr->contentBackground, item->element))) {
+			return sl_false;
+		}
+		GENERATE_CPP_SET_LAYOUT_ATTR_NOREDRAW(attr->, contentBackground, setContentBackground, sbDefineInit)
+		flagRequireNoNative = sl_true;
+	}
+	if (attr->tabBackground.flagDefined) {
+		if (!(_checkDrawableValueAvailable(attr->tabBackground, item->element))) {
+			return sl_false;
+		}
+		GENERATE_CPP_SET_LAYOUT_ATTR_NOREDRAW(attr->, tabBackground, setTabBackground, sbDefineInit)
+		flagRequireNoNative = sl_true;
+	}
+	if (attr->selectedTabBackground.flagDefined) {
+		if (!(_checkDrawableValueAvailable(attr->selectedTabBackground, item->element))) {
+			return sl_false;
+		}
+		GENERATE_CPP_SET_LAYOUT_ATTR_NOREDRAW(attr->, selectedTabBackground, setSelectedTabBackground, sbDefineInit)
+		flagRequireNoNative = sl_true;
+	}
+	if (attr->hoverTabBackground.flagDefined) {
+		if (!(_checkDrawableValueAvailable(attr->hoverTabBackground, item->element))) {
+			return sl_false;
+		}
+		GENERATE_CPP_SET_LAYOUT_ATTR_NOREDRAW(attr->, hoverTabBackground, setHoverTabBackground, sbDefineInit)
+		flagRequireNoNative = sl_true;
+	}
+	
+	GENERATE_CPP_SET_LAYOUT_ATTR_NOREDRAW(attr->, labelColor, setLabelColor, sbDefineInit)
+	if (attr->labelColor.flagDefined) {
+		flagRequireNoNative = sl_true;
+	}
+	GENERATE_CPP_SET_LAYOUT_ATTR_NOREDRAW(attr->, selectedLabelColor, setSelectedLabelColor, sbDefineInit)
+	if (attr->selectedLabelColor.flagDefined) {
+		flagRequireNoNative = sl_true;
+	}
+	GENERATE_CPP_SET_LAYOUT_ATTR_NOREDRAW(attr->, hoverLabelColor, setHoverLabelColor, sbDefineInit)
+	if (attr->hoverLabelColor.flagDefined) {
+		flagRequireNoNative = sl_true;
+	}
+	GENERATE_CPP_SET_LAYOUT_ATTR_NOREDRAW(attr->, labelAlign, setLabelAlignment, sbDefineInit)
+	if (attr->labelAlign.flagDefined) {
+		flagRequireNoNative = sl_true;
+	}
+	GENERATE_CPP_SET_LAYOUT_ATTR_LAYOUT(attr->, labelMarginLeft, setLabelMarginLeft, sbDefineInit, sbDefineLayout)
+	if (attr->labelMarginLeft.flagDefined) {
+		flagRequireNoNative = sl_true;
+	}
+	GENERATE_CPP_SET_LAYOUT_ATTR_LAYOUT(attr->, labelMarginTop, setLabelMarginTop, sbDefineInit, sbDefineLayout)
+	if (attr->labelMarginTop.flagDefined) {
+		flagRequireNoNative = sl_true;
+	}
+	GENERATE_CPP_SET_LAYOUT_ATTR_LAYOUT(attr->, labelMarginRight, setLabelMarginRight, sbDefineInit, sbDefineLayout)
+	if (attr->labelMarginRight.flagDefined) {
+		flagRequireNoNative = sl_true;
+	}
+	GENERATE_CPP_SET_LAYOUT_ATTR_LAYOUT(attr->, labelMarginBottom, setLabelMarginBottom, sbDefineInit, sbDefineLayout)
+	if (attr->labelMarginBottom.flagDefined) {
+		flagRequireNoNative = sl_true;
+	}
+
+
+	if (item->viewAttrs->backgroundColor.flagDefined) {
+		flagRequireNoNative = sl_true;
+	}
+	if (item->viewAttrs->background.flagDefined) {
+		flagRequireNoNative = sl_true;
+	}
+	if (item->viewAttrs->borderWidth.flagDefined || item->viewAttrs->borderColor.flagDefined || item->viewAttrs->borderStyle.flagDefined) {
+		flagRequireNoNative = sl_true;
+	}
+	
+	ListLocker<SAppLayoutTabItem> subItems(attr->items);
+	if (subItems.count > 0) {
+		
+		sl_size indexSelected = 0;
+		sl_bool flagSelected = sl_false;
+		
+		sbDefineInit.add(String::format("%s%s->setTabsCount(%d, sl_false);%n", strTab, name, subItems.count));
+		
+		for (sl_size i = 0; i < subItems.count; i++) {
+			SAppLayoutTabItem& subItem = subItems[i];
+			if (subItem.label.flagDefined) {
+				if (!(_checkStringValueAvailable(subItem.label, subItem.element))) {
+					return sl_false;
+				}
+				sbDefineInit.add(String::format("%s%s->setTabLabel(%d, %s, sl_false);%n", strTab, name, i, subItem.label.getAccessString()));
+			}
+			if (subItem.selected.flagDefined && subItem.selected.value) {
+				flagSelected = sl_true;
+				indexSelected = i;
+			}
+		}
+		
+		if (flagSelected) {
+			sbDefineInit.add(String::format("%s%s->selectTab(%d, sl_false);%n", strTab, name, indexSelected));
+		}
+		
+	}
+	
+	if (flagRequireNoNative) {
+		if (!(item->viewAttrs->nativeWidget.flagDefined)) {
+			sbDefineInit.add(String::format("%s%s->setCreatingNativeWidget(sl_false);%n", strTab, name));
+		}
+	}
+
+	sbDefineInit.add(addStatement);
+	
+	for (sl_size i = 0; i < subItems.count; i++) {
+		SAppLayoutTabItem& subItem = subItems[i];
+		if (subItem.view.isNotNull()) {
+			String addChildStatement = String::format("%s%s->setTabContentView(%d, %s, sl_false);%n%n", strTab, name, i, subItem.view->name);
+			if (!(_generateLayoutsCppItem(item, subItem.view.ptr, sbDeclare, sbDefineInit, sbDefineLayout, addChildStatement))) {
+				return sl_false;
+			}
+		}
+	}
+	
+	return sl_true;
+}
+
+sl_bool SAppDocument::_simulateLayoutSetTabAttributes(SAppLayoutSimulationWindow* simulator, TabView* view, SAppLayoutResourceItem* item, sl_bool flagOnLayout)
+{
+	SAppLayoutTabAttributes* attr = item->tabAttrs.ptr;
+	
+	if (!(_simulateLayoutSetViewAttributes(simulator, view, item, flagOnLayout))) {
+		return sl_false;
+	}
+	
+	sl_bool flagRequireNoNative = sl_false;
+	
+	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_NOREDRAW(attr->, orientation, setOrientation, _get)
+	if (attr->orientation.flagDefined) {
+		flagRequireNoNative = sl_true;
+	}
+	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_INT(attr->, tabWidth, setTabWidth)
+	if (attr->tabWidth.flagDefined) {
+		flagRequireNoNative = sl_true;
+	}
+	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_INT(attr->, tabHeight, setTabHeight)
+	if (attr->tabHeight.flagDefined) {
+		flagRequireNoNative = sl_true;
+	}
+	
+	if (attr->barBackground.flagDefined) {
+		if (!(_checkDrawableValueAvailable(attr->barBackground, item->element))) {
+			return sl_false;
+		}
+		SIMULATE_LAYOUT_SET_LAYOUT_ATTR_DRAWABLE(attr->, barBackground, setBarBackground)
+		flagRequireNoNative = sl_true;
+	}
+	if (attr->contentBackground.flagDefined) {
+		if (!(_checkDrawableValueAvailable(attr->contentBackground, item->element))) {
+			return sl_false;
+		}
+		SIMULATE_LAYOUT_SET_LAYOUT_ATTR_DRAWABLE(attr->, contentBackground, setContentBackground)
+		flagRequireNoNative = sl_true;
+	}
+	if (attr->tabBackground.flagDefined) {
+		if (!(_checkDrawableValueAvailable(attr->tabBackground, item->element))) {
+			return sl_false;
+		}
+		SIMULATE_LAYOUT_SET_LAYOUT_ATTR_DRAWABLE(attr->, tabBackground, setTabBackground)
+		flagRequireNoNative = sl_true;
+	}
+	if (attr->selectedTabBackground.flagDefined) {
+		if (!(_checkDrawableValueAvailable(attr->selectedTabBackground, item->element))) {
+			return sl_false;
+		}
+		SIMULATE_LAYOUT_SET_LAYOUT_ATTR_DRAWABLE(attr->, selectedTabBackground, setSelectedTabBackground)
+		flagRequireNoNative = sl_true;
+	}
+	if (attr->hoverTabBackground.flagDefined) {
+		if (!(_checkDrawableValueAvailable(attr->hoverTabBackground, item->element))) {
+			return sl_false;
+		}
+		SIMULATE_LAYOUT_SET_LAYOUT_ATTR_DRAWABLE(attr->, hoverTabBackground, setHoverTabBackground)
+		flagRequireNoNative = sl_true;
+	}
+	
+	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_NOREDRAW(attr->, labelColor, setLabelColor, _get)
+	if (attr->labelColor.flagDefined) {
+		flagRequireNoNative = sl_true;
+	}
+	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_NOREDRAW(attr->, selectedLabelColor, setSelectedLabelColor, _get)
+	if (attr->selectedLabelColor.flagDefined) {
+		flagRequireNoNative = sl_true;
+	}
+	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_NOREDRAW(attr->, hoverLabelColor, setHoverLabelColor, _get)
+	if (attr->hoverLabelColor.flagDefined) {
+		flagRequireNoNative = sl_true;
+	}
+	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_NOREDRAW(attr->, labelAlign, setLabelAlignment, _get)
+	if (attr->labelAlign.flagDefined) {
+		flagRequireNoNative = sl_true;
+	}
+	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_INT(attr->, labelMarginLeft, setLabelMarginLeft)
+	if (attr->labelMarginLeft.flagDefined) {
+		flagRequireNoNative = sl_true;
+	}
+	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_INT(attr->, labelMarginTop, setLabelMarginTop)
+	if (attr->labelMarginTop.flagDefined) {
+		flagRequireNoNative = sl_true;
+	}
+	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_INT(attr->, labelMarginRight, setLabelMarginRight)
+	if (attr->labelMarginRight.flagDefined) {
+		flagRequireNoNative = sl_true;
+	}
+	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_INT(attr->, labelMarginBottom, setLabelMarginBottom)
+	if (attr->labelMarginBottom.flagDefined) {
+		flagRequireNoNative = sl_true;
+	}
+	
+	ListLocker<SAppLayoutTabItem> subItems(attr->items);
+	if (subItems.count > 0) {
+
+		sl_size indexSelected = 0;
+		sl_bool flagSelected = sl_false;
+
+		view->setTabsCount(subItems.count, sl_false);
+		
+		for (sl_size i = 0; i < subItems.count; i++) {
+			
+			SAppLayoutTabItem& subItem = subItems[i];
+			if (subItem.label.flagDefined) {
+				if (!flagOnLayout) {
+					if (!(_checkStringValueAvailable(subItem.label, subItem.element))) {
+						return sl_false;
+					}
+					view->setTabLabel(i, _getStringValue(subItem.label), sl_false);
+				}
+			}
+			if (subItem.selected.flagDefined && subItem.selected.value) {
+				flagSelected = sl_true;
+				indexSelected = i;
+			}
+			
+			if (subItem.view.isNotNull()) {
+				Ref<View> contentView = _simulateLayoutCreateOrLayoutView(simulator, subItem.view.ptr, view, flagOnLayout);
+				if (!flagOnLayout) {
+					if (contentView.isNotNull()) {
+						view->setTabContentView(i, contentView, sl_false);
+					} else {
+						return sl_false;
+					}
+				}
+			}
+			
+			if (flagSelected) {
+				if (!flagOnLayout) {
+					view->selectTab(indexSelected);
+				}
+			}
+			
+		}
+		
+	}
+	
+	if (flagRequireNoNative) {
+		if (!flagOnLayout) {
+			if (!(item->viewAttrs->nativeWidget.flagDefined)) {
+				view->setCreatingNativeWidget(sl_false);
+			}
+		}
+	}
+	
+	return sl_true;
+}
+
+sl_bool SAppDocument::_parseLayoutResourceSplitAttributes(SAppLayoutResource* layout, SAppLayoutResourceItem* item, SAppLayoutResourceItem* parent)
+{
+	Ref<XmlElement> element = item->element;
+	if (element.isNull()) {
+		return sl_false;
+	}
+	
+	Ref<SAppLayoutSplitAttributes> attr = new SAppLayoutSplitAttributes;
+	if (attr.isNull()) {
+		_logError(element, _g_sdev_sapp_error_out_of_memory);
+		return sl_false;
+	}
+	
+	item->splitAttrs = attr;
+	
+	if (!(_parseLayoutResourceViewAttributes(layout, item, parent))) {
+		return sl_false;
+	}
+	
+	PARSE_AND_CHECK_LAYOUT_ATTR(attr->, orientation)
+	PARSE_AND_CHECK_LAYOUT_ATTR(attr->, dividerWidth)
+	if (!(attr->dividerWidth.checkScalarSize())) {
+		LOG_ERROR_LAYOUT_ATTR(dividerWidth)
+		return sl_false;
+	}
+	PARSE_AND_CHECK_LAYOUT_ATTR(attr->, dividerBackground)
+	PARSE_AND_CHECK_LAYOUT_ATTR(attr->, dividerColor)
+	PARSE_AND_CHECK_LAYOUT_ATTR(attr->, cursorMargin)
+	if (!(attr->cursorMargin.checkScalarSize())) {
+		LOG_ERROR_LAYOUT_ATTR(cursorMargin)
+		return sl_false;
+	}
+	
+	ListLocker< Ref<XmlElement> > itemXmls(item->getChildElements("item"));
+	for (sl_size i = 0; i < itemXmls.count; i++) {
+		Ref<XmlElement>& itemXml = itemXmls[i];
+		if (itemXml.isNotNull()) {
+			SAppLayoutSplitItem subItem;
+			PARSE_AND_CHECK_LAYOUT_XML_ATTR(itemXml, subItem., weight)
+			PARSE_AND_CHECK_LAYOUT_XML_ATTR(itemXml, subItem., minWeight)
+			PARSE_AND_CHECK_LAYOUT_XML_ATTR(itemXml, subItem., maxWeight)
+			PARSE_AND_CHECK_LAYOUT_XML_ATTR(itemXml, subItem., minSize)
+			if (!(subItem.minSize.checkScalarSize())) {
+				LOG_ERROR_LAYOUT_XML_ATTR(itemXml, minSize)
+				return sl_false;
+			}
+			PARSE_AND_CHECK_LAYOUT_XML_ATTR(itemXml, subItem., maxSize)
+			if (!(subItem.maxSize.checkScalarSize())) {
+				LOG_ERROR_LAYOUT_XML_ATTR(itemXml, maxSize)
+				return sl_false;
+			}
+			PARSE_AND_CHECK_LAYOUT_XML_ATTR(itemXml, subItem., dividerWidth)
+			if (!(subItem.dividerWidth.checkScalarSize())) {
+				LOG_ERROR_LAYOUT_XML_ATTR(itemXml, dividerWidth)
+				return sl_false;
+			}
+			PARSE_AND_CHECK_LAYOUT_XML_ATTR(itemXml, subItem., dividerBackground)
+			PARSE_AND_CHECK_LAYOUT_XML_ATTR(itemXml, subItem., dividerColor)
+			
+			sl_size nViews = itemXml->getChildElementsCount();
+			if (nViews > 0) {
+				if (nViews != 1) {
+					_logError(itemXml, _g_sdev_sapp_error_resource_layout_item_must_contain_one_child);
+					return sl_false;
+				}
+				Ref<XmlElement> xmlView= itemXml->getFirstChildElement();
+				if (xmlView.isNotNull()) {
+					Ref<SAppLayoutResourceItem> subItemView = _parseLayoutResourceItemChild(layout, item, xmlView);
+					if (subItemView.isNull()) {
+						return sl_false;
+					}
+					subItem.view = subItemView;
+				}
+			}
+			
+			subItem.element = itemXml;
+			
+			if (!(attr->items.add(subItem))) {
+				_logError(itemXml, _g_sdev_sapp_error_out_of_memory);
+				return sl_false;
+			}
+		}
+	}
+	
+	return sl_true;
+}
+
+sl_bool SAppDocument::_generateLayoutsCppSplitView(const String& name, SAppLayoutResourceItem* item, StringBuffer& sbDeclare, StringBuffer& sbDefineInit, StringBuffer& sbDefineLayout, const String& addStatement)
+{
+	SAppLayoutSplitAttributes* attr = item->splitAttrs.ptr;
+	String strTab = "\t\t\t";
+	
+	if (!(_generateLayoutsCppViewAttributes(name, item, sbDefineInit, sbDefineLayout))) {
+		return sl_false;
+	}
+	
+	GENERATE_CPP_SET_LAYOUT_ATTR_NOREDRAW(attr->, orientation, setOrientation, sbDefineInit)
+	GENERATE_CPP_SET_LAYOUT_ATTR_LAYOUT(attr->, dividerWidth, setDividerWidth, sbDefineInit, sbDefineLayout)
+	if (!(_checkDrawableValueAvailable(attr->dividerBackground, item->element))) {
+		return sl_false;
+	}
+	GENERATE_CPP_SET_LAYOUT_ATTR_NOREDRAW(attr->, dividerBackground, setDividerBackground, sbDefineInit)
+	GENERATE_CPP_SET_LAYOUT_ATTR_NOREDRAW(attr->, dividerColor, setDividerColor, sbDefineInit)
+	GENERATE_CPP_SET_LAYOUT_ATTR_LAYOUT(attr->, cursorMargin, setCursorMargin, sbDefineInit, sbDefineLayout)
+	
+	sl_bool flagRelayoutOnInit = sl_false;
+	sl_bool flagRelayoutOnLayout = sl_false;
+	
+	ListLocker<SAppLayoutSplitItem> subItems(attr->items);
+	if (subItems.count > 0) {
+		if (subItems.count > 2) {
+			sbDefineInit.add(String::format("%s%s->setItemsCount(%d, sl_false);%n", strTab, name, subItems.count));
+		}
+		
+		for (sl_size i = 0; i < subItems.count; i++) {
+			SAppLayoutSplitItem& subItem = subItems[i];
+			if (subItem.weight.flagDefined) {
+				sbDefineInit.add(String::format("%s%s->setItemWeight(%d, %s, sl_false);%n", strTab, name, i, subItem.weight.getAccessString()));
+				flagRelayoutOnInit = sl_true;
+			}
+			if (subItem.minWeight.flagDefined) {
+				sbDefineInit.add(String::format("%s%s->setItemMinimumWeight(%d, %s, sl_false);%n", strTab, name, i, subItem.minWeight.getAccessString()));
+				flagRelayoutOnInit = sl_true;
+			}
+			if (subItem.maxWeight.flagDefined) {
+				sbDefineInit.add(String::format("%s%s->setItemMaximumWeight(%d, %s, sl_false);%n", strTab, name, i, subItem.maxWeight.getAccessString()));
+				flagRelayoutOnInit = sl_true;
+			}
+			if (subItem.minSize.flagDefined) {
+				if (subItem.minSize.isNeededOnLayoutFunction()) {
+					sbDefineLayout.add(String::format("%s%s->setItemMinimumSize(%d, %s, sl_false);%n", strTab, name, i, subItem.minSize.getAccessString()));
+					flagRelayoutOnLayout = sl_true;
+				} else {
+					sbDefineInit.add(String::format("%s%s->setItemMinimumSize(%d, %s, sl_false);%n", strTab, name, i, subItem.minSize.getAccessString()));
+					flagRelayoutOnInit = sl_true;
+				}
+			}
+			if (subItem.maxSize.flagDefined) {
+				if (subItem.maxSize.isNeededOnLayoutFunction()) {
+					sbDefineLayout.add(String::format("%s%s->setItemMaximumSize(%d, %s, sl_false);%n", strTab, name, i, subItem.maxSize.getAccessString()));
+					flagRelayoutOnLayout = sl_true;
+				} else {
+					sbDefineInit.add(String::format("%s%s->setItemMaximumSize(%d, %s, sl_false);%n", strTab, name, i, subItem.maxSize.getAccessString()));
+					flagRelayoutOnInit = sl_true;
+				}
+			}
+			if (subItem.dividerWidth.flagDefined) {
+				if (subItem.dividerWidth.isNeededOnLayoutFunction()) {
+					sbDefineLayout.add(String::format("%s%s->setItemDividerWidth(%d, %s, sl_false);%n", strTab, name, i, subItem.dividerWidth.getAccessString()));
+					flagRelayoutOnLayout = sl_true;
+				} else {
+					sbDefineInit.add(String::format("%s%s->setItemDividerWidth(%d, %s, sl_false);%n", strTab, name, i, subItem.dividerWidth.getAccessString()));
+					flagRelayoutOnInit = sl_true;
+				}
+			}
+			if (subItem.dividerBackground.flagDefined) {
+				if (!(_checkDrawableValueAvailable(subItem.dividerBackground, subItem.element))) {
+					return sl_false;
+				}
+				sbDefineInit.add(String::format("%s%s->setItemDividerBackground(%d, %s, sl_false);%n", strTab, name, i, subItem.dividerBackground.getAccessString()));
+				flagRelayoutOnInit = sl_true;
+			}
+			if (subItem.dividerColor.flagDefined) {
+				sbDefineInit.add(String::format("%s%s->setItemDividerColor(%d, %s, sl_false);%n", strTab, name, i, subItem.dividerColor.getAccessString()));
+				flagRelayoutOnInit = sl_true;
+			}
+		}
+	}
+	
+	sbDefineInit.add(addStatement);
+	
+	for (sl_size i = 0; i < subItems.count; i++) {
+		SAppLayoutSplitItem& subItem = subItems[i];
+		if (subItem.view.isNotNull()) {
+			String addChildStatement = String::format("%s%s->setItemView(%d, %s, sl_false);%n%n", strTab, name, i, subItem.view->name);
+			if (!(_generateLayoutsCppItem(item, subItem.view.ptr, sbDeclare, sbDefineInit, sbDefineLayout, addChildStatement))) {
+				return sl_false;
+			}
+		}
+	}
+	if (flagRelayoutOnInit) {
+		sbDefineInit.add(String::format("%s%s->relayout(sl_false);%n%n", strTab, name));
+	}
+	if (flagRelayoutOnLayout) {
+		sbDefineLayout.add(String::format("%s%s->relayout(sl_false);%n%n", strTab, name));
+	}
+
+	return sl_true;
+}
+
+sl_bool SAppDocument::_simulateLayoutSetSplitAttributes(SAppLayoutSimulationWindow* simulator, SplitView* view, SAppLayoutResourceItem* item, sl_bool flagOnLayout)
+{
+	SAppLayoutSplitAttributes* attr = item->splitAttrs.ptr;
+	
+	if (!(_simulateLayoutSetViewAttributes(simulator, view, item, flagOnLayout))) {
+		return sl_false;
+	}
+	
+	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_NOREDRAW(attr->, orientation, setOrientation, _get)
+	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_INT(attr->, dividerWidth, setDividerWidth)
+	if (!(_checkDrawableValueAvailable(attr->dividerBackground, item->element))) {
+		return sl_false;
+	}
+	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_DRAWABLE(attr->, dividerBackground, setDividerBackground)
+	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_NOREDRAW(attr->, dividerColor, setDividerColor, _get)
+	if (flagOnLayout && attr->cursorMargin.flagDefined) {
+		view->setCursorMargin(_getDimensionIntValue(attr->cursorMargin));
+	}
+	
+	ListLocker<SAppLayoutSplitItem> subItems(attr->items);
+	if (subItems.count > 0) {
+		if (subItems.count > 2) {
+			view->setItemsCount(subItems.count, sl_false);
+		}
+		for (sl_size i = 0; i < subItems.count; i++) {
+			SAppLayoutSplitItem& subItem = subItems[i];
+			if (subItem.weight.flagDefined) {
+				if (!flagOnLayout) {
+					view->setItemWeight(i, subItem.weight.value, sl_false);
+				}
+			}
+			if (subItem.minWeight.flagDefined) {
+				if (!flagOnLayout) {
+					view->setItemMinimumWeight(i, subItem.minWeight.value, sl_false);
+				}
+			}
+			if (subItem.maxWeight.flagDefined) {
+				if (!flagOnLayout) {
+					view->setItemMaximumWeight(i, subItem.maxWeight.value, sl_false);
+				}
+			}
+			if (subItem.minSize.flagDefined) {
+				if (flagOnLayout) {
+					view->setItemMinimumSize(i, _getDimensionIntValue(subItem.minSize), sl_false);
+				}
+			}
+			if (subItem.maxSize.flagDefined) {
+				if (flagOnLayout) {
+					view->setItemMaximumSize(i, _getDimensionIntValue(subItem.maxSize), sl_false);
+				}
+			}
+			if (subItem.dividerWidth.flagDefined) {
+				if (flagOnLayout) {
+					view->setItemDividerWidth(i, _getDimensionIntValue(subItem.dividerWidth), sl_false);
+				}
+			}
+			if (subItem.dividerBackground.flagDefined) {
+				if (!(_checkDrawableValueAvailable(subItem.dividerBackground, subItem.element))) {
+					return sl_false;
+				}
+				if (flagOnLayout) {
+					view->setItemDividerBackground(i, _getDrawableValue(subItem.dividerBackground), sl_false);
+				}
+			}
+			if (subItem.dividerColor.flagDefined) {
+				if (!flagOnLayout) {
+					view->setItemDividerColor(i, subItem.dividerColor.value, sl_false);
+				}
+			}
+			if (subItem.view.isNotNull()) {
+				Ref<View> contentView = _simulateLayoutCreateOrLayoutView(simulator, subItem.view.ptr, view, flagOnLayout);
+				if (!flagOnLayout) {
+					if (contentView.isNotNull()) {
+						view->setItemView(i, contentView, sl_false);
+					} else {
+						return sl_false;
+					}
+				}
+			}
+		}
+		
+		view->relayout();
+		
+	}
+	
+	return sl_true;
+}
+
+sl_bool SAppDocument::_parseLayoutResourceProgressAttributes(SAppLayoutResource* layout, SAppLayoutResourceItem* item, SAppLayoutResourceItem* parent)
+{
+	Ref<XmlElement> element = item->element;
+	if (element.isNull()) {
+		return sl_false;
+	}
+	
+	Ref<SAppLayoutProgressAttributes> attr = new SAppLayoutProgressAttributes;
+	if (attr.isNull()) {
+		_logError(element, _g_sdev_sapp_error_out_of_memory);
+		return sl_false;
+	}
+	
+	item->progressAttrs = attr;
+	
+	if (!(_parseLayoutResourceViewAttributes(layout, item, parent))) {
+		return sl_false;
+	}
+	
+	PARSE_AND_CHECK_LAYOUT_ATTR(attr->, orientation)
+	PARSE_AND_CHECK_LAYOUT_ATTR(attr->, gravity)
+	PARSE_AND_CHECK_LAYOUT_ATTR(attr->, value)
+	PARSE_AND_CHECK_LAYOUT_ATTR(attr->, min)
+	PARSE_AND_CHECK_LAYOUT_ATTR(attr->, max)
+	PARSE_AND_CHECK_LAYOUT_ATTR(attr->, bar)
+	
+	return sl_true;
+}
+
+sl_bool SAppDocument::_generateLayoutsCppProgressBar(const String& name, SAppLayoutResourceItem* item, StringBuffer& sbDeclare, StringBuffer& sbDefineInit, StringBuffer& sbDefineLayout, const String& addStatement)
+{
+	SAppLayoutProgressAttributes* attr = item->progressAttrs.ptr;
+	String strTab = "\t\t\t";
+	
+	if (!(_generateLayoutsCppViewAttributes(name, item, sbDefineInit, sbDefineLayout))) {
+		return sl_false;
+	}
+	
+	GENERATE_CPP_SET_LAYOUT_ATTR_NOREDRAW(attr->, orientation, setOrientation, sbDefineInit)
+	GENERATE_CPP_SET_LAYOUT_ATTR_NOREDRAW(attr->, gravity, setGravity, sbDefineInit)
+	GENERATE_CPP_SET_LAYOUT_ATTR_NOREDRAW(attr->, min, setMinimumValue, sbDefineInit)
+	GENERATE_CPP_SET_LAYOUT_ATTR_NOREDRAW(attr->, max, setMaximumValue, sbDefineInit)
+	GENERATE_CPP_SET_LAYOUT_ATTR_NOREDRAW(attr->, value, setValue, sbDefineInit)
+	if (!(_checkDrawableValueAvailable(attr->bar, item->element))) {
+		return sl_false;
+	}
+	GENERATE_CPP_SET_LAYOUT_ATTR_NOREDRAW(attr->, bar, setBar, sbDefineInit)
+	
+	sbDefineInit.add(addStatement);
+
+	return sl_true;
+}
+
+sl_bool SAppDocument::_simulateLayoutSetProgressAttributes(SAppLayoutSimulationWindow* simulator, ProgressBar* view, SAppLayoutResourceItem* item, sl_bool flagOnLayout)
+{
+	SAppLayoutProgressAttributes* attr = item->progressAttrs.ptr;
+	
+	if (!(_simulateLayoutSetViewAttributes(simulator, view, item, flagOnLayout))) {
+		return sl_false;
+	}
+	
+	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_NOREDRAW(attr->, orientation, setOrientation, _get)
+	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_NOREDRAW(attr->, gravity, setGravity, _get)
+	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_NOREDRAW(attr->, min, setMinimumValue, _get)
+	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_NOREDRAW(attr->, max, setMaximumValue, _get)
+	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_NOREDRAW(attr->, value, setValue, _get)
+	if (!(_checkDrawableValueAvailable(attr->bar, item->element))) {
+		return sl_false;
+	}
+	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_DRAWABLE(attr->, bar, setBar)
+
+	return sl_true;
+}
+
 
 SLIB_SDEV_NAMESPACE_END

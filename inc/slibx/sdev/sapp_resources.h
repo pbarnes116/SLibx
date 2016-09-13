@@ -227,17 +227,18 @@ public:
 	SAppScaleModeValue backgroundScale;
 	SAppAlignmentValue backgroundAlign;
 	SAppColorValue backgroundColor;
-	SAppDimensionValue borderWidth;
+	SAppBooleanValue border;
+	SAppDimensionFloatValue borderWidth;
 	SAppColorValue borderColor;
 	SAppPenStyleValue borderStyle;
 	
 	SAppStringValue fontFamily;
-	SAppDimensionValue fontSize;
+	SAppDimensionFloatValue fontSize;
 	SAppBooleanValue fontBold;
 	SAppBooleanValue fontItalic;
 	SAppBooleanValue fontUnderline;
 	SAppStringValue finalFontFamily;
-	SAppDimensionValue finalFontSize;
+	SAppDimensionFloatValue finalFontSize;
 	sl_bool finalFontBold;
 	sl_bool finalFontItalic;
 	sl_bool finalFontUnderline;
@@ -268,7 +269,7 @@ public:
 	SAppColorValue backgroundColor[(int)(ButtonState::Count)];
 	SAppDrawableValue background[(int)(ButtonState::Count)];
 	SAppDrawableValue icon[(int)(ButtonState::Count)];
-	SAppDimensionValue borderWidth[(int)(ButtonState::Count)];
+	SAppDimensionFloatValue borderWidth[(int)(ButtonState::Count)];
 	SAppColorValue borderColor[(int)(ButtonState::Count)];
 	SAppPenStyleValue borderStyle[(int)(ButtonState::Count)];
 	
@@ -404,6 +405,81 @@ public:
 	
 };
 
+struct SAppLayoutTabItem
+{
+	SAppStringValue label;
+	SAppBooleanValue selected;
+	Ref<SAppLayoutResourceItem> view;
+	
+	Ref<XmlElement> element;
+	
+};
+
+class SAppLayoutTabAttributes : public Referable
+{
+public:
+	SAppLayoutOrientationValue orientation;
+	SAppDimensionValue tabWidth;
+	SAppDimensionValue tabHeight;
+	SAppDrawableValue barBackground;
+	SAppDrawableValue contentBackground;
+	SAppDrawableValue tabBackground;
+	SAppDrawableValue selectedTabBackground;
+	SAppDrawableValue hoverTabBackground;
+	SAppColorValue labelColor;
+	SAppColorValue selectedLabelColor;
+	SAppColorValue hoverLabelColor;
+	SAppAlignmentValue labelAlign;
+	SAppDimensionValue labelMarginLeft;
+	SAppDimensionValue labelMarginTop;
+	SAppDimensionValue labelMarginRight;
+	SAppDimensionValue labelMarginBottom;
+	
+	CList<SAppLayoutTabItem> items;
+	
+};
+
+struct SAppLayoutSplitItem
+{
+	Ref<SAppLayoutResourceItem> view;
+	SAppFloatValue weight;
+	SAppFloatValue minWeight;
+	SAppFloatValue maxWeight;
+	SAppDimensionValue minSize;
+	SAppDimensionValue maxSize;
+	SAppDimensionValue dividerWidth;
+	SAppDrawableValue dividerBackground;
+	SAppColorValue dividerColor;
+	
+	Ref<XmlElement> element;
+	
+};
+
+class SAppLayoutSplitAttributes : public Referable
+{
+public:
+	SAppLayoutOrientationValue orientation;
+	SAppDimensionValue dividerWidth;
+	SAppDrawableValue dividerBackground;
+	SAppColorValue dividerColor;
+	SAppDimensionValue cursorMargin;
+	
+	CList<SAppLayoutSplitItem> items;
+	
+};
+
+class SAppLayoutProgressAttributes : public Referable
+{
+public:
+	SAppLayoutOrientationValue orientation;
+	SAppAlignmentValue gravity;
+	SAppFloatValue value;
+	SAppFloatValue min;
+	SAppFloatValue max;
+	SAppDrawableValue bar;
+	
+};
+
 class SAppLayoutStyle : public Referable
 {
 public:
@@ -436,7 +512,9 @@ public:
 		typeRender = 0x0220,
 		typeTab = 0x0221,
 		typeTree = 0x0222,
-		typeWeb = 0x0223
+		typeWeb = 0x0223,
+		typeSplit = 0x0224,
+		typeProgress = 0x0225
 	};
 	
 	Ref<XmlElement> element;
@@ -460,6 +538,9 @@ public:
 	Ref<SAppLayoutLinearAttributes> linearAttrs;
 	Ref<SAppLayoutListAttributes> listAttrs;
 	Ref<SAppLayoutListReportAttributes> listReportAttrs;
+	Ref<SAppLayoutTabAttributes> tabAttrs;
+	Ref<SAppLayoutSplitAttributes> splitAttrs;
+	Ref<SAppLayoutProgressAttributes> progressAttrs;
 
 	CList< Ref<SAppLayoutStyle> > styles;
 	CList< Ref<SAppLayoutResourceItem> > children;
@@ -477,7 +558,7 @@ public:
 class SAppLayoutResource : public SAppLayoutResourceItem
 {
 public:
-	SAppDimensionValue customUnit;
+	SAppDimensionFloatValue customUnit;
 	
 	HashMap< String, Ref<SAppLayoutResourceItem> > itemsByName;
 	TreeMap<String, sl_bool> customClasses;
@@ -502,6 +583,8 @@ public:
 	sl_uint32 nAutoIncreaseNameTab;
 	sl_uint32 nAutoIncreaseNameTree;
 	sl_uint32 nAutoIncreaseNameWeb;
+	sl_uint32 nAutoIncreaseNameSplit;
+	sl_uint32 nAutoIncreaseNameProgress;
 	sl_uint32 nAutoIncreaseNameOther;
 	
 public:
@@ -517,10 +600,10 @@ public:
 class SAppLayoutSimulationParams
 {
 public:
-	sl_real screenWidth;
-	sl_real screenHeight;
-	sl_real viewportWidth;
-	sl_real viewportHeight;
+	sl_ui_len screenWidth;
+	sl_ui_len screenHeight;
+	sl_ui_len viewportWidth;
+	sl_ui_len viewportHeight;
 	sl_real customUnit;
 	
 public:
@@ -550,7 +633,7 @@ public:
 
 protected:
 	// override
-	void layoutViews(sl_real width, sl_real height);
+	void layoutViews(sl_ui_len width, sl_ui_len height);
 	
 	// override
 	void onClose(UIEvent* ev);
