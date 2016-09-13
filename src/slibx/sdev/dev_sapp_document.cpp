@@ -3098,7 +3098,7 @@ Ref<View> SAppDocument::_simulateLayoutCreateOrLayoutView(SAppLayoutSimulationWi
 			view = simulator->getContent();
 			if (!flagOnLayout) {
 				if (view.isNotNull()) {
-					Size size = UI::getScreenSize();
+					UISize size = UI::getScreenSize();
 					m_layoutSimulationParams.screenWidth = size.x;
 					m_layoutSimulationParams.screenHeight = size.y;
 					m_layoutSimulationParams.viewportWidth = view->getWidth();
@@ -3124,7 +3124,7 @@ Ref<View> SAppDocument::_simulateLayoutCreateOrLayoutView(SAppLayoutSimulationWi
 				view = new ViewGroup;
 			}
 			if (view.isNotNull()) {
-				Size size = simulator->getClientSize();
+				UISize size = simulator->getClientSize();
 				m_layoutSimulationParams.screenWidth = size.x;
 				m_layoutSimulationParams.screenHeight = size.y;
 				m_layoutSimulationParams.viewportWidth = view->getWidth();
@@ -6402,12 +6402,13 @@ sl_bool SAppDocument::_simulateLayoutSetTabAttributes(SAppLayoutSimulationWindow
 	ListLocker<SAppLayoutTabItem> subItems(attr->items);
 	if (subItems.count > 0) {
 
-		sl_size indexSelected = 0;
+		sl_uint32 indexSelected = 0;
 		sl_bool flagSelected = sl_false;
 
-		view->setTabsCount(subItems.count, sl_false);
+		sl_uint32 nSubItems = (sl_uint32)(subItems.count);
+		view->setTabsCount(nSubItems, sl_false);
 		
-		for (sl_size i = 0; i < subItems.count; i++) {
+		for (sl_uint32 i = 0; i < nSubItems; i++) {
 			
 			SAppLayoutTabItem& subItem = subItems[i];
 			if (subItem.label.flagDefined) {
