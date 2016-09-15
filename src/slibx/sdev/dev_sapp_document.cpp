@@ -3938,12 +3938,6 @@ sl_bool SAppDocument::_parseLayoutResourceViewAttributes(SAppLayoutResource* lay
 			}
 		}
 	}
-    if (attr->marginLeft.flagDefined && !(attr->left.flagDefined) && attr->leftMode == PositionMode::Fixed) {
-        attr->left = attr->marginLeft;
-    }
-    if (attr->marginTop.flagDefined && !(attr->top.flagDefined) && attr->topMode == PositionMode::Fixed) {
-        attr->top = attr->marginTop;
-    }
 	
 	{
 		PARSE_AND_CHECK_LAYOUT_ATTR(attr->, paddingLeft)
