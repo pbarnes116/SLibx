@@ -464,6 +464,7 @@ void SAppDocument::_freeResources()
 	m_raws.removeAll();
 	m_layouts.removeAll();
 	m_layoutStyles.removeAll();
+    m_layoutIncludes.removeAll();
 	
 	{
 		ListLocker< Ref<SAppLayoutSimulationWindow> > windows(m_layoutSimulationWindows);
