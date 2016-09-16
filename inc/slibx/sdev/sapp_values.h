@@ -36,7 +36,7 @@ class SAppDimensionValue
 public:
 	sl_bool flagDefined;
 	enum {
-		FILL, WRAP, WEIGHT, PX, SW, SH, SMIN, SMAX, VW, VH, VMIN, VMAX, CUSTOM
+		FILL, WRAP, WEIGHT, PX, SW, SH, SMIN, SMAX, VW, VH, VMIN, VMAX, SP
 	};
 	int unit;
 	sl_real amount;
@@ -51,7 +51,7 @@ public:
 	
 	sl_bool checkGlobal();
 	
-	sl_bool checkCustomUnit();
+	sl_bool checkSP();
 	
 	sl_bool checkPosition();
 	

@@ -262,6 +262,13 @@ public:
 
 };
 
+class SAppLayoutImportAttributes : public Referable
+{
+public:
+	String layout;
+	
+};
+
 class SAppLayoutButtonCategory
 {
 public:
@@ -388,6 +395,8 @@ public:
 class SAppLayoutListAttributes : public Referable
 {
 public:
+	String itemLayout;
+	
 };
 
 struct SAppLayoutListReportColumn
@@ -487,6 +496,13 @@ public:
 	String name;
 };
 
+class SAppLayoutInclude : public Referable
+{
+public:
+	Ref<XmlElement> element;
+	String name;
+};
+
 class SAppLayoutResourceItem : public Referable
 {
 public:
@@ -494,27 +510,33 @@ public:
 		typeUnknown = 0,
 		typeWindow = 0x0100,
 		typeMobilePage = 0x0101,
+		
 		typeView = 0x0200,
 		typeViewGroup = 0x0201,
-		typeButton = 0x0202,
-		typeLabel = 0x0203,
-		typeCheck = 0x0204,
-		typeRadio = 0x0205,
-		typeEdit = 0x0206,
-		typePassword = 0x0207,
-		typeTextArea = 0x0208,
-		typeImage = 0x0210,
-		typeSelect = 0x0211,
-		typeScroll = 0x0212,
-		typeLinear = 0x0213,
-		typeList = 0x0214,
-		typeListReport = 0x0215,
-		typeRender = 0x0220,
-		typeTab = 0x0221,
-		typeTree = 0x0222,
-		typeWeb = 0x0223,
-		typeSplit = 0x0224,
-		typeProgress = 0x0225
+		typeImport = 0x0202,
+		
+		typeButton = 0x0210,
+		typeLabel = 0x0211,
+		typeCheck = 0x0212,
+		typeRadio = 0x0213,
+		typeEdit = 0x0214,
+		typePassword = 0x0215,
+		typeTextArea = 0x0216,
+		typeImage = 0x0217,
+		typeSelect = 0x0218,
+		
+		typeScroll = 0x0230,
+		typeLinear = 0x0231,
+		typeList = 0x0232,
+		typeListReport = 0x0233,
+		typeRender = 0x0234,
+		typeTab = 0x0235,
+		typeTree = 0x0236,
+		typeWeb = 0x0237,
+		typeSplit = 0x0238,
+		
+		typeProgress = 0x0240
+		
 	};
 	
 	Ref<XmlElement> element;
@@ -527,6 +549,7 @@ public:
 	
 	Ref<SAppLayoutWindowAttributes> windowAttrs;
 	Ref<SAppLayoutViewAttributes> viewAttrs;
+	Ref<SAppLayoutImportAttributes> importAttrs;
 	Ref<SAppLayoutButtonAttributes> buttonAttrs;
 	Ref<SAppLayoutLabelAttributes> labelAttrs;
 	Ref<SAppLayoutCheckAttributes> checkAttrs;
@@ -551,14 +574,12 @@ public:
 public:
 	String getXmlAttribute(const String& name);
 	
-	List< Ref<XmlElement> > getChildElements(const String& name);
-	
 };
 
 class SAppLayoutResource : public SAppLayoutResourceItem
 {
 public:
-	SAppDimensionFloatValue customUnit;
+	SAppDimensionFloatValue sp;
 	
 	HashMap< String, Ref<SAppLayoutResourceItem> > itemsByName;
 	TreeMap<String, sl_bool> customClasses;
@@ -566,6 +587,7 @@ public:
 
 	sl_uint32 nAutoIncreaseNameView;
 	sl_uint32 nAutoIncreaseNameViewGroup;
+	sl_uint32 nAutoIncreaseNameImport;
 	sl_uint32 nAutoIncreaseNameButton;
 	sl_uint32 nAutoIncreaseNameLabel;
 	sl_uint32 nAutoIncreaseNameCheck;
@@ -604,7 +626,7 @@ public:
 	sl_ui_len screenHeight;
 	sl_ui_len viewportWidth;
 	sl_ui_len viewportHeight;
-	sl_real customUnit;
+	sl_real sp;
 	
 public:
 	SAppLayoutSimulationParams();
@@ -612,14 +634,12 @@ public:
 };
 
 class SAppDocument;
+class SAppLayoutSimulationWindow;
 
-class SAppLayoutSimulationWindow : public WindowLayoutResource
+class SAppLayoutSimulator
 {
 public:
-	SAppLayoutSimulationWindow();
-	
-public:
-	void open(SAppDocument* doc, SAppLayoutResource* layout);
+	Ref<Referable> getReferable();
 	
 	Ref<View> getViewByName(const String& name);
 	
@@ -629,8 +649,31 @@ public:
 	
 	Ref<SAppDocument> getDocument();
 	
-	Ref<SAppLayoutResource> getLayout();
+	Ref<SAppLayoutResource> getLayoutResource();
+	
+	Ref<SAppLayoutSimulationWindow> getSimulationWindow();
+	
+	Ref<View> getSimulationContentView();
+	
+protected:
+	SafeWeakRef<Referable> m_refer;
+	SafeWeakRef<SAppDocument> m_document;
+	SafeRef<SAppLayoutResource> m_layoutResource;
+	SafeWeakRef<SAppLayoutSimulationWindow> m_simulationWindow;
+	SafeWeakRef<View> m_simulationContentView;
+	HashMap< String, Ref<View> > m_views;
+	HashMap< String, Ref<RadioGroup> > m_radioGroups;
 
+};
+
+class SAppLayoutSimulationWindow : public WindowLayoutResource, public SAppLayoutSimulator
+{
+public:
+	SAppLayoutSimulationWindow();
+	
+public:
+	void open(SAppDocument* doc, SAppLayoutResource* layout);
+	
 protected:
 	// override
 	void layoutViews(sl_ui_len width, sl_ui_len height);
@@ -638,11 +681,18 @@ protected:
 	// override
 	void onClose(UIEvent* ev);
 	
-protected:
-	SafeWeakRef<SAppDocument> m_document;
-	SafeRef<SAppLayoutResource> m_layout;
-	HashMap< String, Ref<View> > m_views;
-	HashMap< String, Ref<RadioGroup> > m_radioGroups;
+};
+
+class SAppLayoutImportView : public ViewLayoutResource, public SAppLayoutSimulator
+{
+public:
+	SAppLayoutImportView();
+	
+public:
+	void init(SAppLayoutSimulator* simulator, SAppLayoutResource* layout);
+	
+	// override
+	void layoutViews(sl_ui_len width, sl_ui_len height);
 	
 };
 

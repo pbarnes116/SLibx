@@ -37,7 +37,10 @@ SLIB_STATIC_STRING(_g_sdev_sapp_error_drawable_not_found, "Drawable resource is 
 SLIB_STATIC_STRING(_g_sdev_sapp_error_drawable_not_image, "Drawable resource is not image: %s")
 SLIB_STATIC_STRING(_g_sdev_sapp_error_load_image_failed, "Failed to load image drawable resource: %s")
 SLIB_STATIC_STRING(_g_sdev_sapp_error_menu_not_found, "Menu resource is not defined: %s")
-SLIB_STATIC_STRING(_g_sdev_sapp_error_layout_style_not_found, "layout style is not found: %s")
+SLIB_STATIC_STRING(_g_sdev_sapp_error_layout_style_not_found, "layout-style is not found: %s")
+SLIB_STATIC_STRING(_g_sdev_sapp_error_layout_include_not_found, "layout-include is not found: %s")
+SLIB_STATIC_STRING(_g_sdev_sapp_error_layout_not_found, "layout is not found: %s")
+SLIB_STATIC_STRING(_g_sdev_sapp_error_layout_is_not_view, "layout is not a view: %s")
 
 SLIB_STATIC_STRING(_g_sdev_sapp_error_resource_raw_name_duplicated, "Raw Resource: Generated name %s is duplicated: %s")
 SLIB_STATIC_STRING(_g_sdev_sapp_error_resource_raw_size_big, "Raw Resource: Size is larger than 16MB: %s")
@@ -431,10 +434,17 @@ sl_bool SAppDocument::_parseConfiguration(const String& filePath, SAppConfigurat
 			ListLocker< Ref<XmlElement> > children(el_layout->getChildElements());
 			for (sl_size i = 0; i < children.count; i++) {
 				Ref<XmlElement> child = children[i];
-				if (child.isNotNull() && child->getName() == "include-header") {
-					String str = child->getText().trim();
-					if (str.isNotEmpty()) {
-						conf.generate_cpp_layout_include_headers.add(str);
+				if (child.isNotNull()) {
+					if (child->getName() == "include-header") {
+						String str = child->getText().trim();
+						if (str.isNotEmpty()) {
+							conf.generate_cpp_layout_include_headers.add(str);
+						}
+					} else if (child->getName() == "include-header-in-cpp") {
+						String str = child->getText().trim();
+						if (str.isNotEmpty()) {
+							conf.generate_cpp_layout_include_headers_in_cpp.add(str);
+						}
 					}
 				}
 			}
@@ -515,6 +525,10 @@ sl_bool SAppDocument::_parseResourcesXml(const String& filePath)
 				}
 			} else if (child->getName() == "layout-style") {
 				if (!_parseLayoutStyle(child)) {
+					return sl_false;
+				}
+			} else if (child->getName() == "layout-include") {
+				if (!_parseLayoutInclude(child)) {
 					return sl_false;
 				}
 			} else if (child->getName() == "layout") {
@@ -2284,6 +2298,39 @@ sl_bool SAppDocument::_parseLayoutStyle(const Ref<XmlElement>& element)
 	return sl_true;
 }
 
+sl_bool SAppDocument::_parseLayoutInclude(const Ref<XmlElement>& element)
+{
+	if (element.isNull()) {
+		return sl_false;
+	}
+	
+	Ref<SAppLayoutInclude> include = new SAppLayoutInclude;
+	if (include.isNull()) {
+		_logError(element, _g_sdev_sapp_error_out_of_memory);
+		return sl_false;
+	}
+	
+	include->element = element;
+	
+	String name = element->getAttribute("name").trim();
+	if (name.isEmpty()) {
+		_logError(element, _g_sdev_sapp_error_resource_layout_name_is_empty);
+		return sl_false;
+	}
+	if (m_layoutIncludes.contains(name)) {
+		_logError(element, _g_sdev_sapp_error_resource_layout_name_redefined.arg(name));
+		return sl_false;
+	}
+	include->name = name;
+	
+	if (!(m_layoutIncludes.put(name, include))) {
+		_logError(element, _g_sdev_sapp_error_out_of_memory);
+		return sl_false;
+	}
+	
+	return sl_true;
+}
+
 sl_bool SAppDocument::_parseLayoutResource(const Ref<XmlElement>& element)
 {
 	if (element.isNull()) {
@@ -2327,9 +2374,9 @@ sl_bool SAppDocument::_parseLayoutResource(const Ref<XmlElement>& element)
 	}
 	layout->name = name;
 	
-	PARSE_AND_CHECK_LAYOUT_XML_ATTR(element, layout->, customUnit)
-	if (!(layout->customUnit.checkCustomUnit())) {
-		LOG_ERROR_LAYOUT_ATTR(customUnit)
+	PARSE_AND_CHECK_LAYOUT_XML_ATTR(element, layout->, sp)
+	if (!(layout->sp.checkSP())) {
+		LOG_ERROR_LAYOUT_ATTR(sp)
 		return sl_false;
 	}
 	
@@ -2428,6 +2475,11 @@ sl_bool SAppDocument::_parseLayoutResourceItem(SAppLayoutResource* layout, SAppL
 				return sl_false;
 			}
 			if (!(_parseLayoutResourceItemChildren(layout, item))) {
+				return sl_false;
+			}
+			break;
+		case SAppLayoutResource::typeImport:
+			if (!(_parseLayoutResourceImportAttributes(layout, item, parent))) {
 				return sl_false;
 			}
 			break;
@@ -2564,7 +2616,7 @@ sl_bool SAppDocument::_parseLayoutResourceItem(SAppLayoutResource* layout, SAppL
 
 sl_bool SAppDocument::_parseLayoutResourceItemChildren(SAppLayoutResource* layout, SAppLayoutResourceItem* item)
 {
-	ListLocker< Ref<XmlElement> > children(item->element->getChildElements());
+	ListLocker< Ref<XmlElement> > children(_getLayoutItemChildElements(item, String::null()));
 	for (sl_size i = 0; i < children.count; i++) {
 		const Ref<XmlElement>& child = children[i];
 		if (child.isNotNull()) {
@@ -2629,7 +2681,7 @@ sl_bool SAppDocument::_generateLayoutsCpp(const String& targetPath)
 	sbHeader.add(String::format(
 								"%n"
 								"namespace %s%n"
-								"{%n\tnamespace ui%n\t{%n%n"
+								"{%n\tnamespace ui%n\t{%n"
 								, m_conf.generate_cpp_namespace));
 	
 	sbCpp.add(String::format(
@@ -2637,76 +2689,103 @@ sl_bool SAppDocument::_generateLayoutsCpp(const String& targetPath)
 							 "#include \"layouts.h\"%n"
 							 "#include \"strings.h\"%n"
 							 "#include \"drawables.h\"%n"
-							 "#include \"menus.h\"%n%n"
-							 "namespace %s%n"
-							 "{%n\tnamespace ui%n\t{%n%n"
+							 "#include \"menus.h\"%n"
 							 , m_conf.generate_cpp_namespace));
 	
-	
-	Iterator< Pair<String, Ref<SAppLayoutResource> > > iterator = m_layouts.iterator();
-	Pair< String, Ref<SAppLayoutResource> > pair;
-	
-	while (iterator.next(&pair)) {
-		if (pair.value.isNotNull()) {
-			
-			Ref<SAppLayoutResource> layout = pair.value;
-			
-			if (layout->type == SAppLayoutResource::typeWindow) {
-				sbHeader.add(String::format("\t\tSLIB_DECLARE_WINDOW_LAYOUT_BEGIN(%s)%n", pair.key));
-				sbCpp.add(String::format("\t\tSLIB_DEFINE_WINDOW_LAYOUT(%s)%n%n", pair.key));
-			} else if (layout->type == SAppLayoutResource::typeMobilePage) {
-				sbHeader.add(String::format("\t\tSLIB_DECLARE_MOBILE_PAGE_LAYOUT_BEGIN(%s)%n", pair.key));
-				sbCpp.add(String::format("\t\tSLIB_DEFINE_MOBILE_PAGE_LAYOUT(%s)%n%n", pair.key));
-			} else if (layout->type == SAppLayoutResource::typeView) {
-				sbHeader.add(String::format("\t\tSLIB_DECLARE_VIEW_LAYOUT_BEGIN(%s)%n", pair.key));
-				sbCpp.add(String::format("\t\tSLIB_DEFINE_VIEW_LAYOUT(%s)%n%n", pair.key));
-			} else {
-				return sl_false;
-			}
-			
-			sbCpp.add(String::format("\t\tvoid %s::initialize()%n\t\t{%n", pair.key));
-			
-			{
-				ListItems<String> radioGroups(layout->radioGroups.keys());
-				for (sl_size i = 0; i < radioGroups.count; i++) {
-					sbHeader.add(String::format("\t\t\tslib::Ref<slib::RadioGroup> " RADIOGROUP_NAME_PREFIX "%s;%n", radioGroups[i]));
-					sbCpp.add(String::format("\t\t\t" RADIOGROUP_NAME_PREFIX "%s = new slib::RadioGroup;%n", radioGroups[i]));
-				}
-				if (radioGroups.count > 0) {
-					sbHeader.add("\r\n");
-					sbCpp.add("\r\n");
-				}
-			}
-			
-			StringBuffer sbLayout;
-			
-			if (layout->customUnit.flagDefined) {
-				if (layout->customUnit.isNeededOnLayoutFunction()) {
-					sbLayout.add(String::format("%n\t\t\tsetCustomUnitLength(%s);%n", layout->customUnit.getAccessString()));
-				} else {
-					sbCpp.add(String::format("%n\t\t\tsetCustomUnitLength(%s);%n%n", layout->customUnit.getAccessString()));
-				}
-			}
-			
-			if (!(_generateLayoutsCppItem(sl_null, layout.ptr, sbHeader, sbCpp, sbLayout, String::null()))) {
-				return sl_false;
-			}
-			
-			sbCpp.add(String::format("\t\t}%n%n\t\tvoid %s::layoutViews(sl_ui_len CONTENT_WIDTH, sl_ui_len CONTENT_HEIGHT)%n\t\t{%n", pair.key));
-			sbCpp.link(sbLayout);
-			static sl_char8 strEndCpp[] = "\t\t}\r\n\r\n";
-			sbCpp.addStatic(strEndCpp, sizeof(strEndCpp)-1);
-			
-			if (layout->type == SAppLayoutResource::typeWindow) {
-				static sl_char8 strEndHeader[] = "\t\tSLIB_DECLARE_WINDOW_LAYOUT_END\r\n\r\n";
-				sbHeader.addStatic(strEndHeader, sizeof(strEndHeader)-1);
-			} else if (layout->type == SAppLayoutResource::typeView) {
-				static sl_char8 strEndHeader[] = "\t\tSLIB_DECLARE_VIEW_LAYOUT_END\r\n\r\n";
-				sbHeader.addStatic(strEndHeader, sizeof(strEndHeader)-1);
+	{
+		ListLocker<String> includes(m_conf.generate_cpp_layout_include_headers_in_cpp);
+		for (sl_size i = 0; i < includes.count; i++) {
+			if (includes[i].isNotEmpty()) {
+				sbCpp.add(String::format("#include \"%s\"%n", includes[i]));
 			}
 		}
 	}
+	sbCpp.add(String::format(
+								"%n"
+								"namespace %s%n"
+								"{%n\tnamespace ui%n\t{%n"
+								, m_conf.generate_cpp_namespace));
+
+	{
+		Iterator< Pair<String, Ref<SAppLayoutResource> > > iterator = m_layouts.iterator();
+		Pair< String, Ref<SAppLayoutResource> > pair;
+		while (iterator.next(&pair)) {
+			if (pair.value.isNotNull()) {
+				Ref<SAppLayoutResource> layout = pair.value;
+				sbHeader.add(String::format("\t\tclass %s;%n", pair.key));
+			}
+		}
+	}
+	
+	sbHeader.add("\r\n");
+	
+	{
+		Iterator< Pair<String, Ref<SAppLayoutResource> > > iterator = m_layouts.iterator();
+		Pair< String, Ref<SAppLayoutResource> > pair;
 		
+		while (iterator.next(&pair)) {
+			
+			if (pair.value.isNotNull()) {
+				
+				Ref<SAppLayoutResource> layout = pair.value;
+				
+				if (layout->type == SAppLayoutResource::typeWindow) {
+					sbHeader.add(String::format("\t\tSLIB_DECLARE_WINDOW_LAYOUT_BEGIN(%s)%n", pair.key));
+					sbCpp.add(String::format("\t\tSLIB_DEFINE_WINDOW_LAYOUT(%s)%n%n", pair.key));
+				} else if (layout->type == SAppLayoutResource::typeMobilePage) {
+					sbHeader.add(String::format("\t\tSLIB_DECLARE_MOBILE_PAGE_LAYOUT_BEGIN(%s)%n", pair.key));
+					sbCpp.add(String::format("\t\tSLIB_DEFINE_MOBILE_PAGE_LAYOUT(%s)%n%n", pair.key));
+				} else if (layout->type == SAppLayoutResource::typeView) {
+					sbHeader.add(String::format("\t\tSLIB_DECLARE_VIEW_LAYOUT_BEGIN(%s)%n", pair.key));
+					sbCpp.add(String::format("\t\tSLIB_DEFINE_VIEW_LAYOUT(%s)%n%n", pair.key));
+				} else {
+					return sl_false;
+				}
+				
+				sbCpp.add(String::format("\t\tvoid %s::initialize()%n\t\t{%n", pair.key));
+				
+				{
+					ListItems<String> radioGroups(layout->radioGroups.keys());
+					for (sl_size i = 0; i < radioGroups.count; i++) {
+						sbHeader.add(String::format("\t\t\tslib::Ref<slib::RadioGroup> " RADIOGROUP_NAME_PREFIX "%s;%n", radioGroups[i]));
+						sbCpp.add(String::format("\t\t\t" RADIOGROUP_NAME_PREFIX "%s = new slib::RadioGroup;%n", radioGroups[i]));
+					}
+					if (radioGroups.count > 0) {
+						sbHeader.add("\r\n");
+						sbCpp.add("\r\n");
+					}
+				}
+				
+				StringBuffer sbLayout;
+				
+				if (layout->sp.flagDefined) {
+					if (layout->sp.isNeededOnLayoutFunction()) {
+						sbLayout.add(String::format("%n\t\t\tsetScaledPixel(%s);%n", layout->sp.getAccessString()));
+					} else {
+						sbCpp.add(String::format("%n\t\t\tsetScaledPixel(%s);%n%n", layout->sp.getAccessString()));
+					}
+				}
+				
+				if (!(_generateLayoutsCppItem(sl_null, layout.ptr, sbHeader, sbCpp, sbLayout, String::null()))) {
+					return sl_false;
+				}
+				
+				sbCpp.add(String::format("\t\t}%n%n\t\tvoid %s::layoutViews(sl_ui_len CONTENT_WIDTH, sl_ui_len CONTENT_HEIGHT)%n\t\t{%n", pair.key));
+				sbCpp.link(sbLayout);
+				static sl_char8 strEndCpp[] = "\t\t}\r\n\r\n";
+				sbCpp.addStatic(strEndCpp, sizeof(strEndCpp)-1);
+				
+				if (layout->type == SAppLayoutResource::typeWindow) {
+					static sl_char8 strEndHeader[] = "\t\tSLIB_DECLARE_WINDOW_LAYOUT_END\r\n\r\n";
+					sbHeader.addStatic(strEndHeader, sizeof(strEndHeader)-1);
+				} else if (layout->type == SAppLayoutResource::typeView) {
+					static sl_char8 strEndHeader[] = "\t\tSLIB_DECLARE_VIEW_LAYOUT_END\r\n\r\n";
+					sbHeader.addStatic(strEndHeader, sizeof(strEndHeader)-1);
+				}
+			}
+		}
+	}
+	
 	sbHeader.add("\t}\r\n}\r\n\r\n#endif");
 	sbCpp.add("\t}\r\n}\r\n");
 	
@@ -2742,6 +2821,11 @@ sl_bool SAppDocument::_generateLayoutsCppItem(SAppLayoutResourceItem* parent, SA
 				}
 				if (addStatement.isNotNull()) {
 					sbDefineInit.add(addStatement);
+				}
+				break;
+			case SAppLayoutResource::typeImport:
+				if (!(_generateLayoutsCppImport(name, item, sbDeclare, sbDefineInit, sbDefineLayout, addStatement))) {
+					return sl_false;
 				}
 				break;
 			case SAppLayoutResource::typeButton:
@@ -2889,7 +2973,7 @@ void SAppDocument::_removeLayoutSimulationWindow(const Ref<SAppLayoutSimulationW
 	m_layoutSimulationWindows.removeValue(window);
 }
 
-Ref<View> SAppDocument::_simulateLayoutCreateOrLayoutView(SAppLayoutSimulationWindow* simulator, SAppLayoutResourceItem* item, View* parent, sl_bool flagOnLayout)
+Ref<View> SAppDocument::_simulateLayoutCreateOrLayoutView(SAppLayoutSimulator* simulator, SAppLayoutResourceItem* item, View* parent, sl_bool flagOnLayout)
 {
 	Ref<View> view;
 	if (parent) {
@@ -2910,6 +2994,12 @@ Ref<View> SAppDocument::_simulateLayoutCreateOrLayoutView(SAppLayoutSimulationWi
 					if (!(_simulateLayoutSetViewAttributes(simulator, view.ptr, item, flagOnLayout))) {
 						return Ref<View>::null();
 					}
+				}
+				break;
+			case SAppLayoutResource::typeImport:
+				view = _simulateLayoutImport(simulator, view.ptr, item, flagOnLayout);
+				if (view.isNull()) {
+					return Ref<View>::null();
 				}
 				break;
 			case SAppLayoutResource::typeButton:
@@ -3088,68 +3178,58 @@ Ref<View> SAppDocument::_simulateLayoutCreateOrLayoutView(SAppLayoutSimulationWi
 			simulator->registerViewByName(item->name, view);
 		}
 	} else {
-		Ref<SAppLayoutResource> layout = simulator->getLayout();
-		if (flagOnLayout) {
-			if (item->type != SAppLayoutResource::typeWindow) {
-				view = simulator->getViewByName("m_contentView");
-			}
+		Ref<SAppLayoutSimulationWindow> window = simulator->getSimulationWindow();
+		if (window.isNull()) {
+			return Ref<View>::null();
+		}
+		view = simulator->getSimulationContentView();
+		if (view.isNull()) {
+			return Ref<View>::null();
+		}
+		Ref<SAppLayoutResource> layout = simulator->getLayoutResource();
+		if (layout.isNull()) {
+			return Ref<View>::null();
 		}
 		if (item->type == SAppLayoutResource::typeWindow) {
-			view = simulator->getContent();
 			if (!flagOnLayout) {
-				if (view.isNotNull()) {
-					UISize size = UI::getScreenSize();
-					m_layoutSimulationParams.screenWidth = size.x;
-					m_layoutSimulationParams.screenHeight = size.y;
-					m_layoutSimulationParams.viewportWidth = view->getWidth();
-					m_layoutSimulationParams.viewportHeight = view->getHeight();
-					m_layoutSimulationParams.customUnit = 1;
-					if (layout.isNotNull() && layout->customUnit.flagDefined && !(layout->customUnit.isNeededOnLayoutFunction())) {
-						m_layoutSimulationParams.customUnit = _getDimensionFloatValue(layout->customUnit);
-					}
-					if (!(_simulateLayoutSetWindowAttributes(simulator, item))) {
-						return Ref<View>::null();
-					}
-					if (!(_simulateLayoutSetRootViewAttributes(view.ptr, item))) {
-						return Ref<View>::null();
-					}
-				}
-			} else {
-				if (layout.isNotNull() && layout->customUnit.flagDefined && layout->customUnit.isNeededOnLayoutFunction()) {
-					m_layoutSimulationParams.customUnit = _getDimensionFloatValue(layout->customUnit);
-				}
-			}
-		} else if (item->type == SAppLayoutResource::typeMobilePage || item->type == SAppLayoutResource::typeView) {
-			if (!flagOnLayout) {
-				view = new ViewGroup;
-			}
-			if (view.isNotNull()) {
-				UISize size = simulator->getClientSize();
+				UISize size = UI::getScreenSize();
 				m_layoutSimulationParams.screenWidth = size.x;
 				m_layoutSimulationParams.screenHeight = size.y;
 				m_layoutSimulationParams.viewportWidth = view->getWidth();
 				m_layoutSimulationParams.viewportHeight = view->getHeight();
-				m_layoutSimulationParams.customUnit = 1;
-				if (layout.isNotNull() && layout->customUnit.flagDefined) {
-					m_layoutSimulationParams.customUnit = _getDimensionFloatValue(layout->customUnit);
+				m_layoutSimulationParams.sp = 1;
+				if (layout.isNotNull() && layout->sp.flagDefined && !(layout->sp.isNeededOnLayoutFunction())) {
+					m_layoutSimulationParams.sp = _getDimensionFloatValue(layout->sp);
 				}
-				if (!(_simulateLayoutSetViewAttributes(simulator, view.ptr, item, flagOnLayout))) {
+				if (!(_simulateLayoutSetWindowAttributes(window.ptr, item))) {
 					return Ref<View>::null();
 				}
-				m_layoutSimulationParams.viewportWidth = view->getWidth();
-				m_layoutSimulationParams.viewportHeight = view->getHeight();
+				if (!(_simulateLayoutSetRootViewAttributes(view.ptr, item))) {
+					return Ref<View>::null();
+				}
+			} else {
+				if (layout.isNotNull() && layout->sp.flagDefined && layout->sp.isNeededOnLayoutFunction()) {
+					m_layoutSimulationParams.sp = _getDimensionFloatValue(layout->sp);
+				}
 			}
+		} else if (item->type == SAppLayoutResource::typeMobilePage || item->type == SAppLayoutResource::typeView) {
+			UISize size = window->getClientSize();
+			m_layoutSimulationParams.screenWidth = size.x;
+			m_layoutSimulationParams.screenHeight = size.y;
+			m_layoutSimulationParams.viewportWidth = view->getWidth();
+			m_layoutSimulationParams.viewportHeight = view->getHeight();
+			m_layoutSimulationParams.sp = 1;
+			if (layout.isNotNull() && layout->sp.flagDefined) {
+				m_layoutSimulationParams.sp = _getDimensionFloatValue(layout->sp);
+			}
+			if (!(_simulateLayoutSetViewAttributes(simulator, view.ptr, item, flagOnLayout))) {
+				return Ref<View>::null();
+			}
+			m_layoutSimulationParams.viewportWidth = view->getWidth();
+			m_layoutSimulationParams.viewportHeight = view->getHeight();
 		} else {
 			return Ref<View>::null();
 		}
-		if (!flagOnLayout) {
-			if (view.isNotNull()) {
-				if (item->type != SAppLayoutResource::typeWindow) {
-					simulator->registerViewByName("m_contentView", view);
-				}
-			}
-		}
-
 	}
 	
 	if (view.isNotNull()) {
@@ -3179,8 +3259,6 @@ sl_ui_pos SAppDocument::_getDimensionIntValue(SAppDimensionValue& value)
 		return 0;
 	}
 	switch (value.unit) {
-		case SAppDimensionValue::CUSTOM:
-			return (sl_ui_pos)(value.amount * m_layoutSimulationParams.customUnit);
 		case SAppDimensionValue::PX:
 			return (sl_ui_pos)(value.amount);
 		case SAppDimensionValue::SW:
@@ -3199,6 +3277,8 @@ sl_ui_pos SAppDocument::_getDimensionIntValue(SAppDimensionValue& value)
 			return (sl_ui_pos)(value.amount * SLIB_MIN(m_layoutSimulationParams.viewportWidth, m_layoutSimulationParams.viewportHeight));
 		case SAppDimensionValue::VMAX:
 			return (sl_ui_pos)(value.amount * SLIB_MAX(m_layoutSimulationParams.viewportWidth, m_layoutSimulationParams.viewportHeight));
+		case SAppDimensionValue::SP:
+			return (sl_ui_pos)(value.amount * m_layoutSimulationParams.sp);
 	}
 	return 0;
 }
@@ -3209,8 +3289,6 @@ sl_real SAppDocument::_getDimensionFloatValue(SAppDimensionFloatValue& value)
 		return 0;
 	}
 	switch (value.unit) {
-		case SAppDimensionValue::CUSTOM:
-			return value.amount * m_layoutSimulationParams.customUnit;
 		case SAppDimensionValue::PX:
 			return value.amount;
 		case SAppDimensionValue::SW:
@@ -3229,8 +3307,51 @@ sl_real SAppDocument::_getDimensionFloatValue(SAppDimensionFloatValue& value)
 			return value.amount * (sl_real)(SLIB_MIN(m_layoutSimulationParams.viewportWidth, m_layoutSimulationParams.viewportHeight));
 		case SAppDimensionValue::VMAX:
 			return value.amount * (sl_real)(SLIB_MAX(m_layoutSimulationParams.viewportWidth, m_layoutSimulationParams.viewportHeight));
+		case SAppDimensionValue::SP:
+			return value.amount * m_layoutSimulationParams.sp;
 	}
 	return 0;
+}
+
+List< Ref<XmlElement> > SAppDocument::_getLayoutItemChildElements(SAppLayoutResourceItem* item, const String& tagName)
+{
+	List< Ref<XmlElement> > ret;
+	{
+		ListLocker< Ref<XmlElement> > children(item->element->getChildElements(tagName));
+		for (sl_size i = 0; i < children.count; i++) {
+			Ref<XmlElement>& child = children[i];
+			if (child.isNotNull()) {
+				String name = child->getName();
+				if (name == "include") {
+					String src = child->getAttribute("src");
+					if (src.isEmpty()) {
+						_logError(child, _g_sdev_sapp_error_resource_layout_attribute_invalid.arg("src", name));
+						return List< Ref<XmlElement> >::null();
+					}
+					Ref<SAppLayoutInclude> include;
+					m_layoutIncludes.get(src, &include);
+					if (include.isNotNull()) {
+						ret.add(include->element->getChildElements(tagName));
+					} else {
+						_logError(child, _g_sdev_sapp_error_layout_include_not_found.arg(name));
+						return List< Ref<XmlElement> >::null();
+					}
+				} else {
+					ret.add(child);
+				}
+			}
+		}
+	}
+	{
+		ListLocker< Ref<SAppLayoutStyle> > _styles(item->styles);
+		for (sl_size i = 0; i < _styles.count; i++) {
+			Ref<SAppLayoutStyle> style = _styles[i];
+			if (style.isNotNull()) {
+				ret.add(style->element->getChildElements(tagName));
+			}
+		}
+	}
+	return ret;
 }
 
 sl_bool SAppDocument::_parseLayoutResourceRootViewAttributes(SAppLayoutResource* item)
@@ -4319,7 +4440,7 @@ sl_bool SAppDocument::_generateLayoutsCppViewAttributes(const String& name, SApp
 	return sl_true;
 }
 
-sl_bool SAppDocument::_simulateLayoutSetViewAttributes(SAppLayoutSimulationWindow* simulator, View* view, SAppLayoutResourceItem* item, sl_bool flagOnLayout)
+sl_bool SAppDocument::_simulateLayoutSetViewAttributes(SAppLayoutSimulator* simulator, View* view, SAppLayoutResourceItem* item, sl_bool flagOnLayout)
 {
 	SAppLayoutViewAttributes* attr = item->viewAttrs.ptr;
 	
@@ -4561,6 +4682,94 @@ sl_bool SAppDocument::_simulateLayoutSetViewAttributes(SAppLayoutSimulationWindo
 	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_NOREDRAW(attr->, doubleBuffering, setDoubleBuffering, _get)
 	
 	return sl_true;
+}
+
+sl_bool SAppDocument::_parseLayoutResourceImportAttributes(SAppLayoutResource* layout, SAppLayoutResourceItem* item, SAppLayoutResourceItem* parent)
+{
+	Ref<XmlElement> element = item->element;
+	if (element.isNull()) {
+		return sl_false;
+	}
+	
+	Ref<SAppLayoutImportAttributes> attr = new SAppLayoutImportAttributes;
+	if (attr.isNull()) {
+		_logError(element, _g_sdev_sapp_error_out_of_memory);
+		return sl_false;
+	}
+	
+	item->importAttrs = attr;
+	
+	attr->layout = item->getXmlAttribute("layout");
+	if (attr->layout.isEmpty()) {
+		_logError(element, _g_sdev_sapp_error_resource_layout_attribute_invalid.arg("layout", attr->layout));
+		return sl_false;
+	}
+	
+	if (!(_parseLayoutResourceViewAttributes(layout, item, parent))) {
+		return sl_false;
+	}
+	
+	return sl_true;
+	
+}
+
+sl_bool SAppDocument::_generateLayoutsCppImport(const String& name, SAppLayoutResourceItem* item, StringBuffer& sbDeclare, StringBuffer& sbDefineInit, StringBuffer& sbDefineLayout, const String& addStatement)
+{
+	SAppLayoutImportAttributes* attr = item->importAttrs.ptr;
+	
+	Ref<SAppLayoutResource> layoutImport;
+	m_layouts.get(attr->layout, &layoutImport);
+	if (layoutImport.isNull()) {
+		_logError(item->element, _g_sdev_sapp_error_layout_not_found.arg(attr->layout));
+		return sl_false;
+	}
+	if (layoutImport->type != SAppLayoutResource::typeView) {
+		_logError(item->element, _g_sdev_sapp_error_layout_is_not_view.arg(attr->layout));
+		return sl_false;
+	}
+	
+	if (!(_generateLayoutsCppViewAttributes(name, item, sbDefineInit, sbDefineLayout))) {
+		return sl_false;
+	}
+	
+	sbDefineInit.add(addStatement);
+	
+	return sl_true;
+}
+
+Ref<View> SAppDocument::_simulateLayoutImport(SAppLayoutSimulator* simulator, View* _view, SAppLayoutResourceItem* item, sl_bool flagOnLayout)
+{
+	SAppLayoutImportAttributes* attr = item->importAttrs.ptr;
+	Ref<SAppLayoutResource> layoutImport;
+	m_layouts.get(attr->layout, &layoutImport);
+	if (layoutImport.isNull()) {
+		_logError(item->element, _g_sdev_sapp_error_layout_not_found.arg(attr->layout));
+		return Ref<View>::null();
+	}
+	if (layoutImport->type != SAppLayoutResource::typeView) {
+		_logError(item->element, _g_sdev_sapp_error_layout_is_not_view.arg(attr->layout));
+		return Ref<View>::null();
+	}
+	
+	Ref<SAppLayoutImportView> view;
+	if (flagOnLayout) {
+		view = (SAppLayoutImportView*)_view;
+	} else {
+		view = new SAppLayoutImportView;
+		if (view.isNotNull()) {
+			view->init(simulator, layoutImport.ptr);
+		}
+	}
+	
+	if (!(_simulateLayoutSetViewAttributes(simulator, view.ptr, item, flagOnLayout))) {
+		return Ref<View>::null();
+	}
+	
+	if (flagOnLayout) {
+		view->layoutViews(view->getWidth(), view->getHeight());
+	}
+	
+	return view;
 }
 
 sl_bool SAppDocument::_parseLayoutResourceButtonAttributes(SAppLayoutResource* layout, SAppLayoutResourceItem* item, SAppLayoutResourceItem* parent)
@@ -4937,7 +5146,7 @@ sl_bool SAppDocument::_generateLayoutsCppButton(const String& name, SAppLayoutRe
 	return sl_true;
 }
 
-sl_bool SAppDocument::_simulateLayoutSetButtonAttributes(SAppLayoutSimulationWindow* simulator, Button* view, SAppLayoutResourceItem* item, sl_bool flagOnLayout)
+sl_bool SAppDocument::_simulateLayoutSetButtonAttributes(SAppLayoutSimulator* simulator, Button* view, SAppLayoutResourceItem* item, sl_bool flagOnLayout)
 {
 	SAppLayoutButtonAttributes* attr = item->buttonAttrs.ptr;
 	
@@ -5187,7 +5396,7 @@ sl_bool SAppDocument::_generateLayoutsCppLabelView(const String& name, SAppLayou
 	return sl_true;
 }
 
-sl_bool SAppDocument::_simulateLayoutSetLabelAttributes(SAppLayoutSimulationWindow* simulator, LabelView* view, SAppLayoutResourceItem* item, sl_bool flagOnLayout)
+sl_bool SAppDocument::_simulateLayoutSetLabelAttributes(SAppLayoutSimulator* simulator, LabelView* view, SAppLayoutResourceItem* item, sl_bool flagOnLayout)
 {
 	SAppLayoutLabelAttributes* attr = item->labelAttrs.ptr;
 	
@@ -5245,7 +5454,7 @@ sl_bool SAppDocument::_generateLayoutsCppCheckBox(const String& name, SAppLayout
 	return sl_true;
 }
 
-sl_bool SAppDocument::_simulateLayoutSetCheckAttributes(SAppLayoutSimulationWindow* simulator, CheckBox* view, SAppLayoutResourceItem* item, sl_bool flagOnLayout)
+sl_bool SAppDocument::_simulateLayoutSetCheckAttributes(SAppLayoutSimulator* simulator, CheckBox* view, SAppLayoutResourceItem* item, sl_bool flagOnLayout)
 {
 	SAppLayoutCheckAttributes* attr = item->checkAttrs.ptr;
 	
@@ -5306,7 +5515,7 @@ sl_bool SAppDocument::_generateLayoutsCppRadioButton(const String& name, SAppLay
 	return sl_true;
 }
 
-sl_bool SAppDocument::_simulateLayoutSetRadioAttributes(SAppLayoutSimulationWindow* simulator, RadioButton* view, SAppLayoutResourceItem* item, sl_bool flagOnLayout)
+sl_bool SAppDocument::_simulateLayoutSetRadioAttributes(SAppLayoutSimulator* simulator, RadioButton* view, SAppLayoutResourceItem* item, sl_bool flagOnLayout)
 {
 	SAppLayoutRadioAttributes* attr = item->radioAttrs.ptr;
 	
@@ -5382,7 +5591,7 @@ sl_bool SAppDocument::_generateLayoutsCppEditView(const String& name, SAppLayout
 	return sl_true;
 }
 
-sl_bool SAppDocument::_simulateLayoutSetEditAttributes(SAppLayoutSimulationWindow* simulator, EditView* view, SAppLayoutResourceItem* item, sl_bool flagOnLayout)
+sl_bool SAppDocument::_simulateLayoutSetEditAttributes(SAppLayoutSimulator* simulator, EditView* view, SAppLayoutResourceItem* item, sl_bool flagOnLayout)
 {
 	SAppLayoutEditAttributes* attr = item->editAttrs.ptr;
 	
@@ -5453,7 +5662,7 @@ sl_bool SAppDocument::_generateLayoutsCppImageView(const String& name, SAppLayou
 	return sl_true;
 }
 
-sl_bool SAppDocument::_simulateLayoutSetImageAttributes(SAppLayoutSimulationWindow* simulator, ImageView* view, SAppLayoutResourceItem* item, sl_bool flagOnLayout)
+sl_bool SAppDocument::_simulateLayoutSetImageAttributes(SAppLayoutSimulator* simulator, ImageView* view, SAppLayoutResourceItem* item, sl_bool flagOnLayout)
 {
 	SAppLayoutImageAttributes* attr = item->imageAttrs.ptr;
 	
@@ -5504,7 +5713,7 @@ sl_bool SAppDocument::_parseLayoutResourceSelectAttributes(SAppLayoutResource* l
 	PARSE_AND_CHECK_LAYOUT_ATTR(attr->, rightIcon)
 	PARSE_AND_CHECK_LAYOUT_ATTR(attr->, textColor)
 	
-	ListItems< Ref<XmlElement> > itemXmls(item->getChildElements("item"));
+	ListItems< Ref<XmlElement> > itemXmls(_getLayoutItemChildElements(item, "item"));
 	for (sl_size i = 0; i < itemXmls.count; i++) {
 		Ref<XmlElement>& itemXml = itemXmls[i];
 		if (itemXml.isNotNull()) {
@@ -5618,7 +5827,7 @@ sl_bool SAppDocument::_generateLayoutsCppSelectView(const String& name, SAppLayo
 	return sl_true;
 }
 
-sl_bool SAppDocument::_simulateLayoutSetSelectAttributes(SAppLayoutSimulationWindow* simulator, SelectView* view, SAppLayoutResourceItem* item, sl_bool flagOnLayout)
+sl_bool SAppDocument::_simulateLayoutSetSelectAttributes(SAppLayoutSimulator* simulator, SelectView* view, SAppLayoutResourceItem* item, sl_bool flagOnLayout)
 {
 	SAppLayoutSelectAttributes* attr = item->selectAttrs.ptr;
 	
@@ -5781,7 +5990,7 @@ sl_bool SAppDocument::_generateLayoutsCppScrollView(const String& name, SAppLayo
 	return sl_true;
 }
 
-sl_bool SAppDocument::_simulateLayoutSetScrollAttributes(SAppLayoutSimulationWindow* simulator, ScrollView* view, SAppLayoutResourceItem* item, sl_bool flagOnLayout)
+sl_bool SAppDocument::_simulateLayoutSetScrollAttributes(SAppLayoutSimulator* simulator, ScrollView* view, SAppLayoutResourceItem* item, sl_bool flagOnLayout)
 {
 	SAppLayoutScrollAttributes* attr = item->scrollAttrs.ptr;
 	
@@ -5853,7 +6062,7 @@ sl_bool SAppDocument::_generateLayoutsCppLinearView(const String& name, SAppLayo
 	return sl_true;
 }
 
-sl_bool SAppDocument::_simulateLayoutSetLinearAttributes(SAppLayoutSimulationWindow* simulator, LinearView* view, SAppLayoutResourceItem* item, sl_bool flagOnLayout)
+sl_bool SAppDocument::_simulateLayoutSetLinearAttributes(SAppLayoutSimulator* simulator, LinearView* view, SAppLayoutResourceItem* item, sl_bool flagOnLayout)
 {
 	SAppLayoutLinearAttributes* attr = item->linearAttrs.ptr;
 	
@@ -5885,6 +6094,8 @@ sl_bool SAppDocument::_parseLayoutResourceListAttributes(SAppLayoutResource* lay
 		return sl_false;
 	}
 	
+	attr->itemLayout = item->getXmlAttribute("item");
+
 	return sl_true;
 }
 
@@ -5902,12 +6113,66 @@ sl_bool SAppDocument::_generateLayoutsCppListView(const String& name, SAppLayout
 	return sl_true;
 }
 
-sl_bool SAppDocument::_simulateLayoutSetListAttributes(SAppLayoutSimulationWindow* simulator, ListView* view, SAppLayoutResourceItem* item, sl_bool flagOnLayout)
+
+class _SAppDocument_SimuationListViewAdapter : public Referable, public IListViewAdapter
 {
-	//SAppLayoutListAttributes* attr = item->listAttrs.ptr;
+public:
+	WeakRef<Referable> refer;
+	SAppLayoutSimulator* simulator;
+	Ref<SAppLayoutResource> layout;
+	
+public:
+	sl_uint64 getItemsCount(ListView* lv)
+	{
+		return 100;
+	}
+	
+	Ref<View> getView(ListView* lv, sl_uint64 index, View* original)
+	{
+		if (original) {
+			return original;
+		}
+		Ref<Referable> _refer = refer;
+		if (_refer.isNull()) {
+			return Ref<View>::null();
+		}
+		Ref<SAppLayoutImportView> view = new SAppLayoutImportView;
+		if (view.isNotNull()) {
+			view->init(simulator, layout.ptr);
+		}
+		return view;
+	}
+	
+};
+
+sl_bool SAppDocument::_simulateLayoutSetListAttributes(SAppLayoutSimulator* simulator, ListView* view, SAppLayoutResourceItem* item, sl_bool flagOnLayout)
+{
+	SAppLayoutListAttributes* attr = item->listAttrs.ptr;
 	
 	if (!(_simulateLayoutSetViewAttributes(simulator, view, item, flagOnLayout))) {
 		return sl_false;
+	}
+	
+	if (attr->itemLayout.isNotEmpty()) {
+
+		Ref<SAppLayoutResource> layoutItem;
+		m_layouts.get(attr->itemLayout, &layoutItem);
+		if (layoutItem.isNull()) {
+			_logError(item->element, _g_sdev_sapp_error_layout_not_found.arg(attr->itemLayout));
+			return sl_false;
+		}
+		if (layoutItem->type != SAppLayoutResource::typeView) {
+			_logError(item->element, _g_sdev_sapp_error_layout_is_not_view.arg(attr->itemLayout));
+			return sl_false;
+		}
+
+		Ref<_SAppDocument_SimuationListViewAdapter> adapter = new _SAppDocument_SimuationListViewAdapter;
+		adapter->refer = simulator->getReferable();
+		adapter->simulator = simulator;
+		adapter->layout = layoutItem;
+
+		view->setAdapter(adapter);
+
 	}
 	
 	return sl_true;
@@ -5932,7 +6197,7 @@ sl_bool SAppDocument::_parseLayoutResourceListReportAttributes(SAppLayoutResourc
 		return sl_false;
 	}
 	
-	ListLocker< Ref<XmlElement> > columnXmls(item->getChildElements("column"));
+	ListLocker< Ref<XmlElement> > columnXmls(_getLayoutItemChildElements(item, "column"));
 	for (sl_size i = 0; i < columnXmls.count; i++) {
 		Ref<XmlElement>& columnXml = columnXmls[i];
 		if (columnXml.isNotNull()) {
@@ -5997,7 +6262,7 @@ sl_bool SAppDocument::_generateLayoutsCppListReportView(const String& name, SApp
 	return sl_true;
 }
 
-sl_bool SAppDocument::_simulateLayoutSetListReportAttributes(SAppLayoutSimulationWindow* simulator, ListReportView* view, SAppLayoutResourceItem* item, sl_bool flagOnLayout)
+sl_bool SAppDocument::_simulateLayoutSetListReportAttributes(SAppLayoutSimulator* simulator, ListReportView* view, SAppLayoutResourceItem* item, sl_bool flagOnLayout)
 {
 	SAppLayoutListReportAttributes* attr = item->listReportAttrs.ptr;
 	
@@ -6119,7 +6384,7 @@ sl_bool SAppDocument::_parseLayoutResourceTabAttributes(SAppLayoutResource* layo
 		}
 	}
 	
-	ListLocker< Ref<XmlElement> > itemXmls(item->getChildElements("item"));
+	ListLocker< Ref<XmlElement> > itemXmls(_getLayoutItemChildElements(item, "item"));
 	for (sl_size i = 0; i < itemXmls.count; i++) {
 		Ref<XmlElement>& itemXml = itemXmls[i];
 		if (itemXml.isNotNull()) {
@@ -6307,7 +6572,7 @@ sl_bool SAppDocument::_generateLayoutsCppTabView(const String& name, SAppLayoutR
 	return sl_true;
 }
 
-sl_bool SAppDocument::_simulateLayoutSetTabAttributes(SAppLayoutSimulationWindow* simulator, TabView* view, SAppLayoutResourceItem* item, sl_bool flagOnLayout)
+sl_bool SAppDocument::_simulateLayoutSetTabAttributes(SAppLayoutSimulator* simulator, TabView* view, SAppLayoutResourceItem* item, sl_bool flagOnLayout)
 {
 	SAppLayoutTabAttributes* attr = item->tabAttrs.ptr;
 	
@@ -6489,7 +6754,7 @@ sl_bool SAppDocument::_parseLayoutResourceSplitAttributes(SAppLayoutResource* la
 		return sl_false;
 	}
 	
-	ListLocker< Ref<XmlElement> > itemXmls(item->getChildElements("item"));
+	ListLocker< Ref<XmlElement> > itemXmls(_getLayoutItemChildElements(item, "item"));
 	for (sl_size i = 0; i < itemXmls.count; i++) {
 		Ref<XmlElement>& itemXml = itemXmls[i];
 		if (itemXml.isNotNull()) {
@@ -6646,7 +6911,7 @@ sl_bool SAppDocument::_generateLayoutsCppSplitView(const String& name, SAppLayou
 	return sl_true;
 }
 
-sl_bool SAppDocument::_simulateLayoutSetSplitAttributes(SAppLayoutSimulationWindow* simulator, SplitView* view, SAppLayoutResourceItem* item, sl_bool flagOnLayout)
+sl_bool SAppDocument::_simulateLayoutSetSplitAttributes(SAppLayoutSimulator* simulator, SplitView* view, SAppLayoutResourceItem* item, sl_bool flagOnLayout)
 {
 	SAppLayoutSplitAttributes* attr = item->splitAttrs.ptr;
 	
@@ -6787,7 +7052,7 @@ sl_bool SAppDocument::_generateLayoutsCppProgressBar(const String& name, SAppLay
 	return sl_true;
 }
 
-sl_bool SAppDocument::_simulateLayoutSetProgressAttributes(SAppLayoutSimulationWindow* simulator, ProgressBar* view, SAppLayoutResourceItem* item, sl_bool flagOnLayout)
+sl_bool SAppDocument::_simulateLayoutSetProgressAttributes(SAppLayoutSimulator* simulator, ProgressBar* view, SAppLayoutResourceItem* item, sl_bool flagOnLayout)
 {
 	SAppLayoutProgressAttributes* attr = item->progressAttrs.ptr;
 	
@@ -6807,6 +7072,5 @@ sl_bool SAppDocument::_simulateLayoutSetProgressAttributes(SAppLayoutSimulationW
 
 	return sl_true;
 }
-
 
 SLIB_SDEV_NAMESPACE_END

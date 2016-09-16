@@ -85,12 +85,6 @@ String SAppDimensionValue::getAccessString()
 		return "0";
 	}
 	switch (unit) {
-		case CUSTOM:
-			if (Math::isAlmostZero(amount - 1)) {
-				return "(sl_ui_pos)(getCustomUnitLength())";
-			} else {
-				return String::format("(sl_ui_pos)(%ff*getCustomUnitLength())", amount);
-			}
 		case PX:
 			return String::format("%d", (int)amount);
 		case SW:
@@ -141,6 +135,12 @@ String SAppDimensionValue::getAccessString()
 			} else {
 				return String::format("(sl_ui_pos)(%ff*SLIB_MAX(CONTENT_WIDTH, CONTENT_HEIGHT))", amount);
 			}
+		case SP:
+			if (Math::isAlmostZero(amount - 1)) {
+				return "(sl_ui_pos)(getScaledPixel())";
+			} else {
+				return String::format("(sl_ui_pos)(%ff*getScaledPixel())", amount);
+			}
 	}
 	return "0";
 }
@@ -151,12 +151,6 @@ String SAppDimensionFloatValue::getAccessString()
 		return "0";
 	}
 	switch (unit) {
-		case CUSTOM:
-			if (Math::isAlmostZero(amount - 1)) {
-				return "(sl_real)(getCustomUnitLength())";
-			} else {
-				return String::format("%ff*getCustomUnitLength()", amount);
-			}
 		case PX:
 			return String::format("%ff", amount);
 		case SW:
@@ -207,6 +201,13 @@ String SAppDimensionFloatValue::getAccessString()
 			} else {
 				return String::format("%ff*(sl_real)(SLIB_MAX(CONTENT_WIDTH, CONTENT_HEIGHT))", amount);
 			}
+		case SP:
+			if (Math::isAlmostZero(amount - 1)) {
+				return "(sl_real)(getScaledPixel())";
+			} else {
+				return String::format("%ff*getScaledPixel()", amount);
+			}
+
 	}
 	return "0";
 }
@@ -249,7 +250,7 @@ sl_bool SAppDimensionValue::parse(const String& _str)
 		}
 		if (pos >= len) {
 			amount = f;
-			unit = CUSTOM;
+			unit = PX;
 			break;
 		}
 		sl_bool flagPercent = sl_false;
@@ -270,7 +271,7 @@ sl_bool SAppDimensionValue::parse(const String& _str)
 			if (flagPercent) {
 				unit = WEIGHT;
 			} else {
-				unit = CUSTOM;
+				unit = PX;
 			}
 			break;
 		} else if (pos + 1 == len) {
@@ -288,6 +289,10 @@ sl_bool SAppDimensionValue::parse(const String& _str)
 				} else if (sz[pos + 1] == 'h') {
 					amount = f;
 					unit = SH;
+					break;
+				} else if (sz[pos + 1] == 'x') {
+					amount = f;
+					unit = SP;
 					break;
 				}
 			} else if (sz[pos] == 'v') {
@@ -352,19 +357,13 @@ sl_bool SAppDimensionValue::checkGlobal()
 	if (!flagDefined) {
 		return sl_true;
 	}
-	if (unit == CUSTOM) {
-		unit = PX;
-	}
 	return isGlobalUnit(unit);
 }
 
-sl_bool SAppDimensionValue::checkCustomUnit()
+sl_bool SAppDimensionValue::checkSP()
 {
 	if (!flagDefined) {
 		return sl_true;
-	}
-	if (unit == CUSTOM) {
-		unit = PX;
 	}
 	return amount > 0 && !isRelativeUnit(unit);
 }
@@ -417,9 +416,6 @@ sl_bool SAppDimensionValue::checkForWindowSize()
 	if (!flagDefined) {
 		return sl_true;
 	}
-	if (unit == CUSTOM) {
-		unit = PX;
-	}
 	return amount >= 0 && isGlobalUnit(unit);
 }
 
@@ -436,9 +432,6 @@ sl_bool SAppDimensionValue::checkForRootViewSize()
 	if (unit == FILL || unit == WRAP) {
 		return sl_true;
 	}
-	if (unit == CUSTOM) {
-		unit = PX;
-	}
 	if (unit == WEIGHT || isGlobalUnit(unit)) {
 		return amount >= 0;
 	}
@@ -449,9 +442,6 @@ sl_bool SAppDimensionValue::checkForRootViewScalarSize()
 {
 	if (!flagDefined) {
 		return sl_true;
-	}
-	if (unit == CUSTOM) {
-		unit = PX;
 	}
 	if (isGlobalUnit(unit)) {
 		return amount >= 0;
@@ -490,7 +480,7 @@ sl_bool SAppDimensionValue::isGlobalUnit(int unit)
 
 sl_bool SAppDimensionValue::isViewportUnit(int unit)
 {
-	return unit == VW || unit == VH || unit == VMIN || unit == VMAX || unit == CUSTOM;
+	return unit == VW || unit == VH || unit == VMIN || unit == VMAX || unit == SP;
 }
 
 /************************************************
@@ -1385,16 +1375,16 @@ sl_bool SAppDrawableValue::parse(const String& _str)
 						f[6] = f[2];
 						f[7] = f[3];
 					}
-					if (f[4].unit != SAppDimensionValue::CUSTOM || f[4].amount < 0) {
+					if (f[4].unit != SAppDimensionValue::PX || f[4].amount < 0) {
 						return sl_false;
 					}
-					if (f[5].unit != SAppDimensionValue::CUSTOM || f[5].amount < 0) {
+					if (f[5].unit != SAppDimensionValue::PX || f[5].amount < 0) {
 						return sl_false;
 					}
-					if (f[6].unit != SAppDimensionValue::CUSTOM || f[6].amount < 0) {
+					if (f[6].unit != SAppDimensionValue::PX || f[6].amount < 0) {
 						return sl_false;
 					}
-					if (f[7].unit != SAppDimensionValue::CUSTOM || f[7].amount < 0) {
+					if (f[7].unit != SAppDimensionValue::PX || f[7].amount < 0) {
 						return sl_false;
 					}
 					if (!(f[0].checkGlobal()) || f[0].amount < 0) {
@@ -1425,10 +1415,10 @@ sl_bool SAppDrawableValue::parse(const String& _str)
 						f[2] = f[0];
 						f[3] = f[1];
 					}
-					if (f[2].unit != SAppDimensionValue::CUSTOM || f[2].amount < 0) {
+					if (f[2].unit != SAppDimensionValue::PX || f[2].amount < 0) {
 						return sl_false;
 					}
-					if (f[3].unit != SAppDimensionValue::CUSTOM || f[3].amount < 0) {
+					if (f[3].unit != SAppDimensionValue::PX || f[3].amount < 0) {
 						return sl_false;
 					}
 					if (!(f[0].checkGlobal()) || f[0].amount < 0) {

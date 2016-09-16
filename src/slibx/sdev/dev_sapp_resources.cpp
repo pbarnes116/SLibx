@@ -55,25 +55,11 @@ String SAppLayoutResourceItem::getXmlAttribute(const String& name)
 	return String::null();
 }
 
-List< Ref<XmlElement> > SAppLayoutResourceItem::getChildElements(const String& name)
-{
-	List< Ref<XmlElement> > ret;
-	ret.add(element->getChildElements(name));
-	ListLocker< Ref<SAppLayoutStyle> > _styles(styles);
-	for (sl_size i = 0; i < _styles.count; i++) {
-		Ref<SAppLayoutStyle> style = _styles[i];
-		if (style.isNotNull()) {
-			ret.add(style->element->getChildElements(name));
-		}
-	}
-	return ret;
-}
-
-
 SAppLayoutResource::SAppLayoutResource()
 {
 	nAutoIncreaseNameView = 0;
 	nAutoIncreaseNameViewGroup = 0;
+	nAutoIncreaseNameImport = 0;
 	nAutoIncreaseNameButton = 0;
 	nAutoIncreaseNameLabel = 0;
 	nAutoIncreaseNameCheck = 0;
@@ -108,6 +94,10 @@ String SAppLayoutResource::getAutoIncreasingName(int type)
 		case typeViewGroup:
 			prefix = "group";
 			pN = &nAutoIncreaseNameViewGroup;
+			break;
+		case typeImport:
+			prefix = "import";
+			pN = &nAutoIncreaseNameImport;
 			break;
 		case typeButton:
 			prefix = "button";
@@ -207,6 +197,8 @@ int SAppLayoutResource::getTypeFromName(const String &strType)
 		type = SAppLayoutResource::typeView;
 	} else if (strType == "group") {
 		type = SAppLayoutResource::typeViewGroup;
+	} else if (strType == "import") {
+		type = SAppLayoutResource::typeImport;
 	} else if (strType == "button") {
 		type = SAppLayoutResource::typeButton;
 	} else if (strType == "label") {
@@ -256,17 +248,61 @@ SAppLayoutSimulationParams::SAppLayoutSimulationParams()
 	screenHeight = 0;
 	viewportWidth = 0;
 	viewportHeight = 0;
-	customUnit = 1;
+	sp = 1;
+}
+
+
+Ref<Referable> SAppLayoutSimulator::getReferable()
+{
+	return m_refer;
+}
+
+Ref<View> SAppLayoutSimulator::getViewByName(const String& name)
+{
+	return m_views.getValue(name, Ref<View>::null());
+}
+
+void SAppLayoutSimulator::registerViewByName(const String& name, const Ref<View>& view)
+{
+	m_views.put(name, view);
+}
+
+Ref<RadioGroup> SAppLayoutSimulator::getRadioGroup(const String& name)
+{
+	return m_radioGroups.getValue(name, Ref<RadioGroup>::null());
+}
+
+Ref<SAppDocument> SAppLayoutSimulator::getDocument()
+{
+	return m_document;
+}
+
+Ref<SAppLayoutResource> SAppLayoutSimulator::getLayoutResource()
+{
+	return m_layoutResource;
+}
+
+Ref<SAppLayoutSimulationWindow> SAppLayoutSimulator::getSimulationWindow()
+{
+	return m_simulationWindow;
+}
+
+Ref<View> SAppLayoutSimulator::getSimulationContentView()
+{
+	return m_simulationContentView;
 }
 
 SAppLayoutSimulationWindow::SAppLayoutSimulationWindow()
 {
+	SLIB_REFERABLE_CONSTRUCTOR
+	m_simulationWindow = this;
+	m_refer = this;
 }
 
 void SAppLayoutSimulationWindow::open(SAppDocument* doc, SAppLayoutResource* layout)
 {
 	m_document = doc;
-	m_layout = layout;
+	m_layoutResource = layout;
 	{
 		ListItems<String> radioGroups(layout->radioGroups.keys());
 		for (sl_size i = 0; i < radioGroups.count; i++) {
@@ -276,14 +312,19 @@ void SAppLayoutSimulationWindow::open(SAppDocument* doc, SAppLayoutResource* lay
 			}
 		}
 	}
-	if (layout->type == SAppLayoutResource::typeView || layout->type == SAppLayoutResource::typeMobilePage) {
+	Ref<View> viewContent;
+	if (layout->type == SAppLayoutResource::typeWindow) {
+		m_simulationContentView = getContentView();
+	} else {
 		setCenterScreenOnCreate(sl_true);
 		setSize(800, 450);
 		setResizable(sl_true);
+		viewContent = new ViewGroup;
+		m_simulationContentView = viewContent;
 	}
-	Ref<View> viewContent = doc->_simulateLayoutCreateOrLayoutView(this, layout, sl_null, sl_false);
+	viewContent = doc->_simulateLayoutCreateOrLayoutView(this, layout, sl_null, sl_false);
 	if (viewContent.isNotNull()) {
-		if (layout->type == SAppLayoutResource::typeView || layout->type == SAppLayoutResource::typeMobilePage) {
+		if (layout->type != SAppLayoutResource::typeWindow) {
 			addView(viewContent);
 		}
 		doc->_simulateLayoutCreateOrLayoutView(this, layout, sl_null, sl_true);
@@ -292,35 +333,10 @@ void SAppLayoutSimulationWindow::open(SAppDocument* doc, SAppLayoutResource* lay
 	}
 }
 
-Ref<View> SAppLayoutSimulationWindow::getViewByName(const String& name)
-{
-	return m_views.getValue(name, Ref<View>::null());
-}
-
-void SAppLayoutSimulationWindow::registerViewByName(const String& name, const Ref<View>& view)
-{
-	m_views.put(name, view);
-}
-
-Ref<RadioGroup> SAppLayoutSimulationWindow::getRadioGroup(const String& name)
-{
-	return m_radioGroups.getValue(name, Ref<RadioGroup>::null());
-}
-
-Ref<SAppDocument> SAppLayoutSimulationWindow::getDocument()
-{
-	return m_document;
-}
-
-Ref<SAppLayoutResource> SAppLayoutSimulationWindow::getLayout()
-{
-	return m_layout;
-}
-
 void SAppLayoutSimulationWindow::layoutViews(sl_ui_len width, sl_ui_len height)
 {
 	Ref<SAppDocument> doc = m_document;
-	Ref<SAppLayoutResource> layout = m_layout;
+	Ref<SAppLayoutResource> layout = m_layoutResource;
 	if (doc.isNotNull() && layout.isNotNull()) {
 		doc->_simulateLayoutCreateOrLayoutView(this, layout.ptr, sl_null, sl_true);
 	}
@@ -333,5 +349,44 @@ void SAppLayoutSimulationWindow::onClose(UIEvent* ev)
 		doc->_removeLayoutSimulationWindow(this);
 	}
 }
+
+
+SAppLayoutImportView::SAppLayoutImportView()
+{
+	SLIB_REFERABLE_CONSTRUCTOR
+	m_refer = this;
+}
+
+void SAppLayoutImportView::init(SAppLayoutSimulator* simulator, SAppLayoutResource* layout)
+{
+	Ref<SAppDocument> document = simulator->getDocument();
+	m_document = document;
+	m_simulationWindow = simulator->getSimulationWindow();
+	m_layoutResource = layout;
+	{
+		ListItems<String> radioGroups(layout->radioGroups.keys());
+		for (sl_size i = 0; i < radioGroups.count; i++) {
+			Ref<RadioGroup> group = new RadioGroup;
+			if (group.isNotNull()) {
+				m_radioGroups.put(radioGroups[i], group);
+			}
+		}
+	}
+	m_simulationContentView = this;
+	Ref<View> viewContent = document->_simulateLayoutCreateOrLayoutView(this, layout, sl_null, sl_false);
+	if (viewContent.isNotNull()) {
+		document->_simulateLayoutCreateOrLayoutView(this, layout, sl_null, sl_true);
+	}
+}
+
+void SAppLayoutImportView::layoutViews(sl_ui_len width, sl_ui_len height)
+{
+	Ref<SAppDocument> doc = m_document;
+	Ref<SAppLayoutResource> layout = m_layoutResource;
+	if (doc.isNotNull() && layout.isNotNull()) {
+		doc->_simulateLayoutCreateOrLayoutView(this, layout.ptr, sl_null, sl_true);
+	}
+}
+
 
 SLIB_SDEV_NAMESPACE_END

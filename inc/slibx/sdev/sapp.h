@@ -14,6 +14,7 @@ public:
 	String generate_cpp_target_path;
 	String generate_cpp_namespace;
 	CList<String> generate_cpp_layout_include_headers;
+	CList<String> generate_cpp_layout_include_headers_in_cpp;
 	
 };
 
@@ -92,6 +93,7 @@ protected:
 	
 	// Layout Resources
 	sl_bool _parseLayoutStyle(const Ref<XmlElement>& element);
+	sl_bool _parseLayoutInclude(const Ref<XmlElement>& element);
 	sl_bool _parseLayoutResource(const Ref<XmlElement>& element);
 	sl_bool _parseLayoutResourceItem(SAppLayoutResource* layout, SAppLayoutResourceItem* item, SAppLayoutResourceItem* parent);
 	sl_bool _parseLayoutResourceItemChildren(SAppLayoutResource* layout, SAppLayoutResourceItem* item);
@@ -101,9 +103,10 @@ protected:
 	void _simulateLayoutInWindow(SAppLayoutResource* layout);
 	void _registerLayoutSimulationWindow(const Ref<SAppLayoutSimulationWindow>& window);
 	void _removeLayoutSimulationWindow(const Ref<SAppLayoutSimulationWindow>& window);
-	Ref<View> _simulateLayoutCreateOrLayoutView(SAppLayoutSimulationWindow* simulator, SAppLayoutResourceItem* item, View* parent, sl_bool flagOnLayout);
+	Ref<View> _simulateLayoutCreateOrLayoutView(SAppLayoutSimulator* simulator, SAppLayoutResourceItem* item, View* parent, sl_bool flagOnLayout);
 	sl_ui_pos _getDimensionIntValue(SAppDimensionValue& value);
 	sl_real _getDimensionFloatValue(SAppDimensionFloatValue& value);
+	List< Ref<XmlElement> > _getLayoutItemChildElements(SAppLayoutResourceItem* item, const String& tagName);
 	
 	sl_bool _parseLayoutResourceRootViewAttributes(SAppLayoutResource* layout);
 	sl_bool _generateLayoutsCppRootViewAttributes(SAppLayoutResourceItem* item, StringBuffer& sbDefineInit);
@@ -115,63 +118,67 @@ protected:
 	
 	sl_bool _parseLayoutResourceViewAttributes(SAppLayoutResource* layout, SAppLayoutResourceItem* item, SAppLayoutResourceItem* parent);
 	sl_bool _generateLayoutsCppViewAttributes(const String& name, SAppLayoutResourceItem* item, StringBuffer& sbDefineInit, StringBuffer& sbDefineLayout);
-	sl_bool _simulateLayoutSetViewAttributes(SAppLayoutSimulationWindow* simulator, View* view, SAppLayoutResourceItem* item, sl_bool flagOnLayout);
+	sl_bool _simulateLayoutSetViewAttributes(SAppLayoutSimulator* simulator, View* view, SAppLayoutResourceItem* item, sl_bool flagOnLayout);
+	
+	sl_bool _parseLayoutResourceImportAttributes(SAppLayoutResource* layout, SAppLayoutResourceItem* item, SAppLayoutResourceItem* parent);
+	sl_bool _generateLayoutsCppImport(const String& name, SAppLayoutResourceItem* item, StringBuffer& sbDeclare, StringBuffer& sbDefineInit, StringBuffer& sbDefineLayout, const String& addStatement);
+	Ref<View> _simulateLayoutImport(SAppLayoutSimulator* simulator, View* view, SAppLayoutResourceItem* item, sl_bool flagOnLayout);
 	
 	sl_bool _parseLayoutResourceButtonAttributes(SAppLayoutResource* layout, SAppLayoutResourceItem* item, SAppLayoutResourceItem* parent);
 	sl_bool _generateLayoutsCppButton(const String& name, SAppLayoutResourceItem* item, StringBuffer& sbDeclare, StringBuffer& sbDefineInit, StringBuffer& sbDefineLayout, const String& addStatement);
-	sl_bool _simulateLayoutSetButtonAttributes(SAppLayoutSimulationWindow* simulator, Button* view, SAppLayoutResourceItem* item, sl_bool flagOnLayout);
+	sl_bool _simulateLayoutSetButtonAttributes(SAppLayoutSimulator* simulator, Button* view, SAppLayoutResourceItem* item, sl_bool flagOnLayout);
 	
 	sl_bool _parseLayoutResourceLabelAttributes(SAppLayoutResource* layout, SAppLayoutResourceItem* item, SAppLayoutResourceItem* parent);
 	sl_bool _generateLayoutsCppLabelView(const String& name, SAppLayoutResourceItem* item, StringBuffer& sbDeclare, StringBuffer& sbDefineInit, StringBuffer& sbDefineLayout, const String& addStatement);
-	sl_bool _simulateLayoutSetLabelAttributes(SAppLayoutSimulationWindow* simulator, LabelView* view, SAppLayoutResourceItem* item, sl_bool flagOnLayout);
+	sl_bool _simulateLayoutSetLabelAttributes(SAppLayoutSimulator* simulator, LabelView* view, SAppLayoutResourceItem* item, sl_bool flagOnLayout);
 	
 	sl_bool _parseLayoutResourceCheckAttributes(SAppLayoutResource* layout, SAppLayoutResourceItem* item, SAppLayoutResourceItem* parent);
 	sl_bool _generateLayoutsCppCheckBox(const String& name, SAppLayoutResourceItem* item, StringBuffer& sbDeclare, StringBuffer& sbDefineInit, StringBuffer& sbDefineLayout, const String& addStatement);
-	sl_bool _simulateLayoutSetCheckAttributes(SAppLayoutSimulationWindow* simulator, CheckBox* view, SAppLayoutResourceItem* item, sl_bool flagOnLayout);
+	sl_bool _simulateLayoutSetCheckAttributes(SAppLayoutSimulator* simulator, CheckBox* view, SAppLayoutResourceItem* item, sl_bool flagOnLayout);
 	
 	sl_bool _parseLayoutResourceRadioAttributes(SAppLayoutResource* layout, SAppLayoutResourceItem* item, SAppLayoutResourceItem* parent);
 	sl_bool _generateLayoutsCppRadioButton(const String& name, SAppLayoutResourceItem* item, StringBuffer& sbDeclare, StringBuffer& sbDefineInit, StringBuffer& sbDefineLayout, const String& addStatement);
-	sl_bool _simulateLayoutSetRadioAttributes(SAppLayoutSimulationWindow* simulator, RadioButton* view, SAppLayoutResourceItem* item, sl_bool flagOnLayout);
+	sl_bool _simulateLayoutSetRadioAttributes(SAppLayoutSimulator* simulator, RadioButton* view, SAppLayoutResourceItem* item, sl_bool flagOnLayout);
 	
 	sl_bool _parseLayoutResourceEditAttributes(SAppLayoutResource* layout, SAppLayoutResourceItem* item, SAppLayoutResourceItem* parent);
 	sl_bool _generateLayoutsCppEditView(const String& name, SAppLayoutResourceItem* item, StringBuffer& sbDeclare, StringBuffer& sbDefineInit, StringBuffer& sbDefineLayout, const String& addStatement);
-	sl_bool _simulateLayoutSetEditAttributes(SAppLayoutSimulationWindow* simulator, EditView* view, SAppLayoutResourceItem* item, sl_bool flagOnLayout);
+	sl_bool _simulateLayoutSetEditAttributes(SAppLayoutSimulator* simulator, EditView* view, SAppLayoutResourceItem* item, sl_bool flagOnLayout);
 	
 	sl_bool _parseLayoutResourceImageAttributes(SAppLayoutResource* layout, SAppLayoutResourceItem* item, SAppLayoutResourceItem* parent);
 	sl_bool _generateLayoutsCppImageView(const String& name, SAppLayoutResourceItem* item, StringBuffer& sbDeclare, StringBuffer& sbDefineInit, StringBuffer& sbDefineLayout, const String& addStatement);
-	sl_bool _simulateLayoutSetImageAttributes(SAppLayoutSimulationWindow* simulator, ImageView* view, SAppLayoutResourceItem* item, sl_bool flagOnLayout);
+	sl_bool _simulateLayoutSetImageAttributes(SAppLayoutSimulator* simulator, ImageView* view, SAppLayoutResourceItem* item, sl_bool flagOnLayout);
 	
 	sl_bool _parseLayoutResourceSelectAttributes(SAppLayoutResource* layout, SAppLayoutResourceItem* item, SAppLayoutResourceItem* parent);
 	sl_bool _generateLayoutsCppSelectView(const String& name, SAppLayoutResourceItem* item, StringBuffer& sbDeclare, StringBuffer& sbDefineInit, StringBuffer& sbDefineLayout, const String& addStatement);
-	sl_bool _simulateLayoutSetSelectAttributes(SAppLayoutSimulationWindow* simulator, SelectView* view, SAppLayoutResourceItem* item, sl_bool flagOnLayout);
+	sl_bool _simulateLayoutSetSelectAttributes(SAppLayoutSimulator* simulator, SelectView* view, SAppLayoutResourceItem* item, sl_bool flagOnLayout);
 
 	sl_bool _parseLayoutResourceScrollAttributes(SAppLayoutResource* layout, SAppLayoutResourceItem* item, SAppLayoutResourceItem* parent);
 	sl_bool _generateLayoutsCppScrollView(const String& name, SAppLayoutResourceItem* item, StringBuffer& sbDeclare, StringBuffer& sbDefineInit, StringBuffer& sbDefineLayout, const String& addStatement);
-	sl_bool _simulateLayoutSetScrollAttributes(SAppLayoutSimulationWindow* simulator, ScrollView* view, SAppLayoutResourceItem* item, sl_bool flagOnLayout);
+	sl_bool _simulateLayoutSetScrollAttributes(SAppLayoutSimulator* simulator, ScrollView* view, SAppLayoutResourceItem* item, sl_bool flagOnLayout);
 	
 	sl_bool _parseLayoutResourceLinearAttributes(SAppLayoutResource* layout, SAppLayoutResourceItem* item, SAppLayoutResourceItem* parent);
 	sl_bool _generateLayoutsCppLinearView(const String& name, SAppLayoutResourceItem* item, StringBuffer& sbDeclare, StringBuffer& sbDefineInit, StringBuffer& sbDefineLayout, const String& addStatement);
-	sl_bool _simulateLayoutSetLinearAttributes(SAppLayoutSimulationWindow* simulator, LinearView* view, SAppLayoutResourceItem* item, sl_bool flagOnLayout);
+	sl_bool _simulateLayoutSetLinearAttributes(SAppLayoutSimulator* simulator, LinearView* view, SAppLayoutResourceItem* item, sl_bool flagOnLayout);
 	
 	sl_bool _parseLayoutResourceListAttributes(SAppLayoutResource* layout, SAppLayoutResourceItem* item, SAppLayoutResourceItem* parent);
 	sl_bool _generateLayoutsCppListView(const String& name, SAppLayoutResourceItem* item, StringBuffer& sbDeclare, StringBuffer& sbDefineInit, StringBuffer& sbDefineLayout, const String& addStatement);
-	sl_bool _simulateLayoutSetListAttributes(SAppLayoutSimulationWindow* simulator, ListView* view, SAppLayoutResourceItem* item, sl_bool flagOnLayout);
+	sl_bool _simulateLayoutSetListAttributes(SAppLayoutSimulator* simulator, ListView* view, SAppLayoutResourceItem* item, sl_bool flagOnLayout);
 
 	sl_bool _parseLayoutResourceListReportAttributes(SAppLayoutResource* layout, SAppLayoutResourceItem* item, SAppLayoutResourceItem* parent);
 	sl_bool _generateLayoutsCppListReportView(const String& name, SAppLayoutResourceItem* item, StringBuffer& sbDeclare, StringBuffer& sbDefineInit, StringBuffer& sbDefineLayout, const String& addStatement);
-	sl_bool _simulateLayoutSetListReportAttributes(SAppLayoutSimulationWindow* simulator, ListReportView* view, SAppLayoutResourceItem* item, sl_bool flagOnLayout);
+	sl_bool _simulateLayoutSetListReportAttributes(SAppLayoutSimulator* simulator, ListReportView* view, SAppLayoutResourceItem* item, sl_bool flagOnLayout);
 	
 	sl_bool _parseLayoutResourceTabAttributes(SAppLayoutResource* layout, SAppLayoutResourceItem* item, SAppLayoutResourceItem* parent);
 	sl_bool _generateLayoutsCppTabView(const String& name, SAppLayoutResourceItem* item, StringBuffer& sbDeclare, StringBuffer& sbDefineInit, StringBuffer& sbDefineLayout, const String& addStatement);
-	sl_bool _simulateLayoutSetTabAttributes(SAppLayoutSimulationWindow* simulator, TabView* view, SAppLayoutResourceItem* item, sl_bool flagOnLayout);
+	sl_bool _simulateLayoutSetTabAttributes(SAppLayoutSimulator* simulator, TabView* view, SAppLayoutResourceItem* item, sl_bool flagOnLayout);
 	
 	sl_bool _parseLayoutResourceSplitAttributes(SAppLayoutResource* layout, SAppLayoutResourceItem* item, SAppLayoutResourceItem* parent);
 	sl_bool _generateLayoutsCppSplitView(const String& name, SAppLayoutResourceItem* item, StringBuffer& sbDeclare, StringBuffer& sbDefineInit, StringBuffer& sbDefineLayout, const String& addStatement);
-	sl_bool _simulateLayoutSetSplitAttributes(SAppLayoutSimulationWindow* simulator, SplitView* view, SAppLayoutResourceItem* item, sl_bool flagOnLayout);
+	sl_bool _simulateLayoutSetSplitAttributes(SAppLayoutSimulator* simulator, SplitView* view, SAppLayoutResourceItem* item, sl_bool flagOnLayout);
 	
 	sl_bool _parseLayoutResourceProgressAttributes(SAppLayoutResource* layout, SAppLayoutResourceItem* item, SAppLayoutResourceItem* parent);
 	sl_bool _generateLayoutsCppProgressBar(const String& name, SAppLayoutResourceItem* item, StringBuffer& sbDeclare, StringBuffer& sbDefineInit, StringBuffer& sbDefineLayout, const String& addStatement);
-	sl_bool _simulateLayoutSetProgressAttributes(SAppLayoutSimulationWindow* simulator, ProgressBar* view, SAppLayoutResourceItem* item, sl_bool flagOnLayout);
+	sl_bool _simulateLayoutSetProgressAttributes(SAppLayoutSimulator* simulator, ProgressBar* view, SAppLayoutResourceItem* item, sl_bool flagOnLayout);
 	
 private:
 	sl_bool m_flagOpened;
@@ -184,12 +191,14 @@ private:
 	TreeMap< String, Ref<SAppDrawableResource> > m_drawables;
 	TreeMap< String, Ref<SAppStringResource> > m_strings;
 	TreeMap< String, Ref<SAppMenuResource> > m_menus;
-	TreeMap< String, Ref<SAppLayoutStyle> > m_layoutStyles;
+	HashMap< String, Ref<SAppLayoutStyle> > m_layoutStyles;
+	HashMap< String, Ref<SAppLayoutInclude> > m_layoutIncludes;
 	TreeMap< String, Ref<SAppLayoutResource> > m_layouts;
 	CList< Ref<SAppLayoutSimulationWindow> > m_layoutSimulationWindows;
 	SAppLayoutSimulationParams m_layoutSimulationParams;
 	
 	friend class SAppLayoutSimulationWindow;
+	friend class SAppLayoutImportView;
 	
 };
 
