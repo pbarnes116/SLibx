@@ -79,6 +79,7 @@ SAppLayoutResource::SAppLayoutResource()
 	nAutoIncreaseNameWeb = 0;
 	nAutoIncreaseNameSplit = 0;
 	nAutoIncreaseNameProgress = 0;
+	nAutoIncreaseNameSlider = 0;
 	nAutoIncreaseNameOther = 0;
 }
 
@@ -175,6 +176,10 @@ String SAppLayoutResource::getAutoIncreasingName(int type)
 			prefix = "progress";
 			pN = &nAutoIncreaseNameProgress;
 			break;
+		case typeSlider:
+			prefix = "slider";
+			pN = &nAutoIncreaseNameSlider;
+			break;
 		default:
 			prefix = "other";
 			pN = &nAutoIncreaseNameOther;
@@ -237,6 +242,8 @@ int SAppLayoutResource::getTypeFromName(const String &strType)
 		type = SAppLayoutResource::typeSplit;
 	} else if (strType == "progress") {
 		type = SAppLayoutResource::typeProgress;
+	} else if (strType == "slider") {
+		type = SAppLayoutResource::typeSlider;
 	}
 	return type;
 }

@@ -485,7 +485,24 @@ public:
 	SAppFloatValue value;
 	SAppFloatValue min;
 	SAppFloatValue max;
+	SAppFloatValue range;
 	SAppDrawableValue bar;
+	
+};
+
+class SAppLayoutSliderAttributes : public Referable
+{
+public:
+	SAppLayoutOrientationValue orientation;
+	SAppFloatValue value;
+	SAppFloatValue min;
+	SAppFloatValue max;
+	SAppFloatValue range;
+	SAppDrawableValue bar;
+	SAppDrawableValue hoverBar;
+	SAppDrawableValue clickedBar;
+	SAppFloatValue barLengthRatio;
+	SAppFloatValue line;
 	
 };
 
@@ -535,7 +552,8 @@ public:
 		typeWeb = 0x0237,
 		typeSplit = 0x0238,
 		
-		typeProgress = 0x0240
+		typeProgress = 0x0240,
+		typeSlider = 0x0241
 		
 	};
 	
@@ -564,6 +582,7 @@ public:
 	Ref<SAppLayoutTabAttributes> tabAttrs;
 	Ref<SAppLayoutSplitAttributes> splitAttrs;
 	Ref<SAppLayoutProgressAttributes> progressAttrs;
+	Ref<SAppLayoutSliderAttributes> sliderAttrs;
 
 	CList< Ref<SAppLayoutStyle> > styles;
 	CList< Ref<SAppLayoutResourceItem> > children;
@@ -607,6 +626,7 @@ public:
 	sl_uint32 nAutoIncreaseNameWeb;
 	sl_uint32 nAutoIncreaseNameSplit;
 	sl_uint32 nAutoIncreaseNameProgress;
+	sl_uint32 nAutoIncreaseNameSlider;
 	sl_uint32 nAutoIncreaseNameOther;
 	
 public:

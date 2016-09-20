@@ -180,6 +180,10 @@ protected:
 	sl_bool _generateLayoutsCppProgressBar(const String& name, SAppLayoutResourceItem* item, StringBuffer& sbDeclare, StringBuffer& sbDefineInit, StringBuffer& sbDefineLayout, const String& addStatement);
 	sl_bool _simulateLayoutSetProgressAttributes(SAppLayoutSimulator* simulator, ProgressBar* view, SAppLayoutResourceItem* item, sl_bool flagOnLayout);
 	
+	sl_bool _parseLayoutResourceSliderAttributes(SAppLayoutResource* layout, SAppLayoutResourceItem* item, SAppLayoutResourceItem* parent);
+	sl_bool _generateLayoutsCppSliderBar(const String& name, SAppLayoutResourceItem* item, StringBuffer& sbDeclare, StringBuffer& sbDefineInit, StringBuffer& sbDefineLayout, const String& addStatement);
+	sl_bool _simulateLayoutSetSliderAttributes(SAppLayoutSimulator* simulator, SliderBar* view, SAppLayoutResourceItem* item, sl_bool flagOnLayout);
+	
 private:
 	sl_bool m_flagOpened;
 	String m_pathConf;

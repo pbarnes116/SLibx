@@ -2589,6 +2589,12 @@ sl_bool SAppDocument::_parseLayoutResourceItem(SAppLayoutResource* layout, SAppL
 				return sl_false;
 			}
 			break;
+		case SAppLayoutResource::typeSlider:
+			item->className = "slib::SliderBar";
+			if (!(_parseLayoutResourceSliderAttributes(layout, item, parent))) {
+				return sl_false;
+			}
+			break;
 		default:
 			return sl_false;
 	}
@@ -2915,6 +2921,11 @@ sl_bool SAppDocument::_generateLayoutsCppItem(SAppLayoutResourceItem* parent, SA
 					return sl_false;
 				}
 				break;
+			case SAppLayoutResource::typeSlider:
+				if (!(_generateLayoutsCppSliderBar(name, item, sbDeclare, sbDefineInit, sbDefineLayout, addStatement))) {
+					return sl_false;
+				}
+				break;
 			default:
 				return sl_false;
 		}
@@ -3165,6 +3176,16 @@ Ref<View> SAppDocument::_simulateLayoutCreateOrLayoutView(SAppLayoutSimulator* s
 				}
 				if (view.isNotNull()) {
 					if (!(_simulateLayoutSetProgressAttributes(simulator, (ProgressBar*)(view.ptr), item, flagOnLayout))) {
+						return Ref<View>::null();
+					}
+				}
+				break;
+			case SAppLayoutResource::typeSlider:
+				if (!flagOnLayout) {
+					view = new SliderBar;
+				}
+				if (view.isNotNull()) {
+					if (!(_simulateLayoutSetSliderAttributes(simulator, (SliderBar*)(view.ptr), item, flagOnLayout))) {
 						return Ref<View>::null();
 					}
 				}
@@ -7024,6 +7045,7 @@ sl_bool SAppDocument::_parseLayoutResourceProgressAttributes(SAppLayoutResource*
 	PARSE_AND_CHECK_LAYOUT_ATTR(attr->, value)
 	PARSE_AND_CHECK_LAYOUT_ATTR(attr->, min)
 	PARSE_AND_CHECK_LAYOUT_ATTR(attr->, max)
+	PARSE_AND_CHECK_LAYOUT_ATTR(attr->, range)
 	PARSE_AND_CHECK_LAYOUT_ATTR(attr->, bar)
 	
 	return sl_true;
@@ -7042,6 +7064,7 @@ sl_bool SAppDocument::_generateLayoutsCppProgressBar(const String& name, SAppLay
 	GENERATE_CPP_SET_LAYOUT_ATTR_NOREDRAW(attr->, gravity, setGravity, sbDefineInit)
 	GENERATE_CPP_SET_LAYOUT_ATTR_NOREDRAW(attr->, min, setMinimumValue, sbDefineInit)
 	GENERATE_CPP_SET_LAYOUT_ATTR_NOREDRAW(attr->, max, setMaximumValue, sbDefineInit)
+	GENERATE_CPP_SET_LAYOUT_ATTR_NOREDRAW(attr->, range, setRange, sbDefineInit)
 	GENERATE_CPP_SET_LAYOUT_ATTR_NOREDRAW(attr->, value, setValue, sbDefineInit)
 	if (!(_checkDrawableValueAvailable(attr->bar, item->element))) {
 		return sl_false;
@@ -7065,12 +7088,111 @@ sl_bool SAppDocument::_simulateLayoutSetProgressAttributes(SAppLayoutSimulator* 
 	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_NOREDRAW(attr->, gravity, setGravity, _get)
 	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_NOREDRAW(attr->, min, setMinimumValue, _get)
 	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_NOREDRAW(attr->, max, setMaximumValue, _get)
+	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_NOREDRAW(attr->, range, setRange, _get)
 	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_NOREDRAW(attr->, value, setValue, _get)
 	if (!(_checkDrawableValueAvailable(attr->bar, item->element))) {
 		return sl_false;
 	}
 	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_DRAWABLE(attr->, bar, setBar)
 
+	return sl_true;
+}
+
+sl_bool SAppDocument::_parseLayoutResourceSliderAttributes(SAppLayoutResource* layout, SAppLayoutResourceItem* item, SAppLayoutResourceItem* parent)
+{
+	Ref<XmlElement> element = item->element;
+	if (element.isNull()) {
+		return sl_false;
+	}
+	
+	Ref<SAppLayoutSliderAttributes> attr = new SAppLayoutSliderAttributes;
+	if (attr.isNull()) {
+		_logError(element, _g_sdev_sapp_error_out_of_memory);
+		return sl_false;
+	}
+	
+	item->sliderAttrs = attr;
+	
+	if (!(_parseLayoutResourceViewAttributes(layout, item, parent))) {
+		return sl_false;
+	}
+	
+	PARSE_AND_CHECK_LAYOUT_ATTR(attr->, orientation)
+	PARSE_AND_CHECK_LAYOUT_ATTR(attr->, value)
+	PARSE_AND_CHECK_LAYOUT_ATTR(attr->, min)
+	PARSE_AND_CHECK_LAYOUT_ATTR(attr->, max)
+	PARSE_AND_CHECK_LAYOUT_ATTR(attr->, range)
+	PARSE_AND_CHECK_LAYOUT_ATTR(attr->, bar)
+	PARSE_AND_CHECK_LAYOUT_ATTR(attr->, hoverBar)
+	PARSE_AND_CHECK_LAYOUT_ATTR(attr->, clickedBar)
+	PARSE_AND_CHECK_LAYOUT_ATTR(attr->, barLengthRatio)
+	PARSE_AND_CHECK_LAYOUT_ATTR(attr->, line)
+	
+	return sl_true;
+}
+
+sl_bool SAppDocument::_generateLayoutsCppSliderBar(const String& name, SAppLayoutResourceItem* item, StringBuffer& sbDeclare, StringBuffer& sbDefineInit, StringBuffer& sbDefineLayout, const String& addStatement)
+{
+	SAppLayoutSliderAttributes* attr = item->sliderAttrs.ptr;
+	String strTab = "\t\t\t";
+	
+	if (!(_generateLayoutsCppViewAttributes(name, item, sbDefineInit, sbDefineLayout))) {
+		return sl_false;
+	}
+	
+	GENERATE_CPP_SET_LAYOUT_ATTR_NOREDRAW(attr->, orientation, setOrientation, sbDefineInit)
+	GENERATE_CPP_SET_LAYOUT_ATTR_NOREDRAW(attr->, min, setMinimumValue, sbDefineInit)
+	GENERATE_CPP_SET_LAYOUT_ATTR_NOREDRAW(attr->, max, setMaximumValue, sbDefineInit)
+	GENERATE_CPP_SET_LAYOUT_ATTR_NOREDRAW(attr->, range, setRange, sbDefineInit)
+	GENERATE_CPP_SET_LAYOUT_ATTR_NOREDRAW(attr->, value, setValue, sbDefineInit)
+	if (!(_checkDrawableValueAvailable(attr->bar, item->element))) {
+		return sl_false;
+	}
+	GENERATE_CPP_SET_LAYOUT_ATTR_NOREDRAW(attr->, bar, setBar, sbDefineInit)
+	if (!(_checkDrawableValueAvailable(attr->hoverBar, item->element))) {
+		return sl_false;
+	}
+	GENERATE_CPP_SET_LAYOUT_ATTR_NOREDRAW(attr->, hoverBar, setHoverBar, sbDefineInit)
+	if (!(_checkDrawableValueAvailable(attr->clickedBar, item->element))) {
+		return sl_false;
+	}
+	GENERATE_CPP_SET_LAYOUT_ATTR_NOREDRAW(attr->, clickedBar, setClickedBar, sbDefineInit)
+	GENERATE_CPP_SET_LAYOUT_ATTR_NOREDRAW(attr->, barLengthRatio, setBarLengthRatio, sbDefineInit)
+	GENERATE_CPP_SET_LAYOUT_ATTR_NOREDRAW(attr->, line, setLine, sbDefineInit)
+	
+	sbDefineInit.add(addStatement);
+	
+	return sl_true;
+}
+
+sl_bool SAppDocument::_simulateLayoutSetSliderAttributes(SAppLayoutSimulator* simulator, SliderBar* view, SAppLayoutResourceItem* item, sl_bool flagOnLayout)
+{
+	SAppLayoutSliderAttributes* attr = item->sliderAttrs.ptr;
+	
+	if (!(_simulateLayoutSetViewAttributes(simulator, view, item, flagOnLayout))) {
+		return sl_false;
+	}
+	
+	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_NOREDRAW(attr->, orientation, setOrientation, _get)
+	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_NOREDRAW(attr->, min, setMinimumValue, _get)
+	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_NOREDRAW(attr->, max, setMaximumValue, _get)
+	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_NOREDRAW(attr->, range, setRange, _get)
+	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_NOREDRAW(attr->, value, setValue, _get)
+	if (!(_checkDrawableValueAvailable(attr->bar, item->element))) {
+		return sl_false;
+	}
+	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_DRAWABLE(attr->, bar, setBar)
+	if (!(_checkDrawableValueAvailable(attr->hoverBar, item->element))) {
+		return sl_false;
+	}
+	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_DRAWABLE(attr->, hoverBar, setHoverBar)
+	if (!(_checkDrawableValueAvailable(attr->clickedBar, item->element))) {
+		return sl_false;
+	}
+	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_DRAWABLE(attr->, clickedBar, setClickedBar)
+	SIMULATE_LAYOUT_SET_LAYOUT_ATTR_NOREDRAW(attr->, barLengthRatio, setBarLengthRatio, _get)
+	SIMULATE_LAYOUT_SET_LAYOUT_ATTR(attr->, line, setLine, _get)
+	
 	return sl_true;
 }
 
