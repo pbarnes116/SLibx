@@ -451,6 +451,38 @@ public:
 	
 };
 
+class SAppBoundShapeValue
+{
+public:
+	sl_bool flagDefined;
+	BoundShape value;
+	
+public:
+	SAppBoundShapeValue();
+	
+public:
+	String getAccessString();
+	
+	sl_bool parse(const String& str);
+	
+};
+
+class SAppRedrawModeValue
+{
+public:
+	sl_bool flagDefined;
+	RedrawMode value;
+	
+public:
+	SAppRedrawModeValue();
+	
+public:
+	String getAccessString();
+	
+	sl_bool parse(const String& str);
+	
+};
+
 SLIB_SDEV_NAMESPACE_END
 
 #endif

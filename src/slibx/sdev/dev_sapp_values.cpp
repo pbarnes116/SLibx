@@ -1774,4 +1774,98 @@ sl_bool SAppScaleModeValue::parse(const String& _str)
 }
 
 
+/************************************************
+			BoundShape
+************************************************/
+
+SAppBoundShapeValue::SAppBoundShapeValue()
+: flagDefined(sl_false), value(BoundShape::Rectangle)
+{
+}
+
+String SAppBoundShapeValue::getAccessString()
+{
+	if (!flagDefined) {
+		return "slib::BoundShape::Rectangle";
+	}
+	switch (value) {
+		case BoundShape::Ellipse:
+			return "slib::BoundShape::Ellipse";
+		case BoundShape::RoundRect:
+			return "slib::BoundShape::RoundRect";
+		default:
+			break;
+	}
+	return "slib::BoundShape::Rectangle";
+}
+
+sl_bool SAppBoundShapeValue::parse(const String& _str)
+{
+	String str = _str.trim();
+	if (str.isEmpty()) {
+		flagDefined = sl_false;
+		return sl_true;
+	}
+	str = str.toLower();
+	if (str == "rectangle") {
+		value = BoundShape::Rectangle;
+		flagDefined = sl_true;
+		return sl_true;
+	} else if (str == "ellipse") {
+		value = BoundShape::Ellipse;
+		flagDefined = sl_true;
+		return sl_true;
+	} else if (str == "round-rect") {
+		value = BoundShape::RoundRect;
+		flagDefined = sl_true;
+		return sl_true;
+	}
+	return sl_false;
+}
+
+
+/************************************************
+				RedrawMode
+************************************************/
+
+SAppRedrawModeValue::SAppRedrawModeValue()
+: flagDefined(sl_false), value(RedrawMode::Continuously)
+{
+}
+
+String SAppRedrawModeValue::getAccessString()
+{
+	if (!flagDefined) {
+		return "slib::RedrawMode::Continuously";
+	}
+	switch (value) {
+		case RedrawMode::WhenDirty:
+			return "slib::RedrawMode::WhenDirty";
+		default:
+			break;
+	}
+	return "slib::RedrawMode::Continuously";
+}
+
+sl_bool SAppRedrawModeValue::parse(const String& _str)
+{
+	String str = _str.trim();
+	if (str.isEmpty()) {
+		flagDefined = sl_false;
+		return sl_true;
+	}
+	str = str.toLower();
+	if (str == "continuously") {
+		value = RedrawMode::Continuously;
+		flagDefined = sl_true;
+		return sl_true;
+	} else if (str == "when-dirty") {
+		value = RedrawMode::WhenDirty;
+		flagDefined = sl_true;
+		return sl_true;
+	}
+	return sl_false;
+}
+
+
 SLIB_SDEV_NAMESPACE_END

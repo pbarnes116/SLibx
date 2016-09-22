@@ -191,7 +191,7 @@ public:
 class SAppLayoutViewAttributes : public Referable
 {
 public:
-	SAppStringValue _id;
+	SAppStringValue id;
 	
 	SAppDimensionValue width;
 	SAppDimensionValue height;
@@ -219,11 +219,14 @@ public:
 	SAppDimensionValue paddingBottom;
 	
 	SAppVisibilityValue visibility;
+	SAppBooleanValue visible;
 	SAppBooleanValue enabled;
 	SAppBooleanValue opaque;
 	SAppBooleanValue occurringClick;
 	
 	SAppDrawableValue background;
+	SAppDrawableValue pressedBackground;
+	SAppDrawableValue hoverBackground;
 	SAppScaleModeValue backgroundScale;
 	SAppAlignmentValue backgroundAlign;
 	SAppColorValue backgroundColor;
@@ -231,6 +234,10 @@ public:
 	SAppDimensionFloatValue borderWidth;
 	SAppColorValue borderColor;
 	SAppPenStyleValue borderStyle;
+	SAppBoundShapeValue boundShape;
+	SAppDimensionFloatValue boundRadiusX;
+	SAppDimensionFloatValue boundRadiusY;
+	SAppDimensionValue boundRadius;
 	
 	SAppStringValue fontFamily;
 	SAppDimensionFloatValue fontSize;
@@ -259,6 +266,8 @@ public:
 	
 public:
 	SAppLayoutViewAttributes();
+	
+	sl_bool isNotRequiredNative();
 
 };
 
@@ -273,7 +282,6 @@ class SAppLayoutButtonCategory
 {
 public:
 	SAppColorValue textColor[(int)(ButtonState::Count)];
-	SAppColorValue backgroundColor[(int)(ButtonState::Count)];
 	SAppDrawableValue background[(int)(ButtonState::Count)];
 	SAppDrawableValue icon[(int)(ButtonState::Count)];
 	SAppDimensionFloatValue borderWidth[(int)(ButtonState::Count)];
@@ -309,6 +317,9 @@ public:
 	
 	SAppLayoutButtonCategory categories[SLIB_SAPP_LAYOUT_BUTTON_CATEGORY_MAX];
 	
+public:
+	sl_bool isNotRequiredNative();
+	
 };
 
 class SAppLayoutLabelAttributes : public Referable
@@ -318,6 +329,9 @@ public:
 	SAppColorValue textColor;
 	SAppAlignmentValue gravity;
 	
+public:
+	sl_bool isNotRequiredNative();
+
 };
 
 class SAppLayoutCheckAttributes : public Referable
@@ -344,6 +358,9 @@ public:
 	SAppBooleanValue multiLine;
 	SAppColorValue textColor;
 	
+public:
+	sl_bool isNotRequiredNative();
+
 };
 
 class SAppLayoutImageAttributes : public Referable
@@ -361,6 +378,8 @@ public:
 	SAppStringValue title;
 	SAppStringValue value;
 	SAppBooleanValue selected;
+	
+	Ref<XmlElement> element;
 };
 
 class SAppLayoutSelectAttributes : public Referable
@@ -373,6 +392,9 @@ public:
 	SAppColorValue textColor;
 	
 	CList<SAppLayoutSelectItem> items;
+	
+public:
+	sl_bool isNotRequiredNative();
 	
 };
 
@@ -414,6 +436,13 @@ public:
 	
 };
 
+class SAppLayoutRenderAttributes : public Referable
+{
+public:
+	SAppRedrawModeValue redraw;
+	
+};
+
 struct SAppLayoutTabItem
 {
 	SAppStringValue label;
@@ -446,6 +475,46 @@ public:
 	
 	CList<SAppLayoutTabItem> items;
 	
+public:
+	sl_bool isNotRequiredNative();
+	
+};
+
+
+struct SAppLayoutTreeItem
+{
+	String name;
+	SAppStringValue id;
+	SAppStringValue text;
+	SAppDrawableValue icon;
+	SAppDrawableValue opendIcon;
+	SAppDrawableValue closedIcon;
+	SAppColorValue textColor;
+	SAppColorValue hoverTextColor;
+	SAppColorValue selectedTextColor;
+	SAppDimensionValue height;
+	
+	Ref<SAppLayoutResourceItem> customView;
+	Ref<XmlElement> element;
+};
+
+class SAppLayoutTreeAttributes : public Referable
+{
+public:
+	SAppDrawableValue itemIcon;
+	SAppDrawableValue opendIcon;
+	SAppDrawableValue closedIcon;
+	SAppDrawableValue collapsedIcon;
+	SAppDrawableValue expandedIcon;
+	SAppColorValue selectedBackgroundColor;
+	SAppColorValue textColor;
+	SAppColorValue hoverTextColor;
+	SAppColorValue selectedTextColor;
+	SAppDimensionValue itemHeight;
+	SAppDimensionValue itemPadding;
+	SAppDimensionValue itemIndent;
+	SAppDimensionValue textIndent;
+
 };
 
 struct SAppLayoutSplitItem
@@ -477,32 +546,41 @@ public:
 	
 };
 
+class SAppLayoutWebAttributes : public Referable
+{
+public:
+	SAppStringValue url;
+	SAppStringValue html;
+	
+};
+
 class SAppLayoutProgressAttributes : public Referable
 {
 public:
 	SAppLayoutOrientationValue orientation;
-	SAppAlignmentValue gravity;
-	SAppFloatValue value;
 	SAppFloatValue min;
 	SAppFloatValue max;
 	SAppFloatValue range;
-	SAppDrawableValue bar;
+	SAppFloatValue value;
+	SAppFloatValue value2;
+	SAppBooleanValue dual;
+	SAppBooleanValue discrete;
+	SAppFloatValue step;
+	SAppBooleanValue reversed;
+	SAppDrawableValue track;
+	SAppDrawableValue progress;
+	SAppDrawableValue progress2;
 	
 };
 
 class SAppLayoutSliderAttributes : public Referable
 {
 public:
-	SAppLayoutOrientationValue orientation;
-	SAppFloatValue value;
-	SAppFloatValue min;
-	SAppFloatValue max;
-	SAppFloatValue range;
-	SAppDrawableValue bar;
-	SAppDrawableValue hoverBar;
-	SAppDrawableValue clickedBar;
-	SAppFloatValue barLengthRatio;
-	SAppFloatValue line;
+	SAppDrawableValue thumb;
+	SAppDrawableValue pressedThumb;
+	SAppDrawableValue hoverThumb;
+	SAppDimensionValue thumbWidth;
+	SAppDimensionValue thumbHeight;
 	
 };
 
@@ -565,24 +643,27 @@ public:
 	
 	String className;
 	
-	Ref<SAppLayoutWindowAttributes> windowAttrs;
-	Ref<SAppLayoutViewAttributes> viewAttrs;
-	Ref<SAppLayoutImportAttributes> importAttrs;
-	Ref<SAppLayoutButtonAttributes> buttonAttrs;
-	Ref<SAppLayoutLabelAttributes> labelAttrs;
-	Ref<SAppLayoutCheckAttributes> checkAttrs;
-	Ref<SAppLayoutRadioAttributes> radioAttrs;
-	Ref<SAppLayoutEditAttributes> editAttrs;
-	Ref<SAppLayoutImageAttributes> imageAttrs;
-	Ref<SAppLayoutSelectAttributes> selectAttrs;
-	Ref<SAppLayoutScrollAttributes> scrollAttrs;
-	Ref<SAppLayoutLinearAttributes> linearAttrs;
-	Ref<SAppLayoutListAttributes> listAttrs;
-	Ref<SAppLayoutListReportAttributes> listReportAttrs;
-	Ref<SAppLayoutTabAttributes> tabAttrs;
-	Ref<SAppLayoutSplitAttributes> splitAttrs;
-	Ref<SAppLayoutProgressAttributes> progressAttrs;
-	Ref<SAppLayoutSliderAttributes> sliderAttrs;
+	Ref<SAppLayoutWindowAttributes> attrsWindow;
+	Ref<SAppLayoutViewAttributes> attrsView;
+	Ref<SAppLayoutImportAttributes> attrsImport;
+	Ref<SAppLayoutButtonAttributes> attrsButton;
+	Ref<SAppLayoutLabelAttributes> attrsLabel;
+	Ref<SAppLayoutCheckAttributes> attrsCheck;
+	Ref<SAppLayoutRadioAttributes> attrsRadio;
+	Ref<SAppLayoutEditAttributes> attrsEdit;
+	Ref<SAppLayoutImageAttributes> attrsImage;
+	Ref<SAppLayoutSelectAttributes> attrsSelect;
+	Ref<SAppLayoutScrollAttributes> attrsScroll;
+	Ref<SAppLayoutLinearAttributes> attrsLinear;
+	Ref<SAppLayoutListAttributes> attrsList;
+	Ref<SAppLayoutListReportAttributes> attrsListReport;
+	Ref<SAppLayoutRenderAttributes> attrsRender;
+	Ref<SAppLayoutTabAttributes> attrsTab;
+	Ref<SAppLayoutTreeAttributes> attrsTree;
+	Ref<SAppLayoutSplitAttributes> attrsSplit;
+	Ref<SAppLayoutWebAttributes> attrsWeb;
+	Ref<SAppLayoutProgressAttributes> attrsProgress;
+	Ref<SAppLayoutSliderAttributes> attrsSlider;
 
 	CList< Ref<SAppLayoutStyle> > styles;
 	CList< Ref<SAppLayoutResourceItem> > children;

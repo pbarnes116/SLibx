@@ -30,6 +30,194 @@ SAppLayoutViewAttributes::SAppLayoutViewAttributes()
 	finalFontUnderline = sl_false;
 }
 
+sl_bool SAppLayoutViewAttributes::isNotRequiredNative()
+{
+	if (backgroundColor.flagDefined) {
+		return sl_true;
+	}
+	if (background.flagDefined) {
+		return sl_true;
+	}
+	if (pressedBackground.flagDefined) {
+		return sl_true;
+	}
+	if (hoverBackground.flagDefined) {
+		return sl_true;
+	}
+	if (borderWidth.flagDefined) {
+		return sl_true;
+	}
+	if (borderColor.flagDefined) {
+		return sl_true;
+	}
+	if (borderStyle.flagDefined) {
+		return sl_true;
+	}
+	return sl_false;
+}
+
+
+sl_bool SAppLayoutButtonAttributes::isNotRequiredNative()
+{
+	if (textColor.flagDefined) {
+		return sl_true;
+	}
+	if (icon.flagDefined) {
+		return sl_true;
+	}
+	if (iconWidth.flagDefined) {
+		return sl_true;
+	}
+	if (iconHeight.flagDefined) {
+		return sl_true;
+	}
+	if (gravity.flagDefined) {
+		return sl_true;
+	}
+	if (iconAlign.flagDefined) {
+		return sl_true;
+	}
+	if (textAlign.flagDefined) {
+		return sl_true;
+	}
+	if (textBeforeIcon.flagDefined) {
+		return sl_true;
+	}
+	if (orientation.flagDefined) {
+		return sl_true;
+	}
+	if (iconMarginLeft.flagDefined) {
+		return sl_true;
+	}
+	if (iconMarginTop.flagDefined) {
+		return sl_true;
+	}
+	if (iconMarginRight.flagDefined) {
+		return sl_true;
+	}
+	if (iconMarginBottom.flagDefined) {
+		return sl_true;
+	}
+	if (textMarginLeft.flagDefined) {
+		return sl_true;
+	}
+	if (textMarginTop.flagDefined) {
+		return sl_true;
+	}
+	if (textMarginRight.flagDefined) {
+		return sl_true;
+	}
+	if (textMarginBottom.flagDefined) {
+		return sl_true;
+	}
+	for (sl_uint32 i = 0; i < SLIB_SAPP_LAYOUT_BUTTON_CATEGORY_MAX; i++) {
+		SAppLayoutButtonCategory& category = categories[i];
+		for (sl_uint32 k = 0; k < (sl_uint32)(ButtonState::Count); k++) {
+			if (category.textColor[k].flagDefined) {
+				return sl_true;
+			}
+			if (category.icon[k].flagDefined) {
+				return sl_true;
+			}
+			if (category.background[k].flagDefined) {
+				return sl_true;
+			}
+			if (category.borderWidth[k].flagDefined || category.borderColor[k].flagDefined || category.borderStyle[k].flagDefined) {
+				return sl_true;
+			}
+		}
+	}
+	return sl_false;
+}
+
+
+sl_bool SAppLayoutLabelAttributes::isNotRequiredNative()
+{
+	return sl_false;
+}
+
+
+sl_bool SAppLayoutEditAttributes::isNotRequiredNative()
+{
+	return sl_false;
+}
+
+
+sl_bool SAppLayoutSelectAttributes::isNotRequiredNative()
+{
+	if (leftIcon.flagDefined) {
+		return sl_true;
+	}
+	if (rightIcon.flagDefined) {
+		return sl_true;
+	}
+	if (iconWidth.flagDefined) {
+		return sl_true;
+	}
+	if (iconHeight.flagDefined) {
+		return sl_true;
+	}
+	if (textColor.flagDefined) {
+		return sl_true;
+	}
+	return sl_false;
+}
+
+
+sl_bool SAppLayoutTabAttributes::isNotRequiredNative()
+{
+	if (orientation.flagDefined) {
+		return sl_true;
+	}
+	if (tabWidth.flagDefined) {
+		return sl_true;
+	}
+	if (tabWidth.flagDefined) {
+		return sl_true;
+	}
+	if (barBackground.flagDefined) {
+		return sl_true;
+	}
+	if (contentBackground.flagDefined) {
+		return sl_true;
+	}
+	if (tabBackground.flagDefined) {
+		return sl_true;
+	}
+	if (selectedTabBackground.flagDefined) {
+		return sl_true;
+	}
+	if (hoverTabBackground.flagDefined) {
+		return sl_true;
+	}
+	if (labelColor.flagDefined) {
+		return sl_true;
+	}
+	if (selectedLabelColor.flagDefined) {
+		return sl_true;
+	}
+	if (hoverLabelColor.flagDefined) {
+		return sl_true;
+	}
+	if (labelAlign.flagDefined) {
+		return sl_true;
+	}
+	if (labelMarginLeft.flagDefined) {
+		return sl_true;
+	}
+	if (labelMarginTop.flagDefined) {
+		return sl_true;
+	}
+	if (labelMarginRight.flagDefined) {
+		return sl_true;
+	}
+	if (labelMarginBottom.flagDefined) {
+		return sl_true;
+	}
+	return sl_false;
+}
+
+
 SAppLayoutResourceItem::SAppLayoutResourceItem()
 {
 	type = typeUnknown;
@@ -329,12 +517,12 @@ void SAppLayoutSimulationWindow::open(SAppDocument* doc, SAppLayoutResource* lay
 		viewContent = new ViewGroup;
 		m_simulationContentView = viewContent;
 	}
-	viewContent = doc->_simulateLayoutCreateOrLayoutView(this, layout, sl_null, sl_false);
+	viewContent = doc->_simulateLayoutCreateOrLayoutView(this, layout, sl_null, sl_null, sl_false);
 	if (viewContent.isNotNull()) {
 		if (layout->type != SAppLayoutResource::typeWindow) {
 			addView(viewContent);
 		}
-		doc->_simulateLayoutCreateOrLayoutView(this, layout, sl_null, sl_true);
+		doc->_simulateLayoutCreateOrLayoutView(this, layout, sl_null, sl_null, sl_true);
 		create();
 		doc->_registerLayoutSimulationWindow(this);
 	}
@@ -345,7 +533,7 @@ void SAppLayoutSimulationWindow::layoutViews(sl_ui_len width, sl_ui_len height)
 	Ref<SAppDocument> doc = m_document;
 	Ref<SAppLayoutResource> layout = m_layoutResource;
 	if (doc.isNotNull() && layout.isNotNull()) {
-		doc->_simulateLayoutCreateOrLayoutView(this, layout.ptr, sl_null, sl_true);
+		doc->_simulateLayoutCreateOrLayoutView(this, layout.ptr, sl_null, sl_null, sl_true);
 	}
 }
 
@@ -380,9 +568,9 @@ void SAppLayoutImportView::init(SAppLayoutSimulator* simulator, SAppLayoutResour
 		}
 	}
 	m_simulationContentView = this;
-	Ref<View> viewContent = document->_simulateLayoutCreateOrLayoutView(this, layout, sl_null, sl_false);
+	Ref<View> viewContent = document->_simulateLayoutCreateOrLayoutView(this, layout, sl_null, sl_null, sl_false);
 	if (viewContent.isNotNull()) {
-		document->_simulateLayoutCreateOrLayoutView(this, layout, sl_null, sl_true);
+		document->_simulateLayoutCreateOrLayoutView(this, layout, sl_null, sl_null, sl_true);
 	}
 }
 
@@ -391,7 +579,7 @@ void SAppLayoutImportView::layoutViews(sl_ui_len width, sl_ui_len height)
 	Ref<SAppDocument> doc = m_document;
 	Ref<SAppLayoutResource> layout = m_layoutResource;
 	if (doc.isNotNull() && layout.isNotNull()) {
-		doc->_simulateLayoutCreateOrLayoutView(this, layout.ptr, sl_null, sl_true);
+		doc->_simulateLayoutCreateOrLayoutView(this, layout.ptr, sl_null, sl_null, sl_true);
 	}
 }
 
