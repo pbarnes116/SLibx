@@ -2802,15 +2802,8 @@ List< Ref<XmlElement> > SAppDocument::_getLayoutItemChildElements(SAppLayoutReso
 	return ret;
 }
 
-#define PROCESS_CONTROL_SWITCH(NAME, CLASSNAME) \
+#define PROCESS_CONTROL_SWITCH(NAME) \
 	case SAppLayoutResource::type##NAME: \
-		if (op == OP_PARSE) { \
-			resourceItem->className = "slib::" #CLASSNAME; \
-		} else if (op == OP_SIMULATE) { \
-			if (!(params->flagOnLayout) && params->view.isNull()) { \
-				params->view = new CLASSNAME; \
-			} \
-		} \
 		if (!(_processLayoutResourceControl_##NAME(params))) { \
 			return sl_false; \
 		} \
@@ -2822,31 +2815,31 @@ sl_bool SAppDocument::_processLayoutResourceControl(LayoutControlProcessParams *
 	int op = params->op;
 	switch (resourceItem->type)
 	{
-		PROCESS_CONTROL_SWITCH(Window, View)
-		PROCESS_CONTROL_SWITCH(MobilePage, View)
-		PROCESS_CONTROL_SWITCH(View, View)
-		PROCESS_CONTROL_SWITCH(ViewGroup, ViewGroup)
-		PROCESS_CONTROL_SWITCH(Import, View)
-		PROCESS_CONTROL_SWITCH(Button, Button)
-		PROCESS_CONTROL_SWITCH(Label, LabelView)
-		PROCESS_CONTROL_SWITCH(Check, CheckBox)
-		PROCESS_CONTROL_SWITCH(Radio, RadioButton)
-		PROCESS_CONTROL_SWITCH(Edit, EditView)
-		PROCESS_CONTROL_SWITCH(Password, PasswordView)
-		PROCESS_CONTROL_SWITCH(TextArea, TextArea)
-		PROCESS_CONTROL_SWITCH(Image, ImageView)
-		PROCESS_CONTROL_SWITCH(Select, SelectView)
-		PROCESS_CONTROL_SWITCH(Scroll, ScrollView)
-		PROCESS_CONTROL_SWITCH(Linear, LinearView)
-		PROCESS_CONTROL_SWITCH(List, ListView)
-		PROCESS_CONTROL_SWITCH(ListReport, ListReportView)
-		PROCESS_CONTROL_SWITCH(Render, RenderView)
-		PROCESS_CONTROL_SWITCH(Tab, TabView)
-		PROCESS_CONTROL_SWITCH(Tree, TreeView)
-		PROCESS_CONTROL_SWITCH(Split, SplitView)
-		PROCESS_CONTROL_SWITCH(Web, WebView)
-		PROCESS_CONTROL_SWITCH(Progress, ProgressBar)
-		PROCESS_CONTROL_SWITCH(Slider, Slider)
+		PROCESS_CONTROL_SWITCH(Window)
+		PROCESS_CONTROL_SWITCH(MobilePage)
+		PROCESS_CONTROL_SWITCH(View)
+		PROCESS_CONTROL_SWITCH(ViewGroup)
+		PROCESS_CONTROL_SWITCH(Import)
+		PROCESS_CONTROL_SWITCH(Button)
+		PROCESS_CONTROL_SWITCH(Label)
+		PROCESS_CONTROL_SWITCH(Check)
+		PROCESS_CONTROL_SWITCH(Radio)
+		PROCESS_CONTROL_SWITCH(Edit)
+		PROCESS_CONTROL_SWITCH(Password)
+		PROCESS_CONTROL_SWITCH(TextArea)
+		PROCESS_CONTROL_SWITCH(Image)
+		PROCESS_CONTROL_SWITCH(Select)
+		PROCESS_CONTROL_SWITCH(Scroll)
+		PROCESS_CONTROL_SWITCH(Linear)
+		PROCESS_CONTROL_SWITCH(List)
+		PROCESS_CONTROL_SWITCH(ListReport)
+		PROCESS_CONTROL_SWITCH(Render)
+		PROCESS_CONTROL_SWITCH(Tab)
+		PROCESS_CONTROL_SWITCH(Tree)
+		PROCESS_CONTROL_SWITCH(Split)
+		PROCESS_CONTROL_SWITCH(Web)
+		PROCESS_CONTROL_SWITCH(Progress)
+		PROCESS_CONTROL_SWITCH(Slider)
 		default:
 			return sl_false;
 	}
@@ -2928,7 +2921,6 @@ sl_bool SAppDocument::_processLayoutResourceControl_##NAME(LayoutControlProcessP
 	Ref<XmlElement> element = resourceItem->element; \
 	int op = params->op; \
 	String name = params->name; \
-	VIEWTYPE* view = (VIEWTYPE*)(params->view.ptr); \
 	sl_bool flagOnLayout = params->flagOnLayout; \
 	Ref<SAppLayout##NAME##Attributes> attr; \
 	if (op == OP_PARSE) { \
@@ -2938,9 +2930,17 @@ sl_bool SAppDocument::_processLayoutResourceControl_##NAME(LayoutControlProcessP
 			return sl_false; \
 		} \
 		resourceItem->attrs##NAME = attr; \
+		resourceItem->className = "slib::" #VIEWTYPE; \
 	} else { \
 		attr = resourceItem->attrs##NAME; \
-	}
+		if (op == OP_SIMULATE) { \
+			if (!flagOnLayout && params->view.isNull()) { \
+				params->view = new VIEWTYPE; \
+			} \
+		} \
+	} \
+	VIEWTYPE* view = (VIEWTYPE*)(params->view.ptr);
+
 
 #define END_PROCESS_LAYOUT_CONTROL \
 	return sl_true; \
@@ -4220,7 +4220,7 @@ BEGIN_PROCESS_LAYOUT_CONTROL(Button, Button)
 		if (resourceItem->attrsView->background.flagDefined) {
 			params->sbDefineInit->add(String::format("%s%s->resetStateBackgrounds(sl_false);%n", strTab, name));
 		}
-		if (resourceItem->attrsView->borderWidth.flagDefined || resourceItem->attrsView->borderColor.flagDefined || resourceItem->attrsView->borderStyle.flagDefined) {
+		if ((resourceItem->attrsView->border.flagDefined && !(resourceItem->attrsView->border.value)) || resourceItem->attrsView->borderWidth.flagDefined || resourceItem->attrsView->borderColor.flagDefined || resourceItem->attrsView->borderStyle.flagDefined) {
 			params->sbDefineInit->add(String::format("%s%s->resetStateBorders(sl_false);%n", strTab, name));
 		}
 	} else if (op == OP_SIMULATE) {
