@@ -4217,7 +4217,7 @@ BEGIN_PROCESS_LAYOUT_CONTROL(Button, Button)
 		if (attr->icon.flagDefined) {
 			params->sbDefineInit->add(String::format("%s%s->resetStateIcons(sl_false);%n", strTab, name));
 		}
-		if (resourceItem->attrsView->background.flagDefined) {
+		if (resourceItem->attrsView->background.flagDefined || resourceItem->attrsView->pressedBackground.flagDefined || resourceItem->attrsView->hoverBackground.flagDefined) {
 			params->sbDefineInit->add(String::format("%s%s->resetStateBackgrounds(sl_false);%n", strTab, name));
 		}
 		if ((resourceItem->attrsView->border.flagDefined && !(resourceItem->attrsView->border.value)) || resourceItem->attrsView->borderWidth.flagDefined || resourceItem->attrsView->borderColor.flagDefined || resourceItem->attrsView->borderStyle.flagDefined) {
@@ -4234,12 +4234,12 @@ BEGIN_PROCESS_LAYOUT_CONTROL(Button, Button)
 				view->resetStateIcons(sl_false);
 			}
 		}
-		if (resourceItem->attrsView->background.flagDefined) {
+		if (resourceItem->attrsView->background.flagDefined || resourceItem->attrsView->pressedBackground.flagDefined || resourceItem->attrsView->hoverBackground.flagDefined) {
 			if (!flagOnLayout) {
 				view->resetStateBackgrounds(sl_false);
 			}
 		}
-		if (resourceItem->attrsView->borderWidth.flagDefined || resourceItem->attrsView->borderColor.flagDefined || resourceItem->attrsView->borderStyle.flagDefined) {
+		if ((resourceItem->attrsView->border.flagDefined && !(resourceItem->attrsView->border.value)) || resourceItem->attrsView->borderWidth.flagDefined || resourceItem->attrsView->borderColor.flagDefined || resourceItem->attrsView->borderStyle.flagDefined) {
 			if (!flagOnLayout) {
 				view->resetStateBorders(sl_false);
 			}
