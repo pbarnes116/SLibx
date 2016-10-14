@@ -110,6 +110,9 @@ sl_bool SAppLayoutButtonAttributes::isNotRequiredNative()
 	if (textMarginBottom.flagDefined) {
 		return sl_true;
 	}
+	if (defaultColorFilter.flagDefined) {
+		return sl_true;
+	}
 	for (sl_uint32 i = 0; i < SLIB_SAPP_LAYOUT_BUTTON_CATEGORY_MAX; i++) {
 		SAppLayoutButtonCategory& category = categories[i];
 		for (sl_uint32 k = 0; k < (sl_uint32)(ButtonState::Count); k++) {
