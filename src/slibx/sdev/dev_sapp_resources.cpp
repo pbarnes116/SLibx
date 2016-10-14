@@ -534,7 +534,7 @@ void SAppLayoutSimulationWindow::layoutViews(sl_ui_len width, sl_ui_len height)
 	Ref<SAppLayoutResource> layout = m_layoutResource;
 	if (doc.isNotNull() && layout.isNotNull()) {
 		doc->_simulateLayoutCreateOrLayoutView(this, layout.ptr, sl_null, sl_null, sl_true);
-	}
+	} 
 }
 
 void SAppLayoutSimulationWindow::onClose(UIEvent* ev)
