@@ -2939,7 +2939,8 @@ sl_bool SAppDocument::_processLayoutResourceControl_##NAME(LayoutControlProcessP
 			} \
 		} \
 	} \
-	VIEWTYPE* view = (VIEWTYPE*)(params->view.ptr);
+	VIEWTYPE* view = (VIEWTYPE*)(params->view.ptr); \
+	SLIB_UNUSED(view)
 
 
 #define END_PROCESS_LAYOUT_CONTROL \
@@ -3186,29 +3187,6 @@ sl_bool SAppDocument::_processLayoutResourceControl_##NAME(LayoutControlProcessP
 	}
 
 #define LAYOUT_CONTROL_SET_NATIVE_WIDGET \
-	if (op == OP_GENERATE_CPP) { \
-		if (resourceItem->attrsView->isNotRequiredNative() || attr->isNotRequiredNative()) { \
-			if (!(resourceItem->attrsView->instance.flagDefined) && !(resourceItem->attrsView->nativeWidget.value)) { \
-				params->sbDefineInit->add(String::format("%s%s->setCreatingInstance(sl_false);%n", strTab, name)); \
-			} \
-			if (!(resourceItem->attrsView->nativeWidget.flagDefined)) { \
-				params->sbDefineInit->add(String::format("%s%s->setCreatingNativeWidget(sl_false);%n", strTab, name)); \
-			} \
-		} \
-	} else if (op == OP_SIMULATE) { \
-		if (!flagOnLayout) { \
-			if (resourceItem->attrsView->isNotRequiredNative() || attr->isNotRequiredNative()) { \
-				if (!(resourceItem->attrsView->instance.flagDefined) && !(resourceItem->attrsView->nativeWidget.value)) { \
-					view->setCreatingInstance(sl_false); \
-				} \
-				if (!(resourceItem->attrsView->nativeWidget.flagDefined)) { \
-					view->setCreatingNativeWidget(sl_false); \
-				} \
-			} \
-		} \
-	}
-
-#define LAYOUT_CONTROL_SET_NATIVE_WIDGET_ONLY \
 	if (op == OP_GENERATE_CPP) { \
 		if (resourceItem->attrsView->isNotRequiredNative() || attr->isNotRequiredNative()) { \
 			if (!(resourceItem->attrsView->nativeWidget.flagDefined)) { \
@@ -3806,7 +3784,7 @@ BEGIN_PROCESS_LAYOUT_CONTROL(View, View)
 	if (flagView) {
 		LAYOUT_CONTROL_GENERIC_ATTR_NOREDRAW(visibility, setVisibility)
 		LAYOUT_CONTROL_GENERIC_ATTR_NOREDRAW(visible, setVisible)
-		LAYOUT_CONTROL_GENERIC_ATTR_NOREDRAW(opaque, setOpaque)
+		LAYOUT_CONTROL_GENERIC_ATTR_NOREDRAW(enabled, setEnabled)
 	}
 	LAYOUT_CONTROL_GENERIC_ATTR(occurringClick, setOccurringClick)
 	LAYOUT_CONTROL_DRAWABLE_ATTR(background, setBackground)
@@ -4000,6 +3978,12 @@ BEGIN_PROCESS_LAYOUT_CONTROL(View, View)
 		}
 	}
 	
+	if (flagView) {
+		LAYOUT_CONTROL_GENERIC_ATTR_NOREDRAW(opaque, setOpaque)
+		LAYOUT_CONTROL_GENERIC_ATTR_NOREDRAW(alpha, setAlpha)
+		LAYOUT_CONTROL_GENERIC_ATTR_NOREDRAW(layer, setLayer)
+	}
+	
 	if (op == OP_PARSE) {
 		LAYOUT_CONTROL_PARSE_ATTR(attr->, scrollBars)
 	} else if (op == OP_GENERATE_CPP) {
@@ -4042,7 +4026,6 @@ BEGIN_PROCESS_LAYOUT_CONTROL(View, View)
 		LAYOUT_CONTROL_GENERIC_ATTR(nativeWidget, setCreatingNativeWidget)
 	}
 	LAYOUT_CONTROL_GENERIC_ATTR(childInstances, setCreatingChildInstances)
-	LAYOUT_CONTROL_GENERIC_ATTR_NOREDRAW(doubleBuffering, setDoubleBuffering)
 	
 	LAYOUT_CONTROL_ADD_STATEMENT
 	
@@ -4210,41 +4193,7 @@ BEGIN_PROCESS_LAYOUT_CONTROL(Button, Button)
 		}
 	}
 	
-	if (op == OP_GENERATE_CPP) {
-		if (attr->textColor.flagDefined) {
-			params->sbDefineInit->add(String::format("%s%s->resetStateTextColors(sl_false);%n", strTab, name));
-		}
-		if (attr->icon.flagDefined) {
-			params->sbDefineInit->add(String::format("%s%s->resetStateIcons(sl_false);%n", strTab, name));
-		}
-		if (resourceItem->attrsView->background.flagDefined || resourceItem->attrsView->pressedBackground.flagDefined || resourceItem->attrsView->hoverBackground.flagDefined) {
-			params->sbDefineInit->add(String::format("%s%s->resetStateBackgrounds(sl_false);%n", strTab, name));
-		}
-		if ((resourceItem->attrsView->border.flagDefined && !(resourceItem->attrsView->border.value)) || resourceItem->attrsView->borderWidth.flagDefined || resourceItem->attrsView->borderColor.flagDefined || resourceItem->attrsView->borderStyle.flagDefined) {
-			params->sbDefineInit->add(String::format("%s%s->resetStateBorders(sl_false);%n", strTab, name));
-		}
-	} else if (op == OP_SIMULATE) {
-		if (attr->textColor.flagDefined) {
-			if (!flagOnLayout) {
-				view->resetStateTextColors(sl_false);
-			}
-		}
-		if (attr->icon.flagDefined) {
-			if (!flagOnLayout) {
-				view->resetStateIcons(sl_false);
-			}
-		}
-		if (resourceItem->attrsView->background.flagDefined || resourceItem->attrsView->pressedBackground.flagDefined || resourceItem->attrsView->hoverBackground.flagDefined) {
-			if (!flagOnLayout) {
-				view->resetStateBackgrounds(sl_false);
-			}
-		}
-		if ((resourceItem->attrsView->border.flagDefined && !(resourceItem->attrsView->border.value)) || resourceItem->attrsView->borderWidth.flagDefined || resourceItem->attrsView->borderColor.flagDefined || resourceItem->attrsView->borderStyle.flagDefined) {
-			if (!flagOnLayout) {
-				view->resetStateBorders(sl_false);
-			}
-		}
-	}
+	LAYOUT_CONTROL_GENERIC_ATTR_NOREDRAW(defaultColorFilter, setUsingDefaultColorFilter)
 	
 	String strStates[] = {"Normal", "Hover", "Pressed", "Disabled"};
 	ButtonState states[] = {ButtonState::Normal, ButtonState::Hover, ButtonState::Pressed, ButtonState::Disabled};
@@ -5030,7 +4979,7 @@ BEGIN_PROCESS_LAYOUT_CONTROL(Tab, TabView)
 
 	}
 	
-	LAYOUT_CONTROL_SET_NATIVE_WIDGET_ONLY
+	LAYOUT_CONTROL_SET_NATIVE_WIDGET
 
 	LAYOUT_CONTROL_ADD_STATEMENT
 	
@@ -5298,7 +5247,7 @@ BEGIN_PROCESS_LAYOUT_CONTROL(Web, WebView)
 {
 	LAYOUT_CONTROL_PROCESS_SUPER(View)
 	
-	if (op = OP_PARSE) {
+	if (op == OP_PARSE) {
 		LAYOUT_CONTROL_PARSE_ATTR(attr->, url)
 		LAYOUT_CONTROL_PARSE_ATTR(attr->, html)
 	} else {

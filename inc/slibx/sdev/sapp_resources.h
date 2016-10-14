@@ -221,7 +221,6 @@ public:
 	SAppVisibilityValue visibility;
 	SAppBooleanValue visible;
 	SAppBooleanValue enabled;
-	SAppBooleanValue opaque;
 	SAppBooleanValue occurringClick;
 	
 	SAppDrawableValue background;
@@ -250,6 +249,10 @@ public:
 	sl_bool finalFontItalic;
 	sl_bool finalFontUnderline;
 	
+	SAppBooleanValue opaque;
+	SAppFloatValue alpha;
+	SAppBooleanValue layer;
+	
 	SAppScrollBarsValue scrollBars;
 	SAppBooleanValue scrollingByMouse;
 	SAppBooleanValue scrollingByTouch;
@@ -262,7 +265,6 @@ public:
 	SAppBooleanValue instance;
 	SAppBooleanValue childInstances;
 	SAppBooleanValue nativeWidget;
-	SAppBooleanValue doubleBuffering;
 	
 public:
 	SAppLayoutViewAttributes();
@@ -314,6 +316,7 @@ public:
 	SAppDimensionValue textMarginTop;
 	SAppDimensionValue textMarginRight;
 	SAppDimensionValue textMarginBottom;
+	SAppBooleanValue defaultColorFilter;
 	
 	SAppLayoutButtonCategory categories[SLIB_SAPP_LAYOUT_BUTTON_CATEGORY_MAX];
 	
