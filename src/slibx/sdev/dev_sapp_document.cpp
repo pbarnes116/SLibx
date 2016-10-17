@@ -2930,7 +2930,9 @@ sl_bool SAppDocument::_processLayoutResourceControl_##NAME(LayoutControlProcessP
 			return sl_false; \
 		} \
 		resourceItem->attrs##NAME = attr; \
-		resourceItem->className = "slib::" #VIEWTYPE; \
+		if (resourceItem->className.isEmpty()) { \
+			resourceItem->className = "slib::" #VIEWTYPE; \
+		} \
 	} else { \
 		attr = resourceItem->attrs##NAME; \
 		if (op == OP_SIMULATE) { \
@@ -3129,7 +3131,7 @@ sl_bool SAppDocument::_processLayoutResourceControl_##NAME(LayoutControlProcessP
 			return sl_false; \
 		} \
 	} else if (op == OP_GENERATE_CPP) { \
-		if (!flagOnLayout) { \
+		if (attr->NAME.flagDefined) { \
 			if (!(_checkStringValueAvailable(attr->NAME, element))) { \
 				return sl_false; \
 			} \
