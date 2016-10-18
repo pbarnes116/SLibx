@@ -607,7 +607,7 @@ public:
 	enum {
 		typeUnknown = 0,
 		typeWindow = 0x0100,
-		typeMobilePage = 0x0101,
+		typePage = 0x0101,
 		
 		typeView = 0x0200,
 		typeViewGroup = 0x0201,

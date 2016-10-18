@@ -126,7 +126,7 @@ protected:
 	};
 	sl_bool _processLayoutResourceControl(LayoutControlProcessParams* params);
 	sl_bool _processLayoutResourceControl_Window(LayoutControlProcessParams* params);
-	sl_bool _processLayoutResourceControl_MobilePage(LayoutControlProcessParams* params);
+	sl_bool _processLayoutResourceControl_Page(LayoutControlProcessParams* params);
 	sl_bool _processLayoutResourceControl_View(LayoutControlProcessParams* params);
 	sl_bool _processLayoutResourceControl_ViewGroup(LayoutControlProcessParams* params);
 	sl_bool _processLayoutResourceControl_Import(LayoutControlProcessParams* params);

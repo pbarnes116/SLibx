@@ -2289,8 +2289,8 @@ sl_bool SAppDocument::_parseLayoutResource(const Ref<XmlElement>& element)
 		type = SAppLayoutResource::typeView;
 	} else if (strType == "window") {
 		type = SAppLayoutResource::typeWindow;
-	} else if (strType == "mobile-page") {
-		type = SAppLayoutResource::typeMobilePage;
+	} else if (strType == "page") {
+		type = SAppLayoutResource::typePage;
 	} else {
 		_logError(element, _g_sdev_sapp_error_resource_layout_type_invalid.arg(strType));
 		return sl_false;
@@ -2504,9 +2504,9 @@ sl_bool SAppDocument::_generateLayoutsCpp(const String& targetPath)
 				if (layout->type == SAppLayoutResource::typeWindow) {
 					sbHeader.add(String::format("\t\tSLIB_DECLARE_WINDOW_LAYOUT_BEGIN(%s)%n", pair.key));
 					sbCpp.add(String::format("\t\tSLIB_DEFINE_WINDOW_LAYOUT(%s)%n%n", pair.key));
-				} else if (layout->type == SAppLayoutResource::typeMobilePage) {
-					sbHeader.add(String::format("\t\tSLIB_DECLARE_MOBILE_PAGE_LAYOUT_BEGIN(%s)%n", pair.key));
-					sbCpp.add(String::format("\t\tSLIB_DEFINE_MOBILE_PAGE_LAYOUT(%s)%n%n", pair.key));
+				} else if (layout->type == SAppLayoutResource::typePage) {
+					sbHeader.add(String::format("\t\tSLIB_DECLARE_PAGE_LAYOUT_BEGIN(%s)%n", pair.key));
+					sbCpp.add(String::format("\t\tSLIB_DEFINE_PAGE_LAYOUT(%s)%n%n", pair.key));
 				} else if (layout->type == SAppLayoutResource::typeView) {
 					sbHeader.add(String::format("\t\tSLIB_DECLARE_VIEW_LAYOUT_BEGIN(%s)%n", pair.key));
 					sbCpp.add(String::format("\t\tSLIB_DEFINE_VIEW_LAYOUT(%s)%n%n", pair.key));
@@ -2550,8 +2550,8 @@ sl_bool SAppDocument::_generateLayoutsCpp(const String& targetPath)
 				if (layout->type == SAppLayoutResource::typeWindow) {
 					static sl_char8 strEndHeader[] = "\t\tSLIB_DECLARE_WINDOW_LAYOUT_END\r\n\r\n";
 					sbHeader.addStatic(strEndHeader, sizeof(strEndHeader)-1);
-				} else if (layout->type == SAppLayoutResource::typeMobilePage) {
-					static sl_char8 strEndHeader[] = "\t\tSLIB_DECLARE_MOBILE_PAGE_LAYOUT_END\r\n\r\n";
+				} else if (layout->type == SAppLayoutResource::typePage) {
+					static sl_char8 strEndHeader[] = "\t\tSLIB_DECLARE_PAGE_LAYOUT_END\r\n\r\n";
 					sbHeader.addStatic(strEndHeader, sizeof(strEndHeader)-1);
 				} else if (layout->type == SAppLayoutResource::typeView) {
 					static sl_char8 strEndHeader[] = "\t\tSLIB_DECLARE_VIEW_LAYOUT_END\r\n\r\n";
@@ -2816,7 +2816,7 @@ sl_bool SAppDocument::_processLayoutResourceControl(LayoutControlProcessParams *
 	switch (resourceItem->type)
 	{
 		PROCESS_CONTROL_SWITCH(Window)
-		PROCESS_CONTROL_SWITCH(MobilePage)
+		PROCESS_CONTROL_SWITCH(Page)
 		PROCESS_CONTROL_SWITCH(View)
 		PROCESS_CONTROL_SWITCH(ViewGroup)
 		PROCESS_CONTROL_SWITCH(Import)
@@ -2846,7 +2846,7 @@ sl_bool SAppDocument::_processLayoutResourceControl(LayoutControlProcessParams *
 	
 	switch (resourceItem->type) {
 		case SAppLayoutResource::typeWindow:
-		case SAppLayoutResource::typeMobilePage:
+		case SAppLayoutResource::typePage:
 		case SAppLayoutResource::typeView:
 		case SAppLayoutResource::typeViewGroup:
 		case SAppLayoutResource::typeLinear:
@@ -3240,9 +3240,9 @@ BEGIN_PROCESS_LAYOUT_CONTROL(Window, View)
 }
 END_PROCESS_LAYOUT_CONTROL
 
-#define SAppLayoutMobilePageAttributes SAppLayoutViewAttributes
-#define attrsMobilePage attrsView
-BEGIN_PROCESS_LAYOUT_CONTROL(MobilePage, MobilePage)
+#define SAppLayoutPageAttributes SAppLayoutViewAttributes
+#define attrsPage attrsView
+BEGIN_PROCESS_LAYOUT_CONTROL(Page, ViewPage)
 {
 	if (!(_processLayoutResourceControl_View(params))) {
 		return sl_false;
