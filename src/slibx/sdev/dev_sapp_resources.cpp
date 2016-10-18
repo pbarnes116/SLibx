@@ -521,6 +521,7 @@ void SAppLayoutSimulationWindow::open(SAppDocument* doc, SAppLayoutResource* lay
 		m_simulationContentView = viewContent;
 	}
 	viewContent = doc->_simulateLayoutCreateOrLayoutView(this, layout, sl_null, sl_null, sl_false);
+	setInitialized();
 	if (viewContent.isNotNull()) {
 		if (layout->type != SAppLayoutResource::typeWindow) {
 			addView(viewContent);
@@ -572,6 +573,7 @@ void SAppLayoutImportView::init(SAppLayoutSimulator* simulator, SAppLayoutResour
 	}
 	m_simulationContentView = this;
 	Ref<View> viewContent = document->_simulateLayoutCreateOrLayoutView(this, layout, sl_null, sl_null, sl_false);
+	setInitialized();
 	if (viewContent.isNotNull()) {
 		document->_simulateLayoutCreateOrLayoutView(this, layout, sl_null, sl_null, sl_true);
 	}
