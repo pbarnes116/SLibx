@@ -3268,7 +3268,7 @@ END_PROCESS_LAYOUT_CONTROL
 BEGIN_PROCESS_LAYOUT_CONTROL(View, View)
 {
 	sl_bool flagWindow = params->parentResourceItem == sl_null && params->resourceItem->type == SAppLayoutResource::typeWindow;
-	sl_bool flagView = params->parentResourceItem != sl_null || params->resourceItem->type == SAppLayoutResource::typeView;
+	sl_bool flagView = params->parentResourceItem != sl_null || params->resourceItem->type == SAppLayoutResource::typeView || params->resourceItem->type == SAppLayoutResource::typePage;
 	sl_bool flagRoot = params->parentResourceItem == sl_null;
 
 	if (flagView) {
@@ -4062,7 +4062,7 @@ BEGIN_PROCESS_LAYOUT_CONTROL(Import, SAppLayoutImportView)
 			_logError(element, _g_sdev_sapp_error_layout_not_found.arg(attr->layout));
 			return sl_false;
 		}
-		if (layoutImport->type != SAppLayoutResource::typeView) {
+		if (layoutImport->type != SAppLayoutResource::typeView && layoutImport->type != SAppLayoutResource::typePage) {
 			_logError(element, _g_sdev_sapp_error_layout_is_not_view.arg(attr->layout));
 			return sl_false;
 		}
@@ -4073,7 +4073,7 @@ BEGIN_PROCESS_LAYOUT_CONTROL(Import, SAppLayoutImportView)
 			_logError(element, _g_sdev_sapp_error_layout_not_found.arg(attr->layout));
 			return sl_false;
 		}
-		if (layoutImport->type != SAppLayoutResource::typeView) {
+		if (layoutImport->type != SAppLayoutResource::typeView && layoutImport->type != SAppLayoutResource::typePage) {
 			_logError(element, _g_sdev_sapp_error_layout_is_not_view.arg(attr->layout));
 			return sl_false;
 		}
