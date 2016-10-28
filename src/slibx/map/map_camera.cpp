@@ -118,7 +118,7 @@ void MapCamera::addMovingTarget(const GeoLocation& location, sl_real duration)
 void MapCamera::addMovingTargets(const List<MapCameraMovingTarget>& targets)
 {
 	MutexLocker lock(getLocker());
-	m_listMovingTargets.add(targets);
+	m_listMovingTargets.addAll(targets);
 }
 
 void MapCamera::startMoving()
@@ -166,7 +166,7 @@ void MapCamera::startMovingToLookAt(const GeoLocation& location)
 		target.duration = 1000;
 		target.location = midLoc;
 		targets.add(target);
-		targets.add(makeBufferedMovingTargets(midLoc, location, 2000, 4, 0.7f, 0.3f));
+		targets.addAll(makeBufferedMovingTargets(midLoc, location, 2000, 4, 0.7f, 0.3f));
 		startMoving(targets);
 	} else {
 		startMoving(location, 3000);

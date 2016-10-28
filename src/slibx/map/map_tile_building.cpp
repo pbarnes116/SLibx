@@ -34,10 +34,10 @@ Ref<MapBuildingTile> MapBuildingTileManager::loadTile(const MapTileLocationi& lo
 	if (loader.isNotNull()) {
 
 		List< Ref<VW_Building_ObjectInfo> > objects;
-		objects.add(VW_Building::readTile(loader, SLIB_MAP_BUILDING_TILE_TYPE, location, sl_false));
-		objects.add(VW_Building::readTile(loader, SLIB_MAP_BUILDING_WORLD_TILE_TYPE, location, sl_false));
-		objects.add(VW_Building::readTile(loader, SLIB_MAP_BRIDGE_TILE_TYPE, location, sl_true));
-		objects.add(VW_Building::readTile(loader, SLIB_MAP_DOKDO_TILE_TYPE, location, sl_true));
+		objects.addAll(VW_Building::readTile(loader, SLIB_MAP_BUILDING_TILE_TYPE, location, sl_false));
+		objects.addAll(VW_Building::readTile(loader, SLIB_MAP_BUILDING_WORLD_TILE_TYPE, location, sl_false));
+		objects.addAll(VW_Building::readTile(loader, SLIB_MAP_BRIDGE_TILE_TYPE, location, sl_true));
+		objects.addAll(VW_Building::readTile(loader, SLIB_MAP_DOKDO_TILE_TYPE, location, sl_true));
 
 		tile = new MapBuildingTile();
 		if (tile.isNotNull()) {

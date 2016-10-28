@@ -12,6 +12,226 @@ SLIB_MAP_NAMESPACE_BEGIN
 #define MAX_LEVEL 25
 #define MAX_RENDER_POIS 1000
 
+class MapEarth_RenderProgramState_SurfaceTile : public RenderProgramState3D
+{
+public:
+	Ref<Texture> textures[4];
+	float textureAlphas[4];
+	
+	sl_int32 gl_uniformTextures[4];			// sampler
+	sl_int32 gl_uniformTextureAlphas[4];	// float
+	
+	sl_int32 gl_attrTexCoordLayers[4];			// Vector2
+	sl_int32 gl_attrAltitude;					// float
+	
+public:
+	MapEarth_RenderProgramState_SurfaceTile()
+	{
+		textureAlphas[0] = 0;
+		textureAlphas[1] = 0;
+		textureAlphas[2] = 0;
+		textureAlphas[3] = 0;
+	}
+	
+};
+
+
+class MapEarth_RenderProgram_SurfaceTile : public RenderProgramT<RenderProgram3D, MapEarth_RenderProgramState_SurfaceTile>
+{
+public:
+	// override
+	sl_bool onInit(RenderEngine* _engine, RenderProgramState* _state)
+	{
+		RenderProgram3D::onInit(_engine, _state);
+
+		RenderEngineType type = _engine->getEngineType();
+		
+		if (type == RenderEngineType::OpenGL_ES || type == RenderEngineType::OpenGL) {
+			GLRenderEngine* engine = (GLRenderEngine*)_engine;
+			MapEarth_RenderProgramState_SurfaceTile* state = (MapEarth_RenderProgramState_SurfaceTile*)_state;
+			sl_uint32 program = state->gl_program;
+			
+			state->gl_uniformTextures[0] = engine->getUniformLocation(program, "u_Texture1");
+			state->gl_uniformTextures[1] = engine->getUniformLocation(program, "u_Texture2");
+			state->gl_uniformTextures[2] = engine->getUniformLocation(program, "u_Texture3");
+			state->gl_uniformTextures[3] = engine->getUniformLocation(program, "u_Texture4");
+			state->gl_uniformTextureAlphas[0] = engine->getUniformLocation(program, "u_TextureAlpha1");
+			state->gl_uniformTextureAlphas[1] = engine->getUniformLocation(program, "u_TextureAlpha2");
+			state->gl_uniformTextureAlphas[2] = engine->getUniformLocation(program, "u_TextureAlpha3");
+			state->gl_uniformTextureAlphas[3] = engine->getUniformLocation(program, "u_TextureAlpha4");
+			
+			state->gl_attrTexCoordLayers[0] = engine->getAttributeLocation(program, "a_TexCoord1");
+			state->gl_attrTexCoordLayers[1] = engine->getAttributeLocation(program, "a_TexCoord2");
+			state->gl_attrTexCoordLayers[2] = engine->getAttributeLocation(program, "a_TexCoord3");
+			state->gl_attrTexCoordLayers[3] = engine->getAttributeLocation(program, "a_TexCoord4");
+			state->gl_attrAltitude = engine->getAttributeLocation(program, "a_Altitude");
+			return sl_true;
+		}
+		return sl_false;
+	}
+	
+	// override
+	sl_bool onUpdate(RenderEngine* _engine, RenderProgramState* _state)
+	{
+		RenderProgram3D::onUpdate(_engine, _state);
+		
+		RenderEngineType type = _engine->getEngineType();
+		
+		if (type == RenderEngineType::OpenGL_ES || type == RenderEngineType::OpenGL) {
+			
+			GLRenderEngine* engine = (GLRenderEngine*)_engine;
+			MapEarth_RenderProgramState_SurfaceTile* state = (MapEarth_RenderProgramState_SurfaceTile*)_state;
+
+			for (int i = 0; i < 4; i++) {
+				engine->setUniformTextureSampler(state->gl_uniformTextures[i], 1 + i);
+				engine->applyTexture(1 + i, state->textures[i]);
+				engine->setUniformFloatValue(state->gl_uniformTextureAlphas[i], state->textureAlphas[i]);
+			}
+			
+			return sl_true;
+		}
+		
+		return sl_false;
+
+	}
+
+	// override
+	sl_bool onPreRender(RenderEngine* _engine, RenderProgramState* _state, Primitive* primitive)
+	{
+		RenderEngineType type = _engine->getEngineType();
+		if (type == RenderEngineType::OpenGL_ES || type == RenderEngineType::OpenGL) {
+			GLRenderEngine* engine = (GLRenderEngine*)_engine;
+			MapEarth_RenderProgramState_SurfaceTile* state = (MapEarth_RenderProgramState_SurfaceTile*)_state;
+			SLIB_RENDER_GL_SET_VERTEX_FLOAT_ARRAY_ATTRIBUTE(engine, state->gl_attrPosition, DEM_Vertex, position);
+			SLIB_RENDER_GL_SET_VERTEX_FLOAT_ARRAY_ATTRIBUTE(engine, state->gl_attrAltitude, DEM_Vertex, altitude);
+			SLIB_RENDER_GL_SET_VERTEX_FLOAT_ARRAY_ATTRIBUTE(engine, state->gl_attrTexCoord, DEM_Vertex, texCoord);
+			SLIB_RENDER_GL_SET_VERTEX_FLOAT_ARRAY_ATTRIBUTE(engine, state->gl_attrTexCoordLayers[0], DEM_Vertex, texCoordLayers[0]);
+			SLIB_RENDER_GL_SET_VERTEX_FLOAT_ARRAY_ATTRIBUTE(engine, state->gl_attrTexCoordLayers[1], DEM_Vertex, texCoordLayers[1]);
+			SLIB_RENDER_GL_SET_VERTEX_FLOAT_ARRAY_ATTRIBUTE(engine, state->gl_attrTexCoordLayers[2], DEM_Vertex, texCoordLayers[2]);
+			SLIB_RENDER_GL_SET_VERTEX_FLOAT_ARRAY_ATTRIBUTE(engine, state->gl_attrTexCoordLayers[3], DEM_Vertex, texCoordLayers[3]);
+			return sl_true;
+		}
+		return sl_false;
+	}
+
+	// override
+	void onPostRender(RenderEngine* _engine, RenderProgramState* _state, Primitive* primitive)
+	{
+		RenderEngineType type = _engine->getEngineType();
+		if (type == RenderEngineType::OpenGL_ES || type == RenderEngineType::OpenGL) {
+			GLRenderEngine* engine = (GLRenderEngine*)_engine;
+			MapEarth_RenderProgramState_SurfaceTile* state = (MapEarth_RenderProgramState_SurfaceTile*)_state;
+			engine->disableVertexArrayAttribute(state->gl_attrPosition);
+			engine->disableVertexArrayAttribute(state->gl_attrAltitude);
+			engine->disableVertexArrayAttribute(state->gl_attrTexCoord);
+			engine->disableVertexArrayAttribute(state->gl_attrTexCoordLayers[0]);
+			engine->disableVertexArrayAttribute(state->gl_attrTexCoordLayers[1]);
+			engine->disableVertexArrayAttribute(state->gl_attrTexCoordLayers[2]);
+			engine->disableVertexArrayAttribute(state->gl_attrTexCoordLayers[3]);
+		}
+	}
+
+	// override
+	String getGLSLVertexShader(RenderEngine* engine)
+	{
+		String source;
+		source = SLIB_STRINGIFY(
+			uniform mat4 u_Transform;
+			attribute vec3 a_Position;
+			attribute float a_Altitude;
+			attribute vec2 a_TexCoord;
+			attribute vec2 a_TexCoord1;
+			attribute vec2 a_TexCoord2;
+			attribute vec2 a_TexCoord3;
+			attribute vec2 a_TexCoord4;
+			varying float v_Altitude;
+			varying vec2 v_TexCoord;
+			varying vec2 v_TexCoord1;
+			varying vec2 v_TexCoord2;
+			varying vec2 v_TexCoord3;
+			varying vec2 v_TexCoord4;
+			void main() {
+				vec4 P = vec4(a_Position, 1.0) * u_Transform;
+				gl_Position = P;
+				v_Altitude = a_Altitude;
+				v_TexCoord = a_TexCoord;
+				v_TexCoord1 = a_TexCoord1;
+				v_TexCoord2 = a_TexCoord2;
+				v_TexCoord3 = a_TexCoord3;
+				v_TexCoord4 = a_TexCoord4;
+			}
+		);
+		return source;
+	}
+
+	// override
+	String getGLSLFragmentShader(RenderEngine* engine)
+	{
+		String source;
+		source = SLIB_STRINGIFY(
+			uniform sampler2D u_Texture;
+			uniform sampler2D u_Texture1;
+			uniform sampler2D u_Texture2;
+			uniform sampler2D u_Texture3;
+			uniform sampler2D u_Texture4;
+			uniform float u_TextureAlpha1;
+			uniform float u_TextureAlpha2;
+			uniform float u_TextureAlpha3;
+			uniform float u_TextureAlpha4;
+			varying vec2 v_TexCoord;
+			varying vec2 v_TexCoord1;
+			varying vec2 v_TexCoord2;
+			varying vec2 v_TexCoord3;
+			varying vec2 v_TexCoord4;
+			void main() {
+				vec4 colorTexture = texture2D(u_Texture, v_TexCoord);
+				vec4 colorTexture1 = texture2D(u_Texture1, v_TexCoord1);
+				vec4 colorTexture2 = texture2D(u_Texture2, v_TexCoord2);
+				vec4 colorTexture3 = texture2D(u_Texture3, v_TexCoord3);
+				vec4 colorTexture4 = texture2D(u_Texture4, v_TexCoord4);
+				
+				float a = colorTexture1.a * u_TextureAlpha1;
+				colorTexture1.a = 1.0;
+				vec4 c = colorTexture * (1.0 - a) + colorTexture1 * a;
+				
+				a = colorTexture2.a * u_TextureAlpha2;
+				colorTexture2.a = 1.0;
+				c = c * (1.0 - a) + colorTexture2 * a;
+				
+				a = colorTexture3.a * u_TextureAlpha3;
+				colorTexture3.a = 1.0;
+				c = c * (1.0 - a) + colorTexture3 * a;
+				
+				a = colorTexture4.a * u_TextureAlpha4;
+				colorTexture4.a = 1.0;
+				c = c * (1.0 - a) + colorTexture4 * a;
+				
+				gl_FragColor = c;
+			}
+		);
+		return source;
+	}
+};
+
+class MapEarth_RenderProgram_SurfaceTile_TestTextureColor : public MapEarth_RenderProgram_SurfaceTile
+{
+public:
+	// override
+	String getGLSLFragmentShader(RenderEngine* engine)
+	{
+		String source;
+		source = SLIB_STRINGIFY(
+			varying vec2 v_TexCoord;
+			void main() {
+				gl_FragColor = vec4(v_TexCoord.x, v_TexCoord.y, 0.0, 1.0);
+			}
+		);
+		return source;
+	}
+	
+};
+
+
 void MapEarthRenderer::render(RenderEngine* engine)
 {
 	if (!m_flagInitialized) {
@@ -53,32 +273,18 @@ void MapEarthRenderer::render(RenderEngine* engine)
 
 void MapEarthRenderer::_renderTile(RenderEngine* engine, _Tile* tile)
 {
-	sl_uint32 layer;
-	m_programSurfaceTile->setTexture(tile->picture->texture);
-	for (layer = 0; layer < SLIB_SMAP_MAX_LAYERS_COUNT; layer++) {
-		if (m_flagShowLayer[layer] && tile->layers[layer].isNotNull()) {
-			m_programSurfaceTile->setTexture(1 + layer, tile->layers[layer]->texture);
-			m_programSurfaceTile->setTextureAlpha(1 + layer, 1);
-		} else {
-			m_programSurfaceTile->setTexture(1 + layer, Ref<Texture>::null());
-			m_programSurfaceTile->setTextureAlpha(1 + layer, 0);
-		}
-	}
-
 	sl_bool flagUseCache = sl_false;
 	Ref<MapRenderTile> cache = m_tilesRender->getTile(tile->location);
 	if (cache.isNotNull()) {
 		if (cache->picture == tile->picture && cache->dem == tile->dem) {
 			flagUseCache = sl_true;
-			for (layer = 0; layer < SLIB_SMAP_MAX_LAYERS_COUNT; layer++) {
+			for (sl_uint32 layer = 0; layer < SLIB_SMAP_MAX_LAYERS_COUNT; layer++) {
 				if (cache->layers[layer] != tile->layers[layer]) {
 					flagUseCache = sl_false;
 				}
 			}
 		}
 	}
-
-	m_programSurfaceTile->setViewMatrix(Transform3lf::getTranslationMatrix(tile->positionCenter) * m_transformView);
 	
 	Primitive _primitive;
 	Primitive* primitive;
@@ -95,35 +301,56 @@ void MapEarthRenderer::_renderTile(RenderEngine* engine, _Tile* tile)
 		cache = new MapRenderTile;
 		cache->location = tile->location;
 		cache->picture = tile->picture;
-		for (layer = 0; layer < SLIB_SMAP_MAX_LAYERS_COUNT; layer++) {
+		for (sl_uint32 layer = 0; layer < SLIB_SMAP_MAX_LAYERS_COUNT; layer++) {
 			cache->layers[layer] = tile->layers[layer];
 		}
 		cache->dem = tile->dem;
 		cache->primitive = *primitive;
 		m_tilesRender->saveTile(tile->location, cache);
 	}
-	engine->draw(m_programSurfaceTile, primitive);
 
+	RenderProgramScope<MapEarth_RenderProgramState_SurfaceTile> scope;
+	if (scope.begin(engine, m_programSurfaceTile)) {
+		scope->texture = tile->picture->texture;
+		for (sl_uint32 layer = 0; layer < SLIB_SMAP_MAX_LAYERS_COUNT; layer++) {
+			if (m_flagShowLayer[layer] && tile->layers[layer].isNotNull()) {
+				scope->textures[layer] = tile->layers[layer]->texture;
+				scope->textureAlphas[layer] = 1;
+			} else {
+				scope->textures[layer].setNull();
+				scope->textureAlphas[layer] = 0;
+			}
+		}
+		Matrix4 matModelView = Transform3lf::getTranslationMatrix(tile->positionCenter) * m_transformView;
+		scope->transform = matModelView * m_transformProjection;
+		scope->matrixModelViewIT = matModelView.inverseTranspose();
+		engine->drawPrimitive(primitive);
+	}
 }
 
 void MapEarthRenderer::_renderBuilding(RenderEngine* engine, MapBuilding* building)
 {
-	m_programBuilding->setAmbientColor(Color(120, 120, 120));
-	m_programBuilding->setDiffuseColor(Color(120, 120, 120));
-	m_programBuilding->setViewMatrix(VW_Building::getModelTransformMatrixForMesh(building->info->bound.getCenter()) * m_transformView);
-	List<VW_Building_Mesh> meshes = building->object->meshes;
-	sl_size n = meshes.getCount();
-	for (sl_size i = 0; i < n; i++) {
-		VW_Building_Mesh mesh;
-		if (meshes.getItem(i, &mesh)) {
-			Ref<Texture> bt;
-			m_tilesBuilding->getDetailedTexture(building->info->key, (sl_uint32)i, bt);
-			if (bt.isNotNull()) {
-				m_programBuilding->setTexture(bt);
-			} else {
-				m_programBuilding->setTexture(mesh.textureThumbnail);
+	RenderProgramScope<RenderProgramState3D> scope;
+	if (scope.begin(engine, m_programBuilding)) {
+		scope->ambientColor = Color(120, 120, 120);
+		scope->diffuseColor = Color(120, 120, 120);
+		Matrix4 matModelView = VW_Building::getModelTransformMatrixForMesh(building->info->bound.getCenter()) * m_transformView;
+		scope->transform = matModelView * m_transformProjection;
+		scope->matrixModelViewIT = matModelView.inverseTranspose();
+		List<VW_Building_Mesh> meshes = building->object->meshes;
+		sl_size n = meshes.getCount();
+		for (sl_size i = 0; i < n; i++) {
+			VW_Building_Mesh mesh;
+			if (meshes.getItem(i, &mesh)) {
+				Ref<Texture> bt;
+				m_tilesBuilding->getDetailedTexture(building->info->key, (sl_uint32)i, bt);
+				if (bt.isNotNull()) {
+					scope->texture = bt;
+				} else {
+					scope->texture = mesh.textureThumbnail;
+				}
+				engine->drawPrimitive(mesh.countElements, mesh.vb, mesh.ib);
 			}
-			engine->draw(m_programBuilding, mesh.countElements, mesh.vb, mesh.ib);
 		}
 	}
 }
@@ -137,7 +364,6 @@ void MapEarthRenderer::_renderGISLine(RenderEngine* engine, MapGISLineTile* tile
 		ListLocker<MapGISLineData> lines(s->lines);
 		sl_uint32 n = (sl_uint32)(lines.count);
 		if (n > 0) {
-			m_programLine->setDiffuseColor(s->color);
 			engine->setLineWidth(s->width);
 			Ref<VertexBuffer> vb;
 			if (s->vb.isNotNull() && dem == s->demTileRef) {
@@ -169,8 +395,11 @@ void MapEarthRenderer::_renderGISLine(RenderEngine* engine, MapGISLineTile* tile
 				s->vb = VertexBuffer::create(pos, n * 2 * sizeof(Vector3));
 				vb = s->vb;
 			}
-			if (vb.isNotNull()) {
-				engine->draw(m_programLine, n * 2, vb, PrimitiveType::Lines);
+			RenderProgramScope<RenderProgramState3D> scope;
+			if (scope.begin(engine, m_programLine)) {
+				scope->transform = m_transformView * m_transformProjection;
+				scope->diffuseColor = s->color;
+				engine->drawPrimitive(n * 2, vb, PrimitiveType::Lines);
 			}
 		}
 	}
@@ -297,9 +526,13 @@ void MapEarthRenderer::_renderPolygon(RenderEngine* engine, MapPolygon* polygon)
 		return;
 	}
 	engine->setLineWidth(polygon->width);
-	m_programLine->setDiffuseColor(polygon->color);
-	Ref<VertexBuffer> vb = VertexBuffer::create(pos, n*sizeof(Vector3));
-	engine->draw(m_programLine, (sl_uint32)n, vb, PrimitiveType::LineStrip);
+	RenderProgramScope<RenderProgramState3D> scope;
+	if (scope.begin(engine, m_programLine)) {
+		scope->transform = m_transformView * m_transformProjection;
+		scope->diffuseColor = polygon->color;
+		Ref<VertexBuffer> vb = VertexBuffer::create(pos, n*sizeof(Vector3));
+		engine->drawPrimitive((sl_uint32)n, vb, PrimitiveType::LineStrip);
+	}
 	engine->setLineWidth(1);
 }
 
@@ -325,13 +558,6 @@ void MapEarthRenderer::_prepareRendering(RenderEngine* engine)
 	m_transformViewProjection = m_transformView * m_transformProjection;
 	m_viewFrustum = ViewFrustumlf::fromMVP(m_transformViewProjection);
 	m_positionEye = m_camera->getEyeCartesianPosition();
-
-	m_programSurfaceTile->setProjectionMatrix(m_transformProjection);
-
-	m_programBuilding->setProjectionMatrix(m_transformProjection);
-
-	m_programLine->setViewMatrix(m_transformView);
-	m_programLine->setProjectionMatrix(m_transformProjection);
 
 	sl_real _w = (sl_real)m_viewportWidth;
 	if (_w > 1280) {
@@ -732,187 +958,9 @@ void MapEarthRenderer::_renderPolygons(RenderEngine* engine)
 	}
 }
 
-
-class _MapEarth_RenderProgram_SurfaceTile : public RenderProgram3D
-{
-public:
-	_MapEarth_RenderProgram_SurfaceTile() {}
-	~_MapEarth_RenderProgram_SurfaceTile() {}
-
-	class MapInfo_GL : public Info_GL
-	{
-	public:
-		sl_int32 attrTexCoordLayers[4]; // Vector2
-		sl_int32 attrAltitude;	// float
-	};
-
-public:
-
-	Ref<RenderProgramInfo> create(RenderEngine* engine)
-	{
-		Ref<RenderProgramInfo> ret;
-		RenderEngineType type = engine->getEngineType();
-		if (type == RenderEngineType::OpenGL_ES || type == RenderEngineType::OpenGL) {
-			ret = new MapInfo_GL;
-		}
-		return ret;
-	}
-
-	sl_bool onInit(RenderEngine* _engine, RenderProgramInfo* _info)
-	{
-		RenderProgram3D::onInit(_engine, _info);
-
-		RenderEngineType type = _engine->getEngineType();
-		if (type == RenderEngineType::OpenGL_ES || type == RenderEngineType::OpenGL) {
-			GLRenderEngine* engine = (GLRenderEngine*)_engine;
-			MapInfo_GL* info = (MapInfo_GL*)_info;
-			sl_uint32 program = info->program_GL;
-			info->attrTexCoordLayers[0] = engine->getAttributeLocation(program, "a_TexCoord1");
-			info->attrTexCoordLayers[1] = engine->getAttributeLocation(program, "a_TexCoord2");
-			info->attrTexCoordLayers[2] = engine->getAttributeLocation(program, "a_TexCoord3");
-			info->attrTexCoordLayers[3] = engine->getAttributeLocation(program, "a_TexCoord4");
-			info->attrAltitude = engine->getAttributeLocation(program, "a_Altitude");
-			return sl_true;
-		}
-		return sl_false;
-	}
-
-	sl_bool onPreRender(RenderEngine* _engine, RenderProgramInfo* _info, Primitive* primitive)
-	{
-		RenderEngineType type = _engine->getEngineType();
-		if (type == RenderEngineType::OpenGL_ES || type == RenderEngineType::OpenGL) {
-			GLRenderEngine* engine = (GLRenderEngine*)_engine;
-			MapInfo_GL* info = (MapInfo_GL*)_info;
-			SLIB_RENDER_GL_SET_VERTEX_FLOAT_ARRAY_ATTRIBUTE(engine, info->attrPosition, DEM_Vertex, position);
-			SLIB_RENDER_GL_SET_VERTEX_FLOAT_ARRAY_ATTRIBUTE(engine, info->attrAltitude, DEM_Vertex, altitude);
-			SLIB_RENDER_GL_SET_VERTEX_FLOAT_ARRAY_ATTRIBUTE(engine, info->attrTexCoord, DEM_Vertex, texCoord);
-			SLIB_RENDER_GL_SET_VERTEX_FLOAT_ARRAY_ATTRIBUTE(engine, info->attrTexCoordLayers[0], DEM_Vertex, texCoordLayers[0]);
-			SLIB_RENDER_GL_SET_VERTEX_FLOAT_ARRAY_ATTRIBUTE(engine, info->attrTexCoordLayers[1], DEM_Vertex, texCoordLayers[1]);
-			SLIB_RENDER_GL_SET_VERTEX_FLOAT_ARRAY_ATTRIBUTE(engine, info->attrTexCoordLayers[2], DEM_Vertex, texCoordLayers[2]);
-			SLIB_RENDER_GL_SET_VERTEX_FLOAT_ARRAY_ATTRIBUTE(engine, info->attrTexCoordLayers[3], DEM_Vertex, texCoordLayers[3]);
-			return sl_true;
-		}
-		return sl_false;
-	}
-
-	void onPostRender(RenderEngine* _engine, RenderProgramInfo* _info, Primitive* primitive)
-	{
-		RenderEngineType type = _engine->getEngineType();
-		if (type == RenderEngineType::OpenGL_ES || type == RenderEngineType::OpenGL) {
-			GLRenderEngine* engine = (GLRenderEngine*)_engine;
-			MapInfo_GL* info = (MapInfo_GL*)_info;
-			engine->disableVertexArrayAttribute(info->attrPosition);
-			engine->disableVertexArrayAttribute(info->attrAltitude);
-			engine->disableVertexArrayAttribute(info->attrTexCoord);
-			engine->disableVertexArrayAttribute(info->attrTexCoordLayers[0]);
-			engine->disableVertexArrayAttribute(info->attrTexCoordLayers[1]);
-			engine->disableVertexArrayAttribute(info->attrTexCoordLayers[2]);
-			engine->disableVertexArrayAttribute(info->attrTexCoordLayers[3]);
-		}
-	}
-
-	String getGLSLVertexShader(RenderEngine* engine)
-	{
-		String source;
-		source = SLIB_STRINGIFY(
-			uniform mat4 u_Transform;
-			attribute vec3 a_Position;
-			attribute float a_Altitude;
-			attribute vec2 a_TexCoord;
-			attribute vec2 a_TexCoord1;
-			attribute vec2 a_TexCoord2;
-			attribute vec2 a_TexCoord3;
-			attribute vec2 a_TexCoord4;
-			varying float v_Altitude;
-			varying vec2 v_TexCoord;
-			varying vec2 v_TexCoord1;
-			varying vec2 v_TexCoord2;
-			varying vec2 v_TexCoord3;
-			varying vec2 v_TexCoord4;
-			void main() {
-				vec4 P = vec4(a_Position, 1.0) * u_Transform;
-				gl_Position = P;
-				v_Altitude = a_Altitude;
-				v_TexCoord = a_TexCoord;
-				v_TexCoord1 = a_TexCoord1;
-				v_TexCoord2 = a_TexCoord2;
-				v_TexCoord3 = a_TexCoord3;
-				v_TexCoord4 = a_TexCoord4;
-			}
-		);
-		return source;
-	}
-
-	String getGLSLFragmentShader(RenderEngine* engine)
-	{
-		String source;
-		source = SLIB_STRINGIFY(
-			uniform sampler2D u_Texture;
-			uniform sampler2D u_Texture1;
-			uniform sampler2D u_Texture2;
-			uniform sampler2D u_Texture3;
-			uniform sampler2D u_Texture4;
-			uniform float u_TextureAlpha1;
-			uniform float u_TextureAlpha2;
-			uniform float u_TextureAlpha3;
-			uniform float u_TextureAlpha4;
-			varying vec2 v_TexCoord;
-			varying vec2 v_TexCoord1;
-			varying vec2 v_TexCoord2;
-			varying vec2 v_TexCoord3;
-			varying vec2 v_TexCoord4;
-			void main() {
-				vec4 colorTexture = texture2D(u_Texture, v_TexCoord);
-				vec4 colorTexture1 = texture2D(u_Texture1, v_TexCoord1);
-				vec4 colorTexture2 = texture2D(u_Texture2, v_TexCoord2);
-				vec4 colorTexture3 = texture2D(u_Texture3, v_TexCoord3);
-				vec4 colorTexture4 = texture2D(u_Texture4, v_TexCoord4);
-				
-				float a = colorTexture1.a * u_TextureAlpha1;
-				colorTexture1.a = 1.0;
-				vec4 c = colorTexture * (1.0 - a) + colorTexture1 * a;
-				
-				a = colorTexture2.a * u_TextureAlpha2;
-				colorTexture2.a = 1.0;
-				c = c * (1.0 - a) + colorTexture2 * a;
-				
-				a = colorTexture3.a * u_TextureAlpha3;
-				colorTexture3.a = 1.0;
-				c = c * (1.0 - a) + colorTexture3 * a;
-				
-				a = colorTexture4.a * u_TextureAlpha4;
-				colorTexture4.a = 1.0;
-				c = c * (1.0 - a) + colorTexture4 * a;
-				
-				gl_FragColor = c;
-			}
-		);
-		return source;
-	}
-};
-
-class _MapEarth_RenderProgram_SurfaceTile_TestTextureColor : public _MapEarth_RenderProgram_SurfaceTile
-{
-public:
-	_MapEarth_RenderProgram_SurfaceTile_TestTextureColor() {}
-	~_MapEarth_RenderProgram_SurfaceTile_TestTextureColor() {}
-
-	String getGLSLFragmentShader(RenderEngine* engine)
-	{
-		String source;
-		source = SLIB_STRINGIFY(
-			varying vec2 v_TexCoord;
-			void main() {
-				gl_FragColor = vec4(v_TexCoord.x, v_TexCoord.y, 0.0, 1.0);
-			}
-		);
-		return source;
-	}
-};
-
 void MapEarthRenderer::_initializeShaders()
 {
-	m_programSurfaceTile = new _MapEarth_RenderProgram_SurfaceTile;
+	m_programSurfaceTile = new MapEarth_RenderProgram_SurfaceTile;
 	m_programBuilding = new RenderProgram3D_PositionNormalTexture_Diffuse;
 	m_programLine = new RenderProgram3D_Position;
 }

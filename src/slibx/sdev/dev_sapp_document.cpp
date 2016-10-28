@@ -2779,7 +2779,7 @@ List< Ref<XmlElement> > SAppDocument::_getLayoutItemChildElements(SAppLayoutReso
 					Ref<SAppLayoutInclude> include;
 					m_layoutIncludes.get(src, &include);
 					if (include.isNotNull()) {
-						ret.add(include->element->getChildElements(tagName));
+						ret.addAll(include->element->getChildElements(tagName));
 					} else {
 						_logError(child, _g_sdev_sapp_error_layout_include_not_found.arg(name));
 						return List< Ref<XmlElement> >::null();
@@ -2795,7 +2795,7 @@ List< Ref<XmlElement> > SAppDocument::_getLayoutItemChildElements(SAppLayoutReso
 		for (sl_size i = 0; i < _styles.count; i++) {
 			Ref<SAppLayoutStyle> style = _styles[i];
 			if (style.isNotNull()) {
-				ret.add(style->element->getChildElements(tagName));
+				ret.addAll(style->element->getChildElements(tagName));
 			}
 		}
 	}
@@ -2880,7 +2880,7 @@ sl_bool SAppDocument::_processLayoutResourceControl(LayoutControlProcessParams *
 				for (sl_size i = 0; i < children.count; i++) {
 					Ref<SAppLayoutResourceItem>& child = children[i];
 					if (child.isNotNull()) {
-						String addStatement = String::format("\t\t\t%s->addChild(%s, sl_false);%n%n", name, child->name);
+						String addStatement = String::format("\t\t\t%s->addChild(%s, slib::UIUpdateMode::Init);%n%n", name, child->name);
 						if (!(_generateLayoutsCppItem(params->resource, child.ptr, resourceItem, *(params->sbDeclare), *(params->sbDefineInit), *(params->sbDefineLayout), addStatement) )) {
 							return sl_false;
 						}
@@ -2897,7 +2897,9 @@ sl_bool SAppDocument::_processLayoutResourceControl(LayoutControlProcessParams *
 					if (child.isNotNull()) {
 						Ref<View> childView = _simulateLayoutCreateOrLayoutView(params->simulator, child.ptr, resourceItem, params->view.ptr, params->flagOnLayout);
 						if (childView.isNotNull()) {
-							params->view->addChild(childView, sl_false);
+							if (!(params->flagOnLayout)) {
+								params->view->addChild(childView, UIUpdateMode::Init);
+							}
 						} else {
 							return sl_false;
 						}
@@ -3001,12 +3003,12 @@ sl_bool SAppDocument::_processLayoutResourceControl_##NAME(LayoutControlProcessP
 		} \
 	} else if (op == OP_GENERATE_CPP) { \
 		if (attr->NAME.flagDefined) { \
-			params->sbDefineInit->add(String::format("%s%s->" #SETFUNC "(%s, sl_false);%n", strTab, name, attr->NAME.getAccessString())); \
+			params->sbDefineInit->add(String::format("%s%s->" #SETFUNC "(%s, slib::UIUpdateMode::Init);%n", strTab, name, attr->NAME.getAccessString())); \
 		} \
 	} else if (op == OP_SIMULATE) { \
 		if (!flagOnLayout) { \
 			if (attr->NAME.flagDefined) { \
-				view->SETFUNC(attr->NAME.value, sl_false); \
+				view->SETFUNC(attr->NAME.value, UIUpdateMode::Init); \
 			} \
 		} \
 	}
@@ -3053,15 +3055,15 @@ sl_bool SAppDocument::_processLayoutResourceControl_##NAME(LayoutControlProcessP
 	} else if (op == OP_GENERATE_CPP) { \
 		if (attr->NAME.flagDefined) { \
 			if (attr->NAME.isNeededOnLayoutFunction()) { \
-				params->sbDefineLayout->add(String::format("%s%s->" #SETFUNC "(%s, sl_false);%n", strTab, name, attr->NAME.getAccessString())); \
+				params->sbDefineLayout->add(String::format("%s%s->" #SETFUNC "(%s, slib::UIUpdateMode::NoRedraw);%n", strTab, name, attr->NAME.getAccessString())); \
 			} else { \
-				params->sbDefineInit->add(String::format("%s%s->" #SETFUNC "(%s, sl_false);%n", strTab, name, attr->NAME.getAccessString())); \
+				params->sbDefineInit->add(String::format("%s%s->" #SETFUNC "(%s, slib::UIUpdateMode::Init);%n", strTab, name, attr->NAME.getAccessString())); \
 			} \
 		} \
 	} else if (op == OP_SIMULATE) { \
 		if (flagOnLayout) { \
 			if (attr->NAME.flagDefined) { \
-				view->SETFUNC(_getDimension##TYPE##Value(attr->NAME), sl_false); \
+				view->SETFUNC(_getDimension##TYPE##Value(attr->NAME), UIUpdateMode::NoRedraw); \
 			} \
 		} \
 	}
@@ -3135,7 +3137,7 @@ sl_bool SAppDocument::_processLayoutResourceControl_##NAME(LayoutControlProcessP
 			if (!(_checkStringValueAvailable(attr->NAME, element))) { \
 				return sl_false; \
 			} \
-			params->sbDefineInit->add(String::format("%s%s->" #SETFUNC "(%s, sl_false);%n", strTab, name, attr->NAME.getAccessString())); \
+			params->sbDefineInit->add(String::format("%s%s->" #SETFUNC "(%s, slib::UIUpdateMode::Init);%n", strTab, name, attr->NAME.getAccessString())); \
 		} \
 	} else if (op == OP_SIMULATE) { \
 		if (!flagOnLayout) { \
@@ -3143,7 +3145,7 @@ sl_bool SAppDocument::_processLayoutResourceControl_##NAME(LayoutControlProcessP
 				if (!(_checkStringValueAvailable(attr->NAME, element))) { \
 					return sl_false; \
 				} \
-				view->SETFUNC(_getStringValue(attr->NAME), sl_false); \
+				view->SETFUNC(_getStringValue(attr->NAME), UIUpdateMode::Init); \
 			} \
 		} \
 	}
@@ -3161,7 +3163,7 @@ sl_bool SAppDocument::_processLayoutResourceControl_##NAME(LayoutControlProcessP
 			if (!(_checkDrawableValueAvailable(attr->NAME, element))) { \
 				return sl_false; \
 			} \
-			params->sbDefineInit->add(String::format("%s%s->" #SETFUNC "(%s, sl_false);%n", strTab, name, attr->NAME.getAccessString())); \
+			params->sbDefineInit->add(String::format("%s%s->" #SETFUNC "(%s, slib::UIUpdateMode::Init);%n", strTab, name, attr->NAME.getAccessString())); \
 		} \
 	} else if (op == OP_SIMULATE) { \
 		if (flagOnLayout) { \
@@ -3169,7 +3171,7 @@ sl_bool SAppDocument::_processLayoutResourceControl_##NAME(LayoutControlProcessP
 				if (!(_checkDrawableValueAvailable(attr->NAME, element))) { \
 					return sl_false; \
 				} \
-				view->SETFUNC(_getDrawableValue(attr->NAME), sl_false); \
+				view->SETFUNC(_getDrawableValue(attr->NAME), UIUpdateMode::NoRedraw); \
 			} \
 		} \
 	}
@@ -3287,22 +3289,22 @@ BEGIN_PROCESS_LAYOUT_CONTROL(View, View)
 		} else if (op == OP_GENERATE_CPP) {
 			if (attr->width.flagDefined) {
 				if (attr->width.unit == SAppDimensionValue::FILL) {
-					params->sbDefineInit->add(String::format("%s%s->setWidthFilling(%ff, sl_false);%n", strTab, name, attr->width.amount));
+					params->sbDefineInit->add(String::format("%s%s->setWidthFilling(%ff, slib::UIUpdateMode::Init);%n", strTab, name, attr->width.amount));
 				} else if (attr->width.unit == SAppDimensionValue::WRAP) {
-					params->sbDefineInit->add(String::format("%s%s->setWidthWrapping(sl_false);%n", strTab, name));
+					params->sbDefineInit->add(String::format("%s%s->setWidthWrapping(slib::UIUpdateMode::Init);%n", strTab, name));
 				} else if (attr->width.unit == SAppDimensionValue::WEIGHT) {
-					params->sbDefineInit->add(String::format("%s%s->setWidthWeight(%ff, sl_false);%n", strTab, name, attr->width.amount));
+					params->sbDefineInit->add(String::format("%s%s->setWidthWeight(%ff, slib::UIUpdateMode::Init);%n", strTab, name, attr->width.amount));
 				} else {
 					LAYOUT_CONTROL_INT_DIMENSION_ATTR_NOREDRAW(width, setWidth, checkSize)
 				}
 			}
 			if (attr->height.flagDefined) {
 				if (attr->height.unit == SAppDimensionValue::FILL) {
-					params->sbDefineInit->add(String::format("%s%s->setHeightFilling(%ff, sl_false);%n", strTab, name, attr->height.amount));
+					params->sbDefineInit->add(String::format("%s%s->setHeightFilling(%ff, slib::UIUpdateMode::Init);%n", strTab, name, attr->height.amount));
 				} else if (attr->height.unit == SAppDimensionValue::WRAP) {
-					params->sbDefineInit->add(String::format("%s%s->setHeightWrapping(sl_false);%n", strTab, name));
+					params->sbDefineInit->add(String::format("%s%s->setHeightWrapping(slib::UIUpdateMode::Init);%n", strTab, name));
 				} else if (attr->height.unit == SAppDimensionValue::WEIGHT) {
-					params->sbDefineInit->add(String::format("%s%s->setHeightWeight(%ff, sl_false);%n", strTab, name, attr->height.amount));
+					params->sbDefineInit->add(String::format("%s%s->setHeightWeight(%ff, slib::UIUpdateMode::Init);%n", strTab, name, attr->height.amount));
 				} else {
 					LAYOUT_CONTROL_INT_DIMENSION_ATTR_NOREDRAW(height, setHeight, checkSize)
 				}
@@ -3311,15 +3313,15 @@ BEGIN_PROCESS_LAYOUT_CONTROL(View, View)
 			if (attr->width.flagDefined) {
 				if (attr->width.unit == SAppDimensionValue::FILL) {
 					if (!flagOnLayout) {
-						view->setWidthFilling(attr->width.amount, sl_false);
+						view->setWidthFilling(attr->width.amount, UIUpdateMode::Init);
 					}
 				} else if (attr->width.unit == SAppDimensionValue::WRAP) {
 					if (!flagOnLayout) {
-						view->setWidthWrapping(sl_false);
+						view->setWidthWrapping(UIUpdateMode::Init);
 					}
 				} else if (attr->width.unit == SAppDimensionValue::WEIGHT) {
 					if (!flagOnLayout) {
-						view->setWidthWeight(attr->width.amount, sl_false);
+						view->setWidthWeight(attr->width.amount, UIUpdateMode::Init);
 					}
 				} else {
 					LAYOUT_CONTROL_INT_DIMENSION_ATTR_NOREDRAW(width, setWidth, checkSize)
@@ -3328,15 +3330,15 @@ BEGIN_PROCESS_LAYOUT_CONTROL(View, View)
 			if (attr->height.flagDefined) {
 				if (attr->height.unit == SAppDimensionValue::FILL) {
 					if (!flagOnLayout) {
-						view->setHeightFilling(attr->height.amount, sl_false);
+						view->setHeightFilling(attr->height.amount, UIUpdateMode::Init);
 					}
 				} else if (attr->height.unit == SAppDimensionValue::WRAP) {
 					if (!flagOnLayout) {
-						view->setHeightWrapping(sl_false);
+						view->setHeightWrapping(UIUpdateMode::Init);
 					}
 				} else if (attr->height.unit == SAppDimensionValue::WEIGHT) {
 					if (!flagOnLayout) {
-						view->setHeightWeight(attr->height.amount, sl_false);
+						view->setHeightWeight(attr->height.amount, UIUpdateMode::Init);
 					}
 				} else {
 					LAYOUT_CONTROL_INT_DIMENSION_ATTR_NOREDRAW(height, setHeight, checkSize)
@@ -3516,117 +3518,117 @@ BEGIN_PROCESS_LAYOUT_CONTROL(View, View)
 			}
 		} else if (op == OP_GENERATE_CPP) {
 			if (attr->leftMode == PositionMode::CenterInParent) {
-				params->sbDefineInit->add(String::format("%s%s->setCenterHorizontal(sl_false);%n", strTab, name, attr->leftReferingView));
+				params->sbDefineInit->add(String::format("%s%s->setCenterHorizontal(slib::UIUpdateMode::Init);%n", strTab, name, attr->leftReferingView));
 			} else if (attr->leftMode == PositionMode::CenterInOther) {
-				params->sbDefineInit->add(String::format("%s%s->setAlignCenterHorizontal(%s, sl_false);%n", strTab, name, attr->leftReferingView));
+				params->sbDefineInit->add(String::format("%s%s->setAlignCenterHorizontal(%s, slib::UIUpdateMode::Init);%n", strTab, name, attr->leftReferingView));
 			} else {
 				if (attr->leftMode == PositionMode::ParentEdge) {
-					params->sbDefineInit->add(String::format("%s%s->setAlignParentLeft(sl_false);%n", strTab, name));
+					params->sbDefineInit->add(String::format("%s%s->setAlignParentLeft(slib::UIUpdateMode::Init);%n", strTab, name));
 				} else if (attr->leftMode == PositionMode::OtherStart) {
-					params->sbDefineInit->add(String::format("%s%s->setAlignLeft(%s, sl_false);%n", strTab, name, attr->leftReferingView));
+					params->sbDefineInit->add(String::format("%s%s->setAlignLeft(%s, slib::UIUpdateMode::Init);%n", strTab, name, attr->leftReferingView));
 				} else if (attr->leftMode == PositionMode::OtherEnd) {
-					params->sbDefineInit->add(String::format("%s%s->setRightOf(%s, sl_false);%n", strTab, name, attr->leftReferingView));
+					params->sbDefineInit->add(String::format("%s%s->setRightOf(%s, slib::UIUpdateMode::Init);%n", strTab, name, attr->leftReferingView));
 				}
 				if (attr->rightMode == PositionMode::ParentEdge) {
-					params->sbDefineInit->add(String::format("%s%s->setAlignParentRight(sl_false);%n", strTab, name));
+					params->sbDefineInit->add(String::format("%s%s->setAlignParentRight(slib::UIUpdateMode::Init);%n", strTab, name));
 				} else if (attr->rightMode == PositionMode::OtherStart) {
-					params->sbDefineInit->add(String::format("%s%s->setLeftOf(%s, sl_false);%n", strTab, name, attr->rightReferingView));
+					params->sbDefineInit->add(String::format("%s%s->setLeftOf(%s, slib::UIUpdateMode::Init);%n", strTab, name, attr->rightReferingView));
 				} else if (attr->rightMode == PositionMode::OtherEnd) {
-					params->sbDefineInit->add(String::format("%s%s->setAlignRight(%s, sl_false);%n", strTab, name, attr->rightReferingView));
+					params->sbDefineInit->add(String::format("%s%s->setAlignRight(%s, slib::UIUpdateMode::Init);%n", strTab, name, attr->rightReferingView));
 				}
 			}
 			
 			if (attr->topMode == PositionMode::CenterInParent) {
-				params->sbDefineInit->add(String::format("%s%s->setCenterVertical(sl_false);%n", strTab, name, attr->topReferingView));
+				params->sbDefineInit->add(String::format("%s%s->setCenterVertical(slib::UIUpdateMode::Init);%n", strTab, name, attr->topReferingView));
 			} else if (attr->topMode == PositionMode::CenterInOther) {
-				params->sbDefineInit->add(String::format("%s%s->setAlignCenterVertical(%s, sl_false);%n", strTab, name, attr->topReferingView));
+				params->sbDefineInit->add(String::format("%s%s->setAlignCenterVertical(%s, slib::UIUpdateMode::Init);%n", strTab, name, attr->topReferingView));
 			} else {
 				if (attr->topMode == PositionMode::ParentEdge) {
-					params->sbDefineInit->add(String::format("%s%s->setAlignParentTop(sl_false);%n", strTab, name));
+					params->sbDefineInit->add(String::format("%s%s->setAlignParentTop(slib::UIUpdateMode::Init);%n", strTab, name));
 				} else if (attr->topMode == PositionMode::OtherStart) {
-					params->sbDefineInit->add(String::format("%s%s->setAlignTop(%s, sl_false);%n", strTab, name, attr->topReferingView));
+					params->sbDefineInit->add(String::format("%s%s->setAlignTop(%s, slib::UIUpdateMode::Init);%n", strTab, name, attr->topReferingView));
 				} else if (attr->topMode == PositionMode::OtherEnd) {
-					params->sbDefineInit->add(String::format("%s%s->setBelow(%s, sl_false);%n", strTab, name, attr->topReferingView));
+					params->sbDefineInit->add(String::format("%s%s->setBelow(%s, slib::UIUpdateMode::Init);%n", strTab, name, attr->topReferingView));
 				}
 				if (attr->bottomMode == PositionMode::ParentEdge) {
-					params->sbDefineInit->add(String::format("%s%s->setAlignParentBottom(sl_false);%n", strTab, name));
+					params->sbDefineInit->add(String::format("%s%s->setAlignParentBottom(slib::UIUpdateMode::Init);%n", strTab, name));
 				} else if (attr->bottomMode == PositionMode::OtherStart) {
-					params->sbDefineInit->add(String::format("%s%s->setAbove(%s, sl_false);%n", strTab, name, attr->bottomReferingView));
+					params->sbDefineInit->add(String::format("%s%s->setAbove(%s, slib::UIUpdateMode::Init);%n", strTab, name, attr->bottomReferingView));
 				} else if (attr->bottomMode == PositionMode::OtherEnd) {
-					params->sbDefineInit->add(String::format("%s%s->setAlignBottom(%s, sl_false);%n", strTab, name, attr->bottomReferingView));
+					params->sbDefineInit->add(String::format("%s%s->setAlignBottom(%s, slib::UIUpdateMode::Init);%n", strTab, name, attr->bottomReferingView));
 				}
 			}
 		} else if (op == OP_SIMULATE) {
 			if (attr->leftMode == PositionMode::CenterInParent) {
 				if (!flagOnLayout) {
-					view->setCenterHorizontal(sl_false);
+					view->setCenterHorizontal(UIUpdateMode::Init);
 				}
 			} else if (attr->leftMode == PositionMode::CenterInOther) {
 				if (!flagOnLayout) {
-					view->setAlignCenterHorizontal(params->simulator->getViewByName(attr->leftReferingView), sl_false);
+					view->setAlignCenterHorizontal(params->simulator->getViewByName(attr->leftReferingView), UIUpdateMode::Init);
 				}
 			} else {
 				if (attr->leftMode == PositionMode::ParentEdge) {
 					if (!flagOnLayout) {
-						view->setAlignParentLeft(sl_false);
+						view->setAlignParentLeft(UIUpdateMode::Init);
 					}
 				} else if (attr->leftMode == PositionMode::OtherStart) {
 					if (!flagOnLayout) {
-						view->setAlignLeft(params->simulator->getViewByName(attr->leftReferingView), sl_false);
+						view->setAlignLeft(params->simulator->getViewByName(attr->leftReferingView), UIUpdateMode::Init);
 					}
 				} else if (attr->leftMode == PositionMode::OtherEnd) {
 					if (!flagOnLayout) {
-						view->setRightOf(params->simulator->getViewByName(attr->leftReferingView), sl_false);
+						view->setRightOf(params->simulator->getViewByName(attr->leftReferingView), UIUpdateMode::Init);
 					}
 				}
 				if (attr->rightMode == PositionMode::ParentEdge) {
 					if (!flagOnLayout) {
-						view->setAlignParentRight(sl_false);
+						view->setAlignParentRight(UIUpdateMode::Init);
 					}
 				} else if (attr->rightMode == PositionMode::OtherStart) {
 					if (!flagOnLayout) {
-						view->setLeftOf(params->simulator->getViewByName(attr->rightReferingView), sl_false);
+						view->setLeftOf(params->simulator->getViewByName(attr->rightReferingView), UIUpdateMode::Init);
 					}
 				} else if (attr->rightMode == PositionMode::OtherEnd) {
 					if (!flagOnLayout) {
-						view->setAlignRight(params->simulator->getViewByName(attr->rightReferingView), sl_false);
+						view->setAlignRight(params->simulator->getViewByName(attr->rightReferingView), UIUpdateMode::Init);
 					}
 				}
 			}
 			
 			if (attr->topMode == PositionMode::CenterInParent) {
 				if (!flagOnLayout) {
-					view->setCenterVertical(sl_false);
+					view->setCenterVertical(UIUpdateMode::Init);
 				}
 			} else if (attr->topMode == PositionMode::CenterInOther) {
 				if (!flagOnLayout) {
-					view->setAlignCenterVertical(params->simulator->getViewByName(attr->topReferingView), sl_false);
+					view->setAlignCenterVertical(params->simulator->getViewByName(attr->topReferingView), UIUpdateMode::Init);
 				}
 			} else {
 				if (attr->topMode == PositionMode::ParentEdge) {
 					if (!flagOnLayout) {
-						view->setAlignParentTop(sl_false);
+						view->setAlignParentTop(UIUpdateMode::Init);
 					}
 				} else if (attr->topMode == PositionMode::OtherStart) {
 					if (!flagOnLayout) {
-						view->setAlignTop(params->simulator->getViewByName(attr->topReferingView), sl_false);
+						view->setAlignTop(params->simulator->getViewByName(attr->topReferingView), UIUpdateMode::Init);
 					}
 				} else if (attr->topMode == PositionMode::OtherEnd) {
 					if (!flagOnLayout) {
-						view->setBelow(params->simulator->getViewByName(attr->topReferingView), sl_false);
+						view->setBelow(params->simulator->getViewByName(attr->topReferingView), UIUpdateMode::Init);
 					}
 				}
 				if (attr->bottomMode == PositionMode::ParentEdge) {
 					if (!flagOnLayout) {
-						view->setAlignParentBottom(sl_false);
+						view->setAlignParentBottom(UIUpdateMode::Init);
 					}
 				} else if (attr->bottomMode == PositionMode::OtherStart) {
 					if (!flagOnLayout) {
-						view->setAbove(params->simulator->getViewByName(attr->bottomReferingView), sl_false);
+						view->setAbove(params->simulator->getViewByName(attr->bottomReferingView), UIUpdateMode::Init);
 					}
 				} else if (attr->bottomMode == PositionMode::OtherEnd) {
 					if (!flagOnLayout) {
-						view->setAlignBottom(params->simulator->getViewByName(attr->bottomReferingView), sl_false);
+						view->setAlignBottom(params->simulator->getViewByName(attr->bottomReferingView), UIUpdateMode::Init);
 					}
 				}
 			}
@@ -3676,28 +3678,28 @@ BEGIN_PROCESS_LAYOUT_CONTROL(View, View)
 		} else if (op == OP_GENERATE_CPP) {
 			if (attr->marginLeft.flagDefined) {
 				if (attr->marginLeft.unit == SAppDimensionValue::WEIGHT) {
-					params->sbDefineInit->add(String::format("%s%s->setRelativeMarginLeft(%ff, sl_false);%n", strTab, name, attr->marginLeft.amount));
+					params->sbDefineInit->add(String::format("%s%s->setRelativeMarginLeft(%ff, slib::UIUpdateMode::Init);%n", strTab, name, attr->marginLeft.amount));
 				} else {
 					LAYOUT_CONTROL_INT_DIMENSION_ATTR_NOREDRAW(marginLeft, setMarginLeft, checkMargin)
 				}
 			}
 			if (attr->marginTop.flagDefined) {
 				if (attr->marginTop.unit == SAppDimensionValue::WEIGHT) {
-					params->sbDefineInit->add(String::format("%s%s->setRelativeMarginTop(%ff, sl_false);%n", strTab, name, attr->marginTop.amount));
+					params->sbDefineInit->add(String::format("%s%s->setRelativeMarginTop(%ff, slib::UIUpdateMode::Init);%n", strTab, name, attr->marginTop.amount));
 				} else {
 					LAYOUT_CONTROL_INT_DIMENSION_ATTR_NOREDRAW(marginTop, setMarginTop, checkMargin)
 				}
 			}
 			if (attr->marginRight.flagDefined) {
 				if (attr->marginRight.unit == SAppDimensionValue::WEIGHT) {
-					params->sbDefineInit->add(String::format("%s%s->setRelativeMarginRight(%ff, sl_false);%n", strTab, name, attr->marginRight.amount));
+					params->sbDefineInit->add(String::format("%s%s->setRelativeMarginRight(%ff, slib::UIUpdateMode::Init);%n", strTab, name, attr->marginRight.amount));
 				} else {
 					LAYOUT_CONTROL_INT_DIMENSION_ATTR_NOREDRAW(marginRight, setMarginRight, checkMargin)
 				}
 			}
 			if (attr->marginBottom.flagDefined) {
 				if (attr->marginBottom.unit == SAppDimensionValue::WEIGHT) {
-					params->sbDefineInit->add(String::format("%s%s->setRelativeMarginBottom(%ff, sl_false);%n", strTab, name, attr->marginBottom.amount));
+					params->sbDefineInit->add(String::format("%s%s->setRelativeMarginBottom(%ff, slib::UIUpdateMode::Init);%n", strTab, name, attr->marginBottom.amount));
 				} else {
 					LAYOUT_CONTROL_INT_DIMENSION_ATTR_NOREDRAW(marginBottom, setMarginBottom, checkMargin)
 				}
@@ -3706,7 +3708,7 @@ BEGIN_PROCESS_LAYOUT_CONTROL(View, View)
 			if (attr->marginLeft.flagDefined) {
 				if (attr->marginLeft.unit == SAppDimensionValue::WEIGHT) {
 					if (!flagOnLayout) {
-						view->setRelativeMarginLeft(attr->marginLeft.amount, sl_false);
+						view->setRelativeMarginLeft(attr->marginLeft.amount, UIUpdateMode::Init);
 					}
 				} else {
 					LAYOUT_CONTROL_INT_DIMENSION_ATTR_NOREDRAW(marginLeft, setMarginLeft, checkMargin)
@@ -3715,7 +3717,7 @@ BEGIN_PROCESS_LAYOUT_CONTROL(View, View)
 			if (attr->marginTop.flagDefined) {
 				if (attr->marginTop.unit == SAppDimensionValue::WEIGHT) {
 					if (!flagOnLayout) {
-						view->setRelativeMarginTop(attr->marginTop.amount, sl_false);
+						view->setRelativeMarginTop(attr->marginTop.amount, UIUpdateMode::Init);
 					}
 				} else {
 					LAYOUT_CONTROL_INT_DIMENSION_ATTR_NOREDRAW(marginTop, setMarginTop, checkMargin)
@@ -3724,7 +3726,7 @@ BEGIN_PROCESS_LAYOUT_CONTROL(View, View)
 			if (attr->marginRight.flagDefined) {
 				if (attr->marginRight.unit == SAppDimensionValue::WEIGHT) {
 					if (!flagOnLayout) {
-						view->setRelativeMarginRight(attr->marginRight.amount, sl_false);
+						view->setRelativeMarginRight(attr->marginRight.amount, UIUpdateMode::Init);
 					}
 				} else {
 					LAYOUT_CONTROL_INT_DIMENSION_ATTR_NOREDRAW(marginRight, setMarginRight, checkMargin)
@@ -3733,7 +3735,7 @@ BEGIN_PROCESS_LAYOUT_CONTROL(View, View)
 			if (attr->marginBottom.flagDefined) {
 				if (attr->marginBottom.unit == SAppDimensionValue::WEIGHT) {
 					if (!flagOnLayout) {
-						view->setRelativeMarginBottom(attr->marginBottom.amount, sl_false);
+						view->setRelativeMarginBottom(attr->marginBottom.amount, UIUpdateMode::Init);
 					}
 				} else {
 					LAYOUT_CONTROL_INT_DIMENSION_ATTR_NOREDRAW(marginBottom, setMarginBottom, checkMargin)
@@ -3808,16 +3810,14 @@ BEGIN_PROCESS_LAYOUT_CONTROL(View, View)
 	} else if (op == OP_GENERATE_CPP){
 		if (attr->borderWidth.flagDefined) {
 			if (Math::isAlmostZero(attr->borderWidth.amount)) {
-				params->sbDefineInit->add(String::format("%s%s->setBorder(slib::Ref<slib::Pen>::null(), sl_false);%n", strTab, name));
+				params->sbDefineInit->add(String::format("%s%s->setBorder(slib::Ref<slib::Pen>::null(), slib::UIUpdateMode::Init);%n", strTab, name));
 			} else {
 				if (attr->borderColor.flagDefined && attr->borderStyle.flagDefined) {
-					StringBuffer* sb;
 					if (attr->borderWidth.isNeededOnLayoutFunction()) {
-						sb = params->sbDefineLayout;
+						params->sbDefineLayout->add(String::format("%s%s->setBorder(slib::Pen::create(%s, %s, %s), slib::UIUpdateMode::NoRedraw);%n", strTab, name, attr->borderStyle.getAccessString(), attr->borderWidth.getAccessString(), attr->borderColor.getAccessString()));
 					} else {
-						sb = params->sbDefineLayout;
+						params->sbDefineInit->add(String::format("%s%s->setBorder(slib::Pen::create(%s, %s, %s), slib::UIUpdateMode::Init);%n", strTab, name, attr->borderStyle.getAccessString(), attr->borderWidth.getAccessString(), attr->borderColor.getAccessString()));
 					}
-					sb->add(String::format("%s%s->setBorder(slib::Pen::create(%s, %s, %s), sl_false);%n", strTab, name, attr->borderStyle.getAccessString(), attr->borderWidth.getAccessString(), attr->borderColor.getAccessString()));
 				} else {
 					LAYOUT_CONTROL_FLOAT_DIMENSION_ATTR_NOREDRAW(borderWidth, setBorderWidth, checkScalarSize)
 					LAYOUT_CONTROL_GENERIC_ATTR_NOREDRAW(borderColor, setBorderColor)
@@ -3832,12 +3832,12 @@ BEGIN_PROCESS_LAYOUT_CONTROL(View, View)
 		if (attr->borderWidth.flagDefined) {
 			if (Math::isAlmostZero(attr->borderWidth.amount)) {
 				if (!flagOnLayout) {
-					view->setBorder(Ref<Pen>::null(), sl_false);
+					view->setBorder(Ref<Pen>::null(), UIUpdateMode::Init);
 				}
 			} else {
 				if (attr->borderColor.flagDefined && attr->borderStyle.flagDefined) {
 					if (flagOnLayout) {
-						view->setBorder(Pen::create(attr->borderStyle.value, _getDimensionFloatValue(attr->borderWidth), attr->borderColor.value), sl_false);
+						view->setBorder(Pen::create(attr->borderStyle.value, _getDimensionFloatValue(attr->borderWidth), attr->borderColor.value), UIUpdateMode::NoRedraw);
 					}
 				} else {
 					LAYOUT_CONTROL_FLOAT_DIMENSION_ATTR_NOREDRAW(borderWidth, setBorderWidth, checkScalarSize)
@@ -3947,17 +3947,20 @@ BEGIN_PROCESS_LAYOUT_CONTROL(View, View)
 				fontSize = "UI::getDefaultFontSize()";
 			}
 			StringBuffer* sb;
+			String strUpdateMode;
 			if (attr->finalFontSize.isNeededOnLayoutFunction()) {
 				sb = params->sbDefineLayout;
+				strUpdateMode = "slib::UIUpdateMode::NoRedraw";
 			} else {
 				sb = params->sbDefineInit;
+				strUpdateMode = "slib::UIUpdateMode::Init";
 			}
 			if (attr->finalFontFamily.flagDefined) {
 				sb->add(String::format("%s%s->setFont(%s, ", strTab, name, attr->finalFontFamily.getAccessString()));
 			} else {
 				sb->add(String::format("%s%s->setFontAttributes(", strTab, name));
 			}
-			sb->add(String::format("%s, %s, %s, %s, sl_false);%n", fontSize, attr->finalFontBold?"sl_true":"sl_false", attr->finalFontItalic?"sl_true":"sl_false", attr->finalFontUnderline?"sl_true":"sl_false"));
+			sb->add(String::format("%s, %s, %s, %s, %s);%n", fontSize, attr->finalFontBold?"sl_true":"sl_false", attr->finalFontItalic?"sl_true":"sl_false", attr->finalFontUnderline?"sl_true":"sl_false", strUpdateMode));
 		}
 	} else if (op == OP_SIMULATE) {
 		if (flagOnLayout) {
@@ -3972,9 +3975,9 @@ BEGIN_PROCESS_LAYOUT_CONTROL(View, View)
 					fontSize = UI::getDefaultFontSize();
 				}
 				if (attr->finalFontFamily.flagDefined) {
-					view->setFont(_getStringValue(attr->finalFontFamily), fontSize, attr->finalFontBold, attr->finalFontItalic, attr->finalFontUnderline, sl_false);
+					view->setFont(_getStringValue(attr->finalFontFamily), fontSize, attr->finalFontBold, attr->finalFontItalic, attr->finalFontUnderline, UIUpdateMode::NoRedraw);
 				} else {
-					view->setFontAttributes(fontSize, attr->finalFontBold, attr->finalFontItalic, attr->finalFontUnderline, sl_false);
+					view->setFontAttributes(fontSize, attr->finalFontBold, attr->finalFontItalic, attr->finalFontUnderline, UIUpdateMode::NoRedraw);
 				}
 			}
 		}
@@ -3991,25 +3994,25 @@ BEGIN_PROCESS_LAYOUT_CONTROL(View, View)
 	} else if (op == OP_GENERATE_CPP) {
 		if (attr->scrollBars.horizontalScrollBar) {
 			if (attr->scrollBars.verticalScrollBar) {
-				params->sbDefineInit->add(String::format("%s%s->createScrollBars(sl_false);%n", strTab, name));
+				params->sbDefineInit->add(String::format("%s%s->createScrollBars(slib::UIUpdateMode::NoRedraw);%n", strTab, name));
 			} else {
-				params->sbDefineInit->add(String::format("%s%s->createHorizontalScrollBar(sl_false);%n", strTab, name));
+				params->sbDefineInit->add(String::format("%s%s->createHorizontalScrollBar(slib::UIUpdateMode::NoRedraw);%n", strTab, name));
 			}
 		} else {
 			if (attr->scrollBars.verticalScrollBar) {
-				params->sbDefineInit->add(String::format("%s%s->createVerticalScrollBar(sl_false);%n", strTab, name));
+				params->sbDefineInit->add(String::format("%s%s->createVerticalScrollBar(slib::UIUpdateMode::NoRedraw);%n", strTab, name));
 			}
 		}
 	} else if (op == OP_SIMULATE) {
 		if (attr->scrollBars.horizontalScrollBar) {
 			if (attr->scrollBars.verticalScrollBar) {
-				view->createScrollBars(sl_false);
+				view->createScrollBars(UIUpdateMode::NoRedraw);
 			} else {
-				view->createHorizontalScrollBar(sl_false);
+				view->createHorizontalScrollBar(UIUpdateMode::NoRedraw);
 			}
 		} else {
 			if (attr->scrollBars.verticalScrollBar) {
-				view->createVerticalScrollBar(sl_false);
+				view->createVerticalScrollBar(UIUpdateMode::NoRedraw);
 			}
 		}
 	}
@@ -4245,29 +4248,32 @@ BEGIN_PROCESS_LAYOUT_CONTROL(Button, Button)
 				}
 			} else if (op == OP_GENERATE_CPP) {
 				if (category.textColor[k].flagDefined) {
-					params->sbDefineInit->add(String::format("%s%s->setTextColor(%s, slib::ButtonState::%s, %d, sl_false);%n", strTab, name, category.textColor[k].getAccessString(), strStates[k], i));
+					params->sbDefineInit->add(String::format("%s%s->setTextColor(%s, slib::ButtonState::%s, %d, slib::UIUpdateMode::Init);%n", strTab, name, category.textColor[k].getAccessString(), strStates[k], i));
 				}
 				if (category.icon[k].flagDefined) {
 					if (!(_checkDrawableValueAvailable(category.icon[k], resourceItem->element))) {
 						return sl_false;
 					}
-					params->sbDefineInit->add(String::format("%s%s->setIcon(%s, slib::ButtonState::%s, %d, sl_false);%n", strTab, name, category.icon[k].getAccessString(), strStates[k], i));
+					params->sbDefineInit->add(String::format("%s%s->setIcon(%s, slib::ButtonState::%s, %d, slib::UIUpdateMode::Init);%n", strTab, name, category.icon[k].getAccessString(), strStates[k], i));
 				}
 				if (category.background[k].flagDefined) {
 					if (!(_checkDrawableValueAvailable(category.background[k], resourceItem->element))) {
 						return sl_false;
 					}
-					params->sbDefineInit->add(String::format("%s%s->setBackground(%s, slib::ButtonState::%s, %d, sl_false);%n", strTab, name, category.background[k].getAccessString(), strStates[k], i));
+					params->sbDefineInit->add(String::format("%s%s->setBackground(%s, slib::ButtonState::%s, %d, slib::UIUpdateMode::Init);%n", strTab, name, category.background[k].getAccessString(), strStates[k], i));
 				}
 				if (category.borderWidth[k].flagDefined || category.borderColor[k].flagDefined || category.borderStyle[k].flagDefined) {
 					if (category.borderWidth[k].flagDefined && Math::isAlmostZero(category.borderWidth[k].amount)) {
-						params->sbDefineInit->add(String::format("%s%s->setBorder(slib::Ref<slib::Pen>::null(), slib::ButtonState::%s, %d, sl_false);%n", strTab, name, strStates[k], i));
+						params->sbDefineInit->add(String::format("%s%s->setBorder(slib::Ref<slib::Pen>::null(), slib::ButtonState::%s, %d, slib::UIUpdateMode::Init);%n", strTab, name, strStates[k], i));
 					} else {
 						StringBuffer* sb;
+						String strUpdateMode;
 						if (category.borderWidth[k].isNeededOnLayoutFunction()) {
 							sb = params->sbDefineLayout;
+							strUpdateMode = "slib::UIUpdateMode::NoRedraw";
 						} else {
 							sb = params->sbDefineInit;
+							strUpdateMode = "slib::UIUpdateMode::Init";
 						}
 						String _borderWidth, _borderColor, _borderStyle;
 						if (category.borderWidth[k].flagDefined) {
@@ -4285,13 +4291,13 @@ BEGIN_PROCESS_LAYOUT_CONTROL(Button, Button)
 						} else {
 							_borderStyle = "slib::PenStyle::Solid";
 						}
-						sb->add(String::format("%s%s->setBorder(slib::Pen::create(%s, %s, %s), slib::ButtonState::%s, %d, sl_false);%n", strTab, name, _borderStyle, _borderWidth, _borderColor, strStates[k], i));
+						sb->add(String::format("%s%s->setBorder(slib::Pen::create(%s, %s, %s), slib::ButtonState::%s, %d, %s);%n", strTab, name, _borderStyle, _borderWidth, _borderColor, strStates[k], i, strUpdateMode));
 					}
 				}
 			} else if (op == OP_SIMULATE) {
 				if (category.textColor[k].flagDefined) {
 					if (!flagOnLayout) {
-						view->setTextColor(category.textColor[k].value, states[k], i, sl_false);
+						view->setTextColor(category.textColor[k].value, states[k], i, UIUpdateMode::Init);
 					}
 				}
 				if (category.background[k].flagDefined) {
@@ -4299,7 +4305,7 @@ BEGIN_PROCESS_LAYOUT_CONTROL(Button, Button)
 						return sl_false;
 					}
 					if (flagOnLayout) {
-						view->setBackground(_getDrawableValue(category.background[k]), states[k], i, sl_false);
+						view->setBackground(_getDrawableValue(category.background[k]), states[k], i, UIUpdateMode::Redraw);
 					}
 				}
 				if (category.icon[k].flagDefined) {
@@ -4307,13 +4313,13 @@ BEGIN_PROCESS_LAYOUT_CONTROL(Button, Button)
 						return sl_false;
 					}
 					if (flagOnLayout) {
-						view->setIcon(_getDrawableValue(category.icon[k]), states[k], i, sl_false);
+						view->setIcon(_getDrawableValue(category.icon[k]), states[k], i, UIUpdateMode::Redraw);
 					}
 				}
 				if (category.borderWidth[k].flagDefined || category.borderColor[k].flagDefined || category.borderStyle[k].flagDefined) {
 					if (category.borderWidth[k].flagDefined && Math::isAlmostZero(category.borderWidth[k].amount)) {
 						if (!flagOnLayout) {
-							view->setBorder(Ref<Pen>::null(), states[k], i, sl_false);
+							view->setBorder(Ref<Pen>::null(), states[k], i, UIUpdateMode::Init);
 						}
 					} else {
 						if (flagOnLayout) {
@@ -4335,7 +4341,7 @@ BEGIN_PROCESS_LAYOUT_CONTROL(Button, Button)
 							} else {
 								_borderStyle = PenStyle::Solid;
 							}
-							view->setBorder(Pen::create(_borderStyle, _borderWidth, _borderColor), states[k], i, sl_false);
+							view->setBorder(Pen::create(_borderStyle, _borderWidth, _borderColor), states[k], i, UIUpdateMode::NoRedraw);
 						}
 					}
 				}
@@ -4519,14 +4525,14 @@ BEGIN_PROCESS_LAYOUT_CONTROL(Select, SelectView)
 		if (selectItems.count > 0) {
 			sl_size indexSelected = 0;
 			sl_bool flagSelected = sl_false;
-			params->sbDefineInit->add(String::format("%s%s->setItemsCount(%d, sl_false);%n", strTab, name, selectItems.count));
+			params->sbDefineInit->add(String::format("%s%s->setItemsCount(%d, slib::UIUpdateMode::Init);%n", strTab, name, selectItems.count));
 			for (sl_size i = 0; i < selectItems.count; i++) {
 				SAppLayoutSelectItem& selectItem = selectItems[i];
 				if (!(_checkStringValueAvailable(selectItem.title, selectItem.element))) {
 					return sl_false;
 				}
 				if (selectItem.title.flagDefined) {
-					params->sbDefineInit->add(String::format("%s%s->setItemTitle(%d, %s, sl_false);%n", strTab, name, i, selectItem.title.getAccessString()));
+					params->sbDefineInit->add(String::format("%s%s->setItemTitle(%d, %s, slib::UIUpdateMode::Init);%n", strTab, name, i, selectItem.title.getAccessString()));
 				}
 				if (!(_checkStringValueAvailable(selectItem.value, selectItem.element))) {
 					return sl_false;
@@ -4540,7 +4546,7 @@ BEGIN_PROCESS_LAYOUT_CONTROL(Select, SelectView)
 				}
 			}
 			if (flagSelected) {
-				params->sbDefineInit->add(String::format("%s%s->selectIndex(%d, sl_false);%n", strTab, name, indexSelected));
+				params->sbDefineInit->add(String::format("%s%s->selectIndex(%d, slib::UIUpdateMode::Init);%n", strTab, name, indexSelected));
 			}
 		}
 	} else if (op == OP_SIMULATE) {
@@ -4550,14 +4556,14 @@ BEGIN_PROCESS_LAYOUT_CONTROL(Select, SelectView)
 				sl_uint32 indexSelected = 0;
 				sl_bool flagSelected = sl_false;
 				sl_uint32 n = (sl_uint32)(selectItems.count);
-				view->setItemsCount(n, sl_false);
+				view->setItemsCount(n, UIUpdateMode::Init);
 				for (sl_uint32 i = 0; i < n; i++) {
 					SAppLayoutSelectItem& selectItem = selectItems[i];
 					if (!(_checkStringValueAvailable(selectItem.title, selectItem.element))) {
 						return sl_false;
 					}
 					if (selectItem.title.flagDefined) {
-						view->setItemTitle(i, _getStringValue(selectItem.title), sl_false);
+						view->setItemTitle(i, _getStringValue(selectItem.title), UIUpdateMode::Init);
 					}
 					if (!(_checkStringValueAvailable(selectItem.value, selectItem.element))) {
 						return sl_false;
@@ -4572,7 +4578,7 @@ BEGIN_PROCESS_LAYOUT_CONTROL(Select, SelectView)
 				}
 				if (flagSelected) {
 					if (!flagOnLayout) {
-						view->selectIndex(indexSelected, sl_false);
+						view->selectIndex(indexSelected, UIUpdateMode::Init);
 					}
 				}
 			}
@@ -4625,7 +4631,7 @@ BEGIN_PROCESS_LAYOUT_CONTROL(Scroll, ScrollView)
 		}
 	} else if (op == OP_GENERATE_CPP) {
 		if (attr->content.isNotNull()) {
-			String addChildStatement = String::format("%s%s->setContentView(%s, sl_false);%n%n", strTab, name, attr->content->name);
+			String addChildStatement = String::format("%s%s->setContentView(%s, slib::UIUpdateMode::Init);%n%n", strTab, name, attr->content->name);
 			if (!(_generateLayoutsCppItem(params->resource, attr->content.ptr, resourceItem, *(params->sbDeclare), *(params->sbDefineInit), *(params->sbDefineLayout), addChildStatement))) {
 				return sl_false;
 			}
@@ -4633,12 +4639,12 @@ BEGIN_PROCESS_LAYOUT_CONTROL(Scroll, ScrollView)
 	} else if (op == OP_SIMULATE) {
 		if (attr->content.isNotNull()) {
 			Ref<View> contentView = _simulateLayoutCreateOrLayoutView(params->simulator, attr->content.ptr, resourceItem, view, flagOnLayout);
-			if (!flagOnLayout) {
-				if (contentView.isNotNull()) {
-					view->setContentView(contentView, sl_false);
-				} else {
-					return sl_false;
+			if (contentView.isNotNull()) {
+				if (!flagOnLayout) {
+					view->setContentView(contentView, UIUpdateMode::Init);
 				}
+			} else {
+				return sl_false;
 			}
 		}
 	}
@@ -4755,27 +4761,27 @@ BEGIN_PROCESS_LAYOUT_CONTROL(ListReport, ListReportView)
 	} else if (op == OP_GENERATE_CPP) {
 		ListLocker<SAppLayoutListReportColumn> columns(attr->columns);
 		if (columns.count > 0) {
-			params->sbDefineInit->add(String::format("%s%s->setColumnsCount(%d, sl_false);%n", strTab, name, columns.count));
+			params->sbDefineInit->add(String::format("%s%s->setColumnsCount(%d, slib::UIUpdateMode::Init);%n", strTab, name, columns.count));
 			for (sl_size i = 0; i < columns.count; i++) {
 				SAppLayoutListReportColumn& column = columns[i];
 				if (!(_checkStringValueAvailable(column.title, element))) {
 					return sl_false;
 				}
 				if (column.title.flagDefined) {
-					params->sbDefineInit->add(String::format("%s%s->setHeaderText(%d, %s, sl_false);%n", strTab, name, i, column.title.getAccessString()));
+					params->sbDefineInit->add(String::format("%s%s->setHeaderText(%d, %s, slib::UIUpdateMode::Init);%n", strTab, name, i, column.title.getAccessString()));
 				}
 				if (column.width.flagDefined) {
 					if (column.width.isNeededOnLayoutFunction()) {
-						params->sbDefineLayout->add(String::format("%s%s->setColumnWidth(%d, %s, sl_false);%n", strTab, name, i, column.width.getAccessString()));
+						params->sbDefineLayout->add(String::format("%s%s->setColumnWidth(%d, %s, slib::UIUpdateMode::NoRedraw);%n", strTab, name, i, column.width.getAccessString()));
 					} else {
-						params->sbDefineInit->add(String::format("%s%s->setColumnWidth(%d, %s, sl_false);%n", strTab, name, i, column.width.getAccessString()));
+						params->sbDefineInit->add(String::format("%s%s->setColumnWidth(%d, %s, slib::UIUpdateMode::Init);%n", strTab, name, i, column.width.getAccessString()));
 					}
 				}
 				if (column.align.flagDefined) {
-					params->sbDefineInit->add(String::format("%s%s->setColumnAlignment(%d, %s, sl_false);%n", strTab, name, i, column.align.getAccessString()));
+					params->sbDefineInit->add(String::format("%s%s->setColumnAlignment(%d, %s, slib::UIUpdateMode::Init);%n", strTab, name, i, column.align.getAccessString()));
 				}
 				if (column.headerAlign.flagDefined) {
-					params->sbDefineInit->add(String::format("%s%s->setHeaderAlignment(%d, %s, sl_false);%n", strTab, name, i, column.headerAlign.getAccessString()));
+					params->sbDefineInit->add(String::format("%s%s->setHeaderAlignment(%d, %s, slib::UIUpdateMode::Init);%n", strTab, name, i, column.headerAlign.getAccessString()));
 				}
 			}
 		}
@@ -4784,7 +4790,7 @@ BEGIN_PROCESS_LAYOUT_CONTROL(ListReport, ListReportView)
 		if (columns.count > 0) {
 			sl_uint32 n = (sl_uint32)(columns.count);
 			if (!flagOnLayout) {
-				view->setColumnsCount(n, sl_false);
+				view->setColumnsCount(n, UIUpdateMode::Init);
 			}
 			for (sl_uint32 i = 0; i < n; i++) {
 				SAppLayoutListReportColumn& column = columns[i];
@@ -4793,18 +4799,18 @@ BEGIN_PROCESS_LAYOUT_CONTROL(ListReport, ListReportView)
 						return sl_false;
 					}
 					if (column.title.flagDefined) {
-						view->setHeaderText(i, _getStringValue(column.title), sl_false);
+						view->setHeaderText(i, _getStringValue(column.title), UIUpdateMode::Init);
 					}
 					if (column.align.flagDefined) {
-						view->setColumnAlignment(i, column.align.value, sl_false);
+						view->setColumnAlignment(i, column.align.value, UIUpdateMode::Init);
 					}
 					if (column.headerAlign.flagDefined) {
-						view->setHeaderAlignment(i, column.headerAlign.value, sl_false);
+						view->setHeaderAlignment(i, column.headerAlign.value, UIUpdateMode::Init);
 					}
 				}
 				if (column.width.flagDefined) {
 					if (flagOnLayout) {
-						view->setColumnWidth(i, _getDimensionIntValue(column.width), sl_false);
+						view->setColumnWidth(i, _getDimensionIntValue(column.width), UIUpdateMode::NoRedraw);
 					}
 				}
 			}
@@ -4912,7 +4918,7 @@ BEGIN_PROCESS_LAYOUT_CONTROL(Tab, TabView)
 			sl_size indexSelected = 0;
 			sl_bool flagSelected = sl_false;
 			
-			params->sbDefineInit->add(String::format("%s%s->setTabsCount(%d, sl_false);%n", strTab, name, subItems.count));
+			params->sbDefineInit->add(String::format("%s%s->setTabsCount(%d, slib::UIUpdateMode::Init);%n", strTab, name, subItems.count));
 			
 			for (sl_size i = 0; i < subItems.count; i++) {
 				SAppLayoutTabItem& subItem = subItems[i];
@@ -4920,7 +4926,7 @@ BEGIN_PROCESS_LAYOUT_CONTROL(Tab, TabView)
 					if (!(_checkStringValueAvailable(subItem.label, subItem.element))) {
 						return sl_false;
 					}
-					params->sbDefineInit->add(String::format("%s%s->setTabLabel(%d, %s, sl_false);%n", strTab, name, i, subItem.label.getAccessString()));
+					params->sbDefineInit->add(String::format("%s%s->setTabLabel(%d, %s, slib::UIUpdateMode::Init);%n", strTab, name, i, subItem.label.getAccessString()));
 				}
 				if (subItem.selected.flagDefined && subItem.selected.value) {
 					flagSelected = sl_true;
@@ -4929,7 +4935,7 @@ BEGIN_PROCESS_LAYOUT_CONTROL(Tab, TabView)
 			}
 			
 			if (flagSelected) {
-				params->sbDefineInit->add(String::format("%s%s->selectTab(%d, sl_false);%n", strTab, name, indexSelected));
+				params->sbDefineInit->add(String::format("%s%s->selectTab(%d, slib::UIUpdateMode::Init);%n", strTab, name, indexSelected));
 			}
 		}
 	} else if (op == OP_SIMULATE) {
@@ -4940,7 +4946,9 @@ BEGIN_PROCESS_LAYOUT_CONTROL(Tab, TabView)
 			sl_bool flagSelected = sl_false;
 			
 			sl_uint32 nSubItems = (sl_uint32)(subItems.count);
-			view->setTabsCount(nSubItems, sl_false);
+			if (!flagOnLayout) {
+				view->setTabsCount(nSubItems, UIUpdateMode::Init);
+			}
 			
 			for (sl_uint32 i = 0; i < nSubItems; i++) {
 				
@@ -4950,7 +4958,7 @@ BEGIN_PROCESS_LAYOUT_CONTROL(Tab, TabView)
 						if (!(_checkStringValueAvailable(subItem.label, subItem.element))) {
 							return sl_false;
 						}
-						view->setTabLabel(i, _getStringValue(subItem.label), sl_false);
+						view->setTabLabel(i, _getStringValue(subItem.label), UIUpdateMode::Init);
 					}
 				}
 				if (subItem.selected.flagDefined && subItem.selected.value) {
@@ -4960,18 +4968,18 @@ BEGIN_PROCESS_LAYOUT_CONTROL(Tab, TabView)
 				
 				if (subItem.view.isNotNull()) {
 					Ref<View> contentView = _simulateLayoutCreateOrLayoutView(params->simulator, subItem.view.ptr, resourceItem, view, flagOnLayout);
-					if (!flagOnLayout) {
-						if (contentView.isNotNull()) {
-							view->setTabContentView(i, contentView, sl_false);
-						} else {
-							return sl_false;
+					if (contentView.isNotNull()) {
+						if (!flagOnLayout) {
+							view->setTabContentView(i, contentView, UIUpdateMode::Init);
 						}
+					} else {
+						return sl_false;
 					}
 				}
 				
 				if (flagSelected) {
 					if (!flagOnLayout) {
-						view->selectTab(indexSelected);
+						view->selectTab(indexSelected, UIUpdateMode::Init);
 					}
 				}
 				
@@ -4990,7 +4998,7 @@ BEGIN_PROCESS_LAYOUT_CONTROL(Tab, TabView)
 		for (sl_size i = 0; i < subItems.count; i++) {
 			SAppLayoutTabItem& subItem = subItems[i];
 			if (subItem.view.isNotNull()) {
-				String addChildStatement = String::format("%s%s->setTabContentView(%d, %s, sl_false);%n%n", strTab, name, i, subItem.view->name);
+				String addChildStatement = String::format("%s%s->setTabContentView(%d, %s, slib::UIUpdateMode::Init);%n%n", strTab, name, i, subItem.view->name);
 				if (!(_generateLayoutsCppItem(params->resource, subItem.view.ptr, resourceItem, *(params->sbDeclare), *(params->sbDefineInit), *(params->sbDefineLayout), addChildStatement))) {
 					return sl_false;
 				}
@@ -5094,47 +5102,47 @@ BEGIN_PROCESS_LAYOUT_CONTROL(Split, SplitView)
 		ListLocker<SAppLayoutSplitItem> subItems(attr->items);
 		if (subItems.count > 0) {
 			if (subItems.count > 2) {
-				params->sbDefineInit->add(String::format("%s%s->setItemsCount(%d, sl_false);%n", strTab, name, subItems.count));
+				params->sbDefineInit->add(String::format("%s%s->setItemsCount(%d, slib::UIUpdateMode::Init);%n", strTab, name, subItems.count));
 			}
 			
 			for (sl_size i = 0; i < subItems.count; i++) {
 				SAppLayoutSplitItem& subItem = subItems[i];
 				if (subItem.weight.flagDefined) {
-					params->sbDefineInit->add(String::format("%s%s->setItemWeight(%d, %s, sl_false);%n", strTab, name, i, subItem.weight.getAccessString()));
+					params->sbDefineInit->add(String::format("%s%s->setItemWeight(%d, %s, slib::UIUpdateMode::Init);%n", strTab, name, i, subItem.weight.getAccessString()));
 					flagRelayoutOnInit = sl_true;
 				}
 				if (subItem.minWeight.flagDefined) {
-					params->sbDefineInit->add(String::format("%s%s->setItemMinimumWeight(%d, %s, sl_false);%n", strTab, name, i, subItem.minWeight.getAccessString()));
+					params->sbDefineInit->add(String::format("%s%s->setItemMinimumWeight(%d, %s, slib::UIUpdateMode::Init);%n", strTab, name, i, subItem.minWeight.getAccessString()));
 					flagRelayoutOnInit = sl_true;
 				}
 				if (subItem.maxWeight.flagDefined) {
-					params->sbDefineInit->add(String::format("%s%s->setItemMaximumWeight(%d, %s, sl_false);%n", strTab, name, i, subItem.maxWeight.getAccessString()));
+					params->sbDefineInit->add(String::format("%s%s->setItemMaximumWeight(%d, %s, slib::UIUpdateMode::Init);%n", strTab, name, i, subItem.maxWeight.getAccessString()));
 					flagRelayoutOnInit = sl_true;
 				}
 				if (subItem.minSize.flagDefined) {
 					if (subItem.minSize.isNeededOnLayoutFunction()) {
-						params->sbDefineLayout->add(String::format("%s%s->setItemMinimumSize(%d, %s, sl_false);%n", strTab, name, i, subItem.minSize.getAccessString()));
+						params->sbDefineLayout->add(String::format("%s%s->setItemMinimumSize(%d, %s, slib::UIUpdateMode::NoRedraw);%n", strTab, name, i, subItem.minSize.getAccessString()));
 						flagRelayoutOnLayout = sl_true;
 					} else {
-						params->sbDefineInit->add(String::format("%s%s->setItemMinimumSize(%d, %s, sl_false);%n", strTab, name, i, subItem.minSize.getAccessString()));
+						params->sbDefineInit->add(String::format("%s%s->setItemMinimumSize(%d, %s, slib::UIUpdateMode::Init);%n", strTab, name, i, subItem.minSize.getAccessString()));
 						flagRelayoutOnInit = sl_true;
 					}
 				}
 				if (subItem.maxSize.flagDefined) {
 					if (subItem.maxSize.isNeededOnLayoutFunction()) {
-						params->sbDefineLayout->add(String::format("%s%s->setItemMaximumSize(%d, %s, sl_false);%n", strTab, name, i, subItem.maxSize.getAccessString()));
+						params->sbDefineLayout->add(String::format("%s%s->setItemMaximumSize(%d, %s, slib::UIUpdateMode::NoRedraw);%n", strTab, name, i, subItem.maxSize.getAccessString()));
 						flagRelayoutOnLayout = sl_true;
 					} else {
-						params->sbDefineInit->add(String::format("%s%s->setItemMaximumSize(%d, %s, sl_false);%n", strTab, name, i, subItem.maxSize.getAccessString()));
+						params->sbDefineInit->add(String::format("%s%s->setItemMaximumSize(%d, %s, slib::UIUpdateMode::Init);%n", strTab, name, i, subItem.maxSize.getAccessString()));
 						flagRelayoutOnInit = sl_true;
 					}
 				}
 				if (subItem.dividerWidth.flagDefined) {
 					if (subItem.dividerWidth.isNeededOnLayoutFunction()) {
-						params->sbDefineLayout->add(String::format("%s%s->setItemDividerWidth(%d, %s, sl_false);%n", strTab, name, i, subItem.dividerWidth.getAccessString()));
+						params->sbDefineLayout->add(String::format("%s%s->setItemDividerWidth(%d, %s, slib::UIUpdateMode::NoRedraw);%n", strTab, name, i, subItem.dividerWidth.getAccessString()));
 						flagRelayoutOnLayout = sl_true;
 					} else {
-						params->sbDefineInit->add(String::format("%s%s->setItemDividerWidth(%d, %s, sl_false);%n", strTab, name, i, subItem.dividerWidth.getAccessString()));
+						params->sbDefineInit->add(String::format("%s%s->setItemDividerWidth(%d, %s, slib::UIUpdateMode::Init);%n", strTab, name, i, subItem.dividerWidth.getAccessString()));
 						flagRelayoutOnInit = sl_true;
 					}
 				}
@@ -5142,11 +5150,11 @@ BEGIN_PROCESS_LAYOUT_CONTROL(Split, SplitView)
 					if (!(_checkDrawableValueAvailable(subItem.dividerBackground, subItem.element))) {
 						return sl_false;
 					}
-					params->sbDefineInit->add(String::format("%s%s->setItemDividerBackground(%d, %s, sl_false);%n", strTab, name, i, subItem.dividerBackground.getAccessString()));
+					params->sbDefineInit->add(String::format("%s%s->setItemDividerBackground(%d, %s, slib::UIUpdateMode::Init);%n", strTab, name, i, subItem.dividerBackground.getAccessString()));
 					flagRelayoutOnInit = sl_true;
 				}
 				if (subItem.dividerColor.flagDefined) {
-					params->sbDefineInit->add(String::format("%s%s->setItemDividerColor(%d, %s, sl_false);%n", strTab, name, i, subItem.dividerColor.getAccessString()));
+					params->sbDefineInit->add(String::format("%s%s->setItemDividerColor(%d, %s, slib::UIUpdateMode::Init);%n", strTab, name, i, subItem.dividerColor.getAccessString()));
 					flagRelayoutOnInit = sl_true;
 				}
 			}
@@ -5155,39 +5163,41 @@ BEGIN_PROCESS_LAYOUT_CONTROL(Split, SplitView)
 		
 		ListLocker<SAppLayoutSplitItem> subItems(attr->items);
 		if (subItems.count > 0) {
-			if (subItems.count > 2) {
-				view->setItemsCount(subItems.count, sl_false);
+			if (!flagOnLayout) {
+				if (subItems.count > 2) {
+					view->setItemsCount(subItems.count, UIUpdateMode::Init);
+				}
 			}
 			for (sl_size i = 0; i < subItems.count; i++) {
 				SAppLayoutSplitItem& subItem = subItems[i];
 				if (subItem.weight.flagDefined) {
 					if (!flagOnLayout) {
-						view->setItemWeight(i, subItem.weight.value, sl_false);
+						view->setItemWeight(i, subItem.weight.value, UIUpdateMode::Init);
 					}
 				}
 				if (subItem.minWeight.flagDefined) {
 					if (!flagOnLayout) {
-						view->setItemMinimumWeight(i, subItem.minWeight.value, sl_false);
+						view->setItemMinimumWeight(i, subItem.minWeight.value, UIUpdateMode::Init);
 					}
 				}
 				if (subItem.maxWeight.flagDefined) {
 					if (!flagOnLayout) {
-						view->setItemMaximumWeight(i, subItem.maxWeight.value, sl_false);
+						view->setItemMaximumWeight(i, subItem.maxWeight.value, UIUpdateMode::Init);
 					}
 				}
 				if (subItem.minSize.flagDefined) {
 					if (flagOnLayout) {
-						view->setItemMinimumSize(i, _getDimensionIntValue(subItem.minSize), sl_false);
+						view->setItemMinimumSize(i, _getDimensionIntValue(subItem.minSize), UIUpdateMode::NoRedraw);
 					}
 				}
 				if (subItem.maxSize.flagDefined) {
 					if (flagOnLayout) {
-						view->setItemMaximumSize(i, _getDimensionIntValue(subItem.maxSize), sl_false);
+						view->setItemMaximumSize(i, _getDimensionIntValue(subItem.maxSize), UIUpdateMode::NoRedraw);
 					}
 				}
 				if (subItem.dividerWidth.flagDefined) {
 					if (flagOnLayout) {
-						view->setItemDividerWidth(i, _getDimensionIntValue(subItem.dividerWidth), sl_false);
+						view->setItemDividerWidth(i, _getDimensionIntValue(subItem.dividerWidth), UIUpdateMode::NoRedraw);
 					}
 				}
 				if (subItem.dividerBackground.flagDefined) {
@@ -5195,27 +5205,27 @@ BEGIN_PROCESS_LAYOUT_CONTROL(Split, SplitView)
 						return sl_false;
 					}
 					if (flagOnLayout) {
-						view->setItemDividerBackground(i, _getDrawableValue(subItem.dividerBackground), sl_false);
+						view->setItemDividerBackground(i, _getDrawableValue(subItem.dividerBackground), UIUpdateMode::NoRedraw);
 					}
 				}
 				if (subItem.dividerColor.flagDefined) {
 					if (!flagOnLayout) {
-						view->setItemDividerColor(i, subItem.dividerColor.value, sl_false);
+						view->setItemDividerColor(i, subItem.dividerColor.value, UIUpdateMode::Init);
 					}
 				}
 				if (subItem.view.isNotNull()) {
 					Ref<View> contentView = _simulateLayoutCreateOrLayoutView(params->simulator, subItem.view.ptr, resourceItem, view, flagOnLayout);
-					if (!flagOnLayout) {
-						if (contentView.isNotNull()) {
-							view->setItemView(i, contentView, sl_false);
-						} else {
-							return sl_false;
+					if (contentView.isNotNull()) {
+						if (!flagOnLayout) {
+							view->setItemView(i, contentView, UIUpdateMode::NoRedraw);
 						}
+					} else {
+						return sl_false;
 					}
 				}
 			}
 			
-			view->relayout();
+			view->relayout(UIUpdateMode::NoRedraw);
 			
 		}
 	}
@@ -5227,17 +5237,17 @@ BEGIN_PROCESS_LAYOUT_CONTROL(Split, SplitView)
 		for (sl_size i = 0; i < subItems.count; i++) {
 			SAppLayoutSplitItem& subItem = subItems[i];
 			if (subItem.view.isNotNull()) {
-				String addChildStatement = String::format("%s%s->setItemView(%d, %s, sl_false);%n%n", strTab, name, i, subItem.view->name);
+				String addChildStatement = String::format("%s%s->setItemView(%d, %s, slib::UIUpdateMode::Init);%n%n", strTab, name, i, subItem.view->name);
 				if (!(_generateLayoutsCppItem(params->resource, subItem.view.ptr, resourceItem, *(params->sbDeclare), *(params->sbDefineInit), *(params->sbDefineLayout), addChildStatement))) {
 					return sl_false;
 				}
 			}
 		}
 		if (flagRelayoutOnInit) {
-			params->sbDefineInit->add(String::format("%s%s->relayout(sl_false);%n%n", strTab, name));
+			params->sbDefineInit->add(String::format("%s%s->relayout(slib::UIUpdateMode::NoRedraw);%n%n", strTab, name));
 		}
 		if (flagRelayoutOnLayout) {
-			params->sbDefineLayout->add(String::format("%s%s->relayout(sl_false);%n%n", strTab, name));
+			params->sbDefineLayout->add(String::format("%s%s->relayout(slib::UIUpdateMode::NoRedraw);%n%n", strTab, name));
 		}
 	}
 	

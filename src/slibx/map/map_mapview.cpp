@@ -130,6 +130,7 @@ void MapView::onFrame(RenderEngine* engine)
 			
 			Ref<Texture> textureStatus = m_textureStatus;
 			if (textureStatus.isNotNull()) {
+				textureStatus->getSource()->resetPixels(Color(0, 0, 0, 0));
 				String textStatus = getStatusText();
 				Size size = fontStatus->getStringExtent(textStatus);
 				fontStatus->drawString(
@@ -137,7 +138,6 @@ void MapView::onFrame(RenderEngine* engine)
 									   , STATUS_HEIGHT / 2 + (sl_uint32)(size.y / 2)
 									   , textStatus, Color::White);
 				textureStatus->update();
-				textureStatus->getSource()->resetPixels(Color(0, 0, 0, 0));
 			}
 			
 			sl_real heightStatus = getStatusBarHeight();
