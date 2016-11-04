@@ -156,9 +156,9 @@ protected:
 	Ref<MapGISLineTileManager> m_tilesGISLine;
 	Ref<MapGISPoiTileManager> m_tilesGISPoi;
 
-	Ref<RenderProgram3D> m_programSurfaceTile;
-	Ref<RenderProgram3D> m_programBuilding;
-	Ref<RenderProgram3D> m_programLine;
+	Ref<RenderProgram> m_programSurfaceTile;
+	Ref<RenderProgram3D_PositionNormalTexture> m_programBuilding;
+	Ref<RenderProgram3D_Position> m_programLine;
 
 	sl_real m_sizeTileMinimum;
 	sl_uint32 m_nMaxRenderTileLevel;

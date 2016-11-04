@@ -83,7 +83,7 @@ Ref<VW_Building_Object> VW_Building::readObject(Ref<MapDataLoader> data, VW_Buil
 			return ret;
 		}
 		sl_uint32 i;
-		SLIB_SCOPED_BUFFER(RenderProgram3D_PositionNormalTexture_Diffuse::VertexData, 1024, vertices, countVertices);
+		SLIB_SCOPED_BUFFER(RenderVertex3D_PositionNormalTexture, 1024, vertices, countVertices);
 		for (i = 0; i < countVertices; i++) {
 			reader.readFloat(&(vertices[i].position.x));
 			reader.readFloat(&(vertices[i].position.y));
@@ -94,7 +94,7 @@ Ref<VW_Building_Object> VW_Building::readObject(Ref<MapDataLoader> data, VW_Buil
 			reader.readFloat(&(vertices[i].texCoord.x));
 			reader.readFloat(&(vertices[i].texCoord.y));
 		}
-		mesh.vb = VertexBuffer::create(vertices, sizeof(RenderProgram3D_PositionNormalTexture_Diffuse::VertexData) * countVertices);
+		mesh.vb = VertexBuffer::create(vertices, sizeof(RenderVertex3D_PositionNormalTexture) * countVertices);
 		sl_uint32 countIndices;
 		if (!reader.readUint32(&countIndices)) {
 			return ret;
