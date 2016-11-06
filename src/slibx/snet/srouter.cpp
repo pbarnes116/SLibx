@@ -432,6 +432,19 @@ String SRouterRemote::getStatus()
 	}
 }
 
+void SRouterRemote::reconnect()
+{
+	if (m_flagTcp && !m_flagDynamicConnection) {
+		TcpDatagramClientParam tp;
+		tp.serverAddress = m_address;
+		tp.listener = WeakRef<SRouter>(m_router);
+		tp.flagAutoReconnect = sl_true;
+		tp.autoReconnectIntervalSeconds = 5;
+		tp.maxWaitingBytesForSending = m_tcpSendBufferSize;
+		m_tcp = TcpDatagramClient::create(tp);
+	}
+}
+
 void SRouterRemote::_idle()
 {
 	Time now = Time::now();
@@ -839,19 +852,14 @@ Ref<SRouterRemote> SRouter::getRemote(const String& name)
 void SRouter::registerRemote(const String& name, const Ref<SRouterRemote>& remote)
 {
 	if (remote.isNotNull()) {
+		registerInterface(name, remote);
 		m_mapRemotes.put(name, remote);
 		if (!(remote->m_flagDynamicConnection)) {
 			if (remote->m_flagTcp) {
 				Ref<TcpDatagramClient> tcp = remote->m_tcp;
 				if (tcp.isNull()) {
-					TcpDatagramClientParam tp;
-					tp.serverAddress = remote->m_address;
-					tp.listener = WeakRef<SRouter>(this);
-					tp.flagAutoReconnect = sl_true;
-					tp.autoReconnectIntervalSeconds = 5;
-					tp.maxWaitingBytesForSending = remote->m_tcpSendBufferSize;
-					tcp = TcpDatagramClient::create(tp);
-					remote->m_tcp = tcp;
+					remote->reconnect();
+					tcp = remote->m_tcp;
 				}
 				if (tcp.isNotNull()) {
 					m_mapRemotesByTcpClient.put(tcp.ptr, remote);
@@ -860,7 +868,6 @@ void SRouter::registerRemote(const String& name, const Ref<SRouterRemote>& remot
 				m_mapRemotesBySocketAddress.put(remote->m_address, remote);
 			}
 		}
-		registerInterface(name, remote);
 	}
 }
 

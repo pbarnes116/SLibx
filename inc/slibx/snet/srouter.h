@@ -176,6 +176,8 @@ public:
 public:
 	String getStatus();
 
+	void reconnect();
+
 protected:
 	// override
 	void _writeIPv4Packet(const void* packet, sl_uint32 size);
