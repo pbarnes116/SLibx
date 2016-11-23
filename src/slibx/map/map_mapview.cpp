@@ -405,10 +405,7 @@ void MapView::onMouseWheelEvent(UIEvent* event)
 
 void MapView::onClick()
 {
-	Ref<Runnable> listener = getOnClick();
-	if (listener.isNotNull()) {
-		listener->run();
-	}
+	(getOnClick())();
 }
 
 void MapView::_zoom(double ratio)

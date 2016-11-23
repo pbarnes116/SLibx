@@ -115,7 +115,7 @@ public:
 	SLIB_BOOLEAN_PROPERTY(StatusBarVisible);
 	SLIB_BOOLEAN_PROPERTY(StatusBarLocateAtTop);
 	
-	SLIB_REF_PROPERTY(Runnable, OnClick);
+	SLIB_CALLBACK_PROPERTY(OnClick);
 	SLIB_PROPERTY(Point, LastClickedPoint);
 	
 private:

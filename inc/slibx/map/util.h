@@ -42,7 +42,7 @@ public:
 		return *this;
 	}
 
-	SLIB_INLINE sl_bool operator==(const MapTileLocationT<T>& other)
+	SLIB_INLINE sl_bool operator==(const MapTileLocationT<T>& other) const
 	{
 		return level == other.level && y == other.y && x == other.x;
 	}
