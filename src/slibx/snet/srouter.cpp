@@ -728,7 +728,7 @@ Ref<SRouter> SRouter::createFromConfiguration(const Variant& varConfig)
 				if (route.parseConfig(ret.ptr, varRoutes[i])) {
 					ret->m_listRoutes.add_NoLock(route);
 				} else {
-					SLIB_LOG_ERROR(TAG, "Failed to parse route element: " + varRoutes[i].toJson());
+					SLIB_LOG_ERROR(TAG, "Failed to parse route element: " + varRoutes[i].toJsonString());
 					return Ref<SRouter>::null();
 				}
 			}
@@ -741,7 +741,7 @@ Ref<SRouter> SRouter::createFromConfiguration(const Variant& varConfig)
 				if (arp.parseConfig(ret.ptr, varArps[i])) {
 					ret->m_listArpProxies.add_NoLock(arp);
 				} else {
-					SLIB_LOG_ERROR(TAG, "Failed to parse ARP proxy element: " + varArps[i].toJson());
+					SLIB_LOG_ERROR(TAG, "Failed to parse ARP proxy element: " + varArps[i].toJsonString());
 					return Ref<SRouter>::null();
 				}
 			}

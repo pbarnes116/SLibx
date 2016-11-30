@@ -19,19 +19,6 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\..\inc\slibx\map.h" />
-    <ClInclude Include="..\..\..\inc\slibx\map\camera.h" />
-    <ClInclude Include="..\..\..\inc\slibx\map\data.h" />
-    <ClInclude Include="..\..\..\inc\slibx\map\data_building.h" />
-    <ClInclude Include="..\..\..\inc\slibx\map\data_gearth.h" />
-    <ClInclude Include="..\..\..\inc\slibx\map\data_gis.h" />
-    <ClInclude Include="..\..\..\inc\slibx\map\definition.h" />
-    <ClInclude Include="..\..\..\inc\slibx\map\dem.h" />
-    <ClInclude Include="..\..\..\inc\slibx\map\earth.h" />
-    <ClInclude Include="..\..\..\inc\slibx\map\mapview.h" />
-    <ClInclude Include="..\..\..\inc\slibx\map\object.h" />
-    <ClInclude Include="..\..\..\inc\slibx\map\package.h" />
-    <ClInclude Include="..\..\..\inc\slibx\map\util.h" />
     <ClInclude Include="..\..\..\inc\slibx\sdev.h" />
     <ClInclude Include="..\..\..\inc\slibx\sdev\definition.h" />
     <ClInclude Include="..\..\..\inc\slibx\sdev\sapp.h" />
@@ -45,37 +32,8 @@
     <ClInclude Include="..\..\..\inc\slibx\snet\dbip.h" />
     <ClInclude Include="..\..\..\inc\slibx\snet\definition.h" />
     <ClInclude Include="..\..\..\inc\slibx\snet\srouter.h" />
-    <ClInclude Include="..\..\..\src\slibx\map\map_data_config.h" />
-    <ClInclude Include="..\..\..\src\slibx\map\map_earth_renderer.h" />
-    <ClInclude Include="..\..\..\src\slibx\map\map_tile_building.h" />
-    <ClInclude Include="..\..\..\src\slibx\map\map_tile_config.h" />
-    <ClInclude Include="..\..\..\src\slibx\map\map_tile_dem.h" />
-    <ClInclude Include="..\..\..\src\slibx\map\map_tile_gis.h" />
-    <ClInclude Include="..\..\..\src\slibx\map\map_tile_layer.h" />
-    <ClInclude Include="..\..\..\src\slibx\map\map_tile_picture.h" />
-    <ClInclude Include="..\..\..\src\slibx\map\map_tile_render.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\src\slibx\map\map_camera.cpp" />
-    <ClCompile Include="..\..\..\src\slibx\map\map_data.cpp" />
-    <ClCompile Include="..\..\..\src\slibx\map\map_data_building.cpp" />
-    <ClCompile Include="..\..\..\src\slibx\map\map_data_gearth.cpp" />
-    <ClCompile Include="..\..\..\src\slibx\map\map_data_gis.cpp" />
-    <ClCompile Include="..\..\..\src\slibx\map\map_dem.cpp" />
-    <ClCompile Include="..\..\..\src\slibx\map\map_earth.cpp" />
-    <ClCompile Include="..\..\..\src\slibx\map\map_earth_base.cpp" />
-    <ClCompile Include="..\..\..\src\slibx\map\map_earth_control.cpp" />
-    <ClCompile Include="..\..\..\src\slibx\map\map_earth_data.cpp" />
-    <ClCompile Include="..\..\..\src\slibx\map\map_earth_render.cpp" />
-    <ClCompile Include="..\..\..\src\slibx\map\map_mapview.cpp" />
-    <ClCompile Include="..\..\..\src\slibx\map\map_package.cpp" />
-    <ClCompile Include="..\..\..\src\slibx\map\map_tile_building.cpp" />
-    <ClCompile Include="..\..\..\src\slibx\map\map_tile_dem.cpp" />
-    <ClCompile Include="..\..\..\src\slibx\map\map_tile_gis.cpp" />
-    <ClCompile Include="..\..\..\src\slibx\map\map_tile_layer.cpp" />
-    <ClCompile Include="..\..\..\src\slibx\map\map_tile_picture.cpp" />
-    <ClCompile Include="..\..\..\src\slibx\map\map_tile_render.cpp" />
-    <ClCompile Include="..\..\..\src\slibx\map\map_util.cpp" />
     <ClCompile Include="..\..\..\src\slibx\sdev\dev_sapp_document.cpp" />
     <ClCompile Include="..\..\..\src\slibx\sdev\dev_sapp_resources.cpp" />
     <ClCompile Include="..\..\..\src\slibx\sdev\dev_sapp_values.cpp" />

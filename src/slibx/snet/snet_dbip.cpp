@@ -1,7 +1,7 @@
 #include "../../../inc/slibx/snet/dbip.h"
 
 #include <slib/core/file.h>
-#include <slib/core/algorithm.h>
+#include <slib/core/compare.h>
 
 SLIB_SNET_NAMESPACE_BEGIN
 

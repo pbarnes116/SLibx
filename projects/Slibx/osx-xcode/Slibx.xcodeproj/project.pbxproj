@@ -12,35 +12,6 @@
 		267E06861D3F731500B1EC97 /* dev_sapp_values.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 267E06841D3F731500B1EC97 /* dev_sapp_values.cpp */; };
 		26ACCB931C4A3AA000330F88 /* srouter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26ACCB921C4A3AA000330F88 /* srouter.cpp */; };
 		26FF905A1D21A4D700812F22 /* dev_util.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26FF90591D21A4D700812F22 /* dev_util.cpp */; };
-		A2255B331BBA70B800E4CA9B /* map_tile_layer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A2255B311BBA70B800E4CA9B /* map_tile_layer.cpp */; };
-		A2255B341BBA70B800E4CA9B /* map_tile_layer.h in Headers */ = {isa = PBXBuildFile; fileRef = A2255B321BBA70B800E4CA9B /* map_tile_layer.h */; };
-		A2492A4C1B8C44FC00928EAD /* map_camera.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A2492A2D1B8C44FC00928EAD /* map_camera.cpp */; };
-		A2492A4D1B8C44FC00928EAD /* map_data.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A2492A2E1B8C44FC00928EAD /* map_data.cpp */; };
-		A2492A4E1B8C44FC00928EAD /* map_data_building.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A2492A2F1B8C44FC00928EAD /* map_data_building.cpp */; };
-		A2492A4F1B8C44FC00928EAD /* map_data_config.h in Headers */ = {isa = PBXBuildFile; fileRef = A2492A301B8C44FC00928EAD /* map_data_config.h */; };
-		A2492A501B8C44FC00928EAD /* map_data_gearth.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A2492A311B8C44FC00928EAD /* map_data_gearth.cpp */; };
-		A2492A511B8C44FC00928EAD /* map_data_gis.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A2492A321B8C44FC00928EAD /* map_data_gis.cpp */; };
-		A2492A521B8C44FC00928EAD /* map_dem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A2492A331B8C44FC00928EAD /* map_dem.cpp */; };
-		A2492A531B8C44FC00928EAD /* map_earth.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A2492A341B8C44FC00928EAD /* map_earth.cpp */; };
-		A2492A541B8C44FC00928EAD /* map_earth_base.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A2492A351B8C44FC00928EAD /* map_earth_base.cpp */; };
-		A2492A551B8C44FC00928EAD /* map_earth_control.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A2492A361B8C44FC00928EAD /* map_earth_control.cpp */; };
-		A2492A561B8C44FC00928EAD /* map_earth_data.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A2492A371B8C44FC00928EAD /* map_earth_data.cpp */; };
-		A2492A571B8C44FC00928EAD /* map_earth_render.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A2492A381B8C44FC00928EAD /* map_earth_render.cpp */; };
-		A2492A581B8C44FC00928EAD /* map_earth_renderer.h in Headers */ = {isa = PBXBuildFile; fileRef = A2492A391B8C44FC00928EAD /* map_earth_renderer.h */; };
-		A2492A591B8C44FC00928EAD /* map_mapview.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A2492A3A1B8C44FC00928EAD /* map_mapview.cpp */; };
-		A2492A5A1B8C44FC00928EAD /* map_package.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A2492A3B1B8C44FC00928EAD /* map_package.cpp */; };
-		A2492A5B1B8C44FC00928EAD /* map_tile_building.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A2492A3C1B8C44FC00928EAD /* map_tile_building.cpp */; };
-		A2492A5C1B8C44FC00928EAD /* map_tile_building.h in Headers */ = {isa = PBXBuildFile; fileRef = A2492A3D1B8C44FC00928EAD /* map_tile_building.h */; };
-		A2492A5D1B8C44FC00928EAD /* map_tile_config.h in Headers */ = {isa = PBXBuildFile; fileRef = A2492A3E1B8C44FC00928EAD /* map_tile_config.h */; };
-		A2492A5E1B8C44FC00928EAD /* map_tile_dem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A2492A3F1B8C44FC00928EAD /* map_tile_dem.cpp */; };
-		A2492A5F1B8C44FC00928EAD /* map_tile_dem.h in Headers */ = {isa = PBXBuildFile; fileRef = A2492A401B8C44FC00928EAD /* map_tile_dem.h */; };
-		A2492A601B8C44FC00928EAD /* map_tile_gis.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A2492A411B8C44FC00928EAD /* map_tile_gis.cpp */; };
-		A2492A611B8C44FC00928EAD /* map_tile_gis.h in Headers */ = {isa = PBXBuildFile; fileRef = A2492A421B8C44FC00928EAD /* map_tile_gis.h */; };
-		A2492A621B8C44FC00928EAD /* map_tile_picture.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A2492A431B8C44FC00928EAD /* map_tile_picture.cpp */; };
-		A2492A631B8C44FC00928EAD /* map_tile_picture.h in Headers */ = {isa = PBXBuildFile; fileRef = A2492A441B8C44FC00928EAD /* map_tile_picture.h */; };
-		A2492A641B8C44FC00928EAD /* map_tile_render.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A2492A451B8C44FC00928EAD /* map_tile_render.cpp */; };
-		A2492A651B8C44FC00928EAD /* map_tile_render.h in Headers */ = {isa = PBXBuildFile; fileRef = A2492A461B8C44FC00928EAD /* map_tile_render.h */; };
-		A2492A661B8C44FC00928EAD /* map_util.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A2492A471B8C44FC00928EAD /* map_util.cpp */; };
 		A2492A671B8C44FC00928EAD /* secure_file_pack.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A2492A491B8C44FC00928EAD /* secure_file_pack.cpp */; };
 		A2492A681B8C44FC00928EAD /* snet_dbip.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A2492A4B1B8C44FC00928EAD /* snet_dbip.cpp */; };
 /* End PBXBuildFile section */
@@ -51,37 +22,8 @@
 		267E06841D3F731500B1EC97 /* dev_sapp_values.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = dev_sapp_values.cpp; path = sdev/dev_sapp_values.cpp; sourceTree = "<group>"; };
 		26ACCB921C4A3AA000330F88 /* srouter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = srouter.cpp; sourceTree = "<group>"; };
 		26FF90591D21A4D700812F22 /* dev_util.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = dev_util.cpp; path = sdev/dev_util.cpp; sourceTree = "<group>"; };
-		A2255B311BBA70B800E4CA9B /* map_tile_layer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = map_tile_layer.cpp; sourceTree = "<group>"; };
-		A2255B321BBA70B800E4CA9B /* map_tile_layer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = map_tile_layer.h; sourceTree = "<group>"; };
 		A2492A211B8C446400928EAD /* libslibx.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libslibx.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		A2492A2A1B8C44EB00928EAD /* slibx */ = {isa = PBXFileReference; lastKnownFileType = folder; name = slibx; path = ../../../inc/slibx; sourceTree = "<group>"; };
-		A2492A2D1B8C44FC00928EAD /* map_camera.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = map_camera.cpp; sourceTree = "<group>"; };
-		A2492A2E1B8C44FC00928EAD /* map_data.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = map_data.cpp; sourceTree = "<group>"; };
-		A2492A2F1B8C44FC00928EAD /* map_data_building.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = map_data_building.cpp; sourceTree = "<group>"; };
-		A2492A301B8C44FC00928EAD /* map_data_config.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = map_data_config.h; sourceTree = "<group>"; };
-		A2492A311B8C44FC00928EAD /* map_data_gearth.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = map_data_gearth.cpp; sourceTree = "<group>"; };
-		A2492A321B8C44FC00928EAD /* map_data_gis.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = map_data_gis.cpp; sourceTree = "<group>"; };
-		A2492A331B8C44FC00928EAD /* map_dem.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = map_dem.cpp; sourceTree = "<group>"; };
-		A2492A341B8C44FC00928EAD /* map_earth.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = map_earth.cpp; sourceTree = "<group>"; };
-		A2492A351B8C44FC00928EAD /* map_earth_base.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = map_earth_base.cpp; sourceTree = "<group>"; };
-		A2492A361B8C44FC00928EAD /* map_earth_control.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = map_earth_control.cpp; sourceTree = "<group>"; };
-		A2492A371B8C44FC00928EAD /* map_earth_data.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = map_earth_data.cpp; sourceTree = "<group>"; };
-		A2492A381B8C44FC00928EAD /* map_earth_render.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = map_earth_render.cpp; sourceTree = "<group>"; };
-		A2492A391B8C44FC00928EAD /* map_earth_renderer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = map_earth_renderer.h; sourceTree = "<group>"; };
-		A2492A3A1B8C44FC00928EAD /* map_mapview.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = map_mapview.cpp; sourceTree = "<group>"; };
-		A2492A3B1B8C44FC00928EAD /* map_package.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = map_package.cpp; sourceTree = "<group>"; };
-		A2492A3C1B8C44FC00928EAD /* map_tile_building.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = map_tile_building.cpp; sourceTree = "<group>"; };
-		A2492A3D1B8C44FC00928EAD /* map_tile_building.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = map_tile_building.h; sourceTree = "<group>"; };
-		A2492A3E1B8C44FC00928EAD /* map_tile_config.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = map_tile_config.h; sourceTree = "<group>"; };
-		A2492A3F1B8C44FC00928EAD /* map_tile_dem.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = map_tile_dem.cpp; sourceTree = "<group>"; };
-		A2492A401B8C44FC00928EAD /* map_tile_dem.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = map_tile_dem.h; sourceTree = "<group>"; };
-		A2492A411B8C44FC00928EAD /* map_tile_gis.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = map_tile_gis.cpp; sourceTree = "<group>"; };
-		A2492A421B8C44FC00928EAD /* map_tile_gis.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = map_tile_gis.h; sourceTree = "<group>"; };
-		A2492A431B8C44FC00928EAD /* map_tile_picture.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = map_tile_picture.cpp; sourceTree = "<group>"; };
-		A2492A441B8C44FC00928EAD /* map_tile_picture.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = map_tile_picture.h; sourceTree = "<group>"; };
-		A2492A451B8C44FC00928EAD /* map_tile_render.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = map_tile_render.cpp; sourceTree = "<group>"; };
-		A2492A461B8C44FC00928EAD /* map_tile_render.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = map_tile_render.h; sourceTree = "<group>"; };
-		A2492A471B8C44FC00928EAD /* map_util.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = map_util.cpp; sourceTree = "<group>"; };
 		A2492A491B8C44FC00928EAD /* secure_file_pack.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = secure_file_pack.cpp; sourceTree = "<group>"; };
 		A2492A4B1B8C44FC00928EAD /* snet_dbip.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = snet_dbip.cpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -106,6 +48,13 @@
 				26FF90591D21A4D700812F22 /* dev_util.cpp */,
 			);
 			name = sdev;
+			sourceTree = "<group>";
+		};
+		26CBB0221DE5E8DE00F5A6F9 /* smap */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = smap;
 			sourceTree = "<group>";
 		};
 		A2492A181B8C446400928EAD = {
@@ -144,49 +93,13 @@
 		A2492A2B1B8C44FC00928EAD /* slibx */ = {
 			isa = PBXGroup;
 			children = (
-				A2492A2C1B8C44FC00928EAD /* map */,
 				26B57FC61D0B0FC1002FF522 /* sdev */,
 				A2492A481B8C44FC00928EAD /* sfile */,
+				26CBB0221DE5E8DE00F5A6F9 /* smap */,
 				A2492A4A1B8C44FC00928EAD /* snet */,
 			);
 			name = slibx;
 			path = ../../../src/slibx;
-			sourceTree = "<group>";
-		};
-		A2492A2C1B8C44FC00928EAD /* map */ = {
-			isa = PBXGroup;
-			children = (
-				A2492A2D1B8C44FC00928EAD /* map_camera.cpp */,
-				A2492A2E1B8C44FC00928EAD /* map_data.cpp */,
-				A2492A2F1B8C44FC00928EAD /* map_data_building.cpp */,
-				A2492A301B8C44FC00928EAD /* map_data_config.h */,
-				A2492A311B8C44FC00928EAD /* map_data_gearth.cpp */,
-				A2492A321B8C44FC00928EAD /* map_data_gis.cpp */,
-				A2492A331B8C44FC00928EAD /* map_dem.cpp */,
-				A2492A341B8C44FC00928EAD /* map_earth.cpp */,
-				A2492A351B8C44FC00928EAD /* map_earth_base.cpp */,
-				A2492A361B8C44FC00928EAD /* map_earth_control.cpp */,
-				A2492A371B8C44FC00928EAD /* map_earth_data.cpp */,
-				A2492A381B8C44FC00928EAD /* map_earth_render.cpp */,
-				A2492A391B8C44FC00928EAD /* map_earth_renderer.h */,
-				A2492A3A1B8C44FC00928EAD /* map_mapview.cpp */,
-				A2492A3B1B8C44FC00928EAD /* map_package.cpp */,
-				A2492A3C1B8C44FC00928EAD /* map_tile_building.cpp */,
-				A2492A3D1B8C44FC00928EAD /* map_tile_building.h */,
-				A2492A3E1B8C44FC00928EAD /* map_tile_config.h */,
-				A2492A3F1B8C44FC00928EAD /* map_tile_dem.cpp */,
-				A2492A401B8C44FC00928EAD /* map_tile_dem.h */,
-				A2492A411B8C44FC00928EAD /* map_tile_gis.cpp */,
-				A2492A421B8C44FC00928EAD /* map_tile_gis.h */,
-				A2255B311BBA70B800E4CA9B /* map_tile_layer.cpp */,
-				A2255B321BBA70B800E4CA9B /* map_tile_layer.h */,
-				A2492A431B8C44FC00928EAD /* map_tile_picture.cpp */,
-				A2492A441B8C44FC00928EAD /* map_tile_picture.h */,
-				A2492A451B8C44FC00928EAD /* map_tile_render.cpp */,
-				A2492A461B8C44FC00928EAD /* map_tile_render.h */,
-				A2492A471B8C44FC00928EAD /* map_util.cpp */,
-			);
-			path = map;
 			sourceTree = "<group>";
 		};
 		A2492A481B8C44FC00928EAD /* sfile */ = {
@@ -213,15 +126,6 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				A2492A4F1B8C44FC00928EAD /* map_data_config.h in Headers */,
-				A2492A651B8C44FC00928EAD /* map_tile_render.h in Headers */,
-				A2492A581B8C44FC00928EAD /* map_earth_renderer.h in Headers */,
-				A2492A631B8C44FC00928EAD /* map_tile_picture.h in Headers */,
-				A2492A5F1B8C44FC00928EAD /* map_tile_dem.h in Headers */,
-				A2255B341BBA70B800E4CA9B /* map_tile_layer.h in Headers */,
-				A2492A611B8C44FC00928EAD /* map_tile_gis.h in Headers */,
-				A2492A5C1B8C44FC00928EAD /* map_tile_building.h in Headers */,
-				A2492A5D1B8C44FC00928EAD /* map_tile_config.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -282,31 +186,11 @@
 			buildActionMask = 2147483647;
 			files = (
 				267E06851D3F731500B1EC97 /* dev_sapp_document.cpp in Sources */,
-				A2492A641B8C44FC00928EAD /* map_tile_render.cpp in Sources */,
-				A2255B331BBA70B800E4CA9B /* map_tile_layer.cpp in Sources */,
 				A2492A681B8C44FC00928EAD /* snet_dbip.cpp in Sources */,
-				A2492A4D1B8C44FC00928EAD /* map_data.cpp in Sources */,
-				A2492A501B8C44FC00928EAD /* map_data_gearth.cpp in Sources */,
-				A2492A551B8C44FC00928EAD /* map_earth_control.cpp in Sources */,
-				A2492A5A1B8C44FC00928EAD /* map_package.cpp in Sources */,
 				A2492A671B8C44FC00928EAD /* secure_file_pack.cpp in Sources */,
-				A2492A4C1B8C44FC00928EAD /* map_camera.cpp in Sources */,
 				262DDA8C1D3F7AD400061CEA /* dev_sapp_resources.cpp in Sources */,
-				A2492A4E1B8C44FC00928EAD /* map_data_building.cpp in Sources */,
-				A2492A5B1B8C44FC00928EAD /* map_tile_building.cpp in Sources */,
-				A2492A511B8C44FC00928EAD /* map_data_gis.cpp in Sources */,
-				A2492A531B8C44FC00928EAD /* map_earth.cpp in Sources */,
-				A2492A5E1B8C44FC00928EAD /* map_tile_dem.cpp in Sources */,
-				A2492A541B8C44FC00928EAD /* map_earth_base.cpp in Sources */,
 				26ACCB931C4A3AA000330F88 /* srouter.cpp in Sources */,
-				A2492A571B8C44FC00928EAD /* map_earth_render.cpp in Sources */,
-				A2492A521B8C44FC00928EAD /* map_dem.cpp in Sources */,
-				A2492A591B8C44FC00928EAD /* map_mapview.cpp in Sources */,
-				A2492A621B8C44FC00928EAD /* map_tile_picture.cpp in Sources */,
-				A2492A601B8C44FC00928EAD /* map_tile_gis.cpp in Sources */,
 				26FF905A1D21A4D700812F22 /* dev_util.cpp in Sources */,
-				A2492A661B8C44FC00928EAD /* map_util.cpp in Sources */,
-				A2492A561B8C44FC00928EAD /* map_earth_data.cpp in Sources */,
 				267E06861D3F731500B1EC97 /* dev_sapp_values.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
