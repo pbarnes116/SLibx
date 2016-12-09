@@ -5,7 +5,7 @@
 #include <slib/core/file.h>
 #include <slib/core/log.h>
 #include <slib/core/resource.h>
-#include <slib/core/scoped_pointer.h>
+#include <slib/core/scoped.h>
 #include <slib/ui.h>
 
 #define TAG "SApp"

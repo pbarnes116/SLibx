@@ -5,7 +5,7 @@
 #include <slib/network/arp.h>
 #include <slib/network/os.h>
 #include <slib/crypto/zlib.h>
-#include <slib/core/scoped_pointer.h>
+#include <slib/core/scoped.h>
 #include <slib/core/log.h>
 
 #define TAG "SRouter"
