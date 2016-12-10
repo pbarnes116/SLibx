@@ -381,6 +381,7 @@ sl_bool SAppDocument::_parseConfiguration(const String& filePath, SAppConfigurat
 	}
 	
 	XmlParseParam param;
+	param.flagLogError = sl_false;
 	param.setCreatingOnlyElementsAndTexts();
 	Ref<XmlDocument> xml = Xml::parseXmlFromTextFile(filePath, param);
 	if (param.flagError) {
@@ -483,6 +484,7 @@ sl_bool SAppDocument::_parseResourcesXml(const String& filePath)
 	_log(_g_sdev_sapp_log_open_resource_begin.arg(filePath));
 	
 	XmlParseParam param;
+	param.flagLogError = sl_false;
 	param.setCreatingOnlyElementsAndTexts();
 	Ref<XmlDocument> xml = Xml::parseXmlFromTextFile(filePath, param);
 	if (param.flagError) {
