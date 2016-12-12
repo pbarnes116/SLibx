@@ -3946,7 +3946,7 @@ BEGIN_PROCESS_LAYOUT_CONTROL(View, View)
 			if (attr->finalFontSize.flagDefined) {
 				fontSize = attr->finalFontSize.getAccessString();
 			} else {
-				fontSize = "UI::getDefaultFontSize()";
+				fontSize = "slib::UI::getDefaultFontSize()";
 			}
 			StringBuffer* sb;
 			String strUpdateMode;
