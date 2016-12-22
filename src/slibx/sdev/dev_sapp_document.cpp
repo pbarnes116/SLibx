@@ -2842,6 +2842,7 @@ sl_bool SAppDocument::_processLayoutResourceControl(LayoutControlProcessParams *
 		PROCESS_CONTROL_SWITCH(Web)
 		PROCESS_CONTROL_SWITCH(Progress)
 		PROCESS_CONTROL_SWITCH(Slider)
+		PROCESS_CONTROL_SWITCH(Picker)
 		default:
 			return sl_false;
 	}
@@ -5362,5 +5363,99 @@ BEGIN_PROCESS_LAYOUT_CONTROL(Slider, Slider)
 }
 END_PROCESS_LAYOUT_CONTROL
 
+
+BEGIN_PROCESS_LAYOUT_CONTROL(Picker, PickerView)
+{
+	LAYOUT_CONTROL_PROCESS_SUPER(View)
+	
+	LAYOUT_CONTROL_GENERIC_ATTR_NOREDRAW(textColor, setTextColor)
+	
+	LAYOUT_CONTROL_SET_NATIVE_WIDGET
+	
+	if (op == OP_PARSE) {
+		ListItems< Ref<XmlElement> > itemXmls(_getLayoutItemChildElements(resourceItem, "item"));
+		for (sl_size i = 0; i < itemXmls.count; i++) {
+			Ref<XmlElement>& itemXml = itemXmls[i];
+			if (itemXml.isNotNull()) {
+				SAppLayoutSelectItem subItem;
+				LAYOUT_CONTROL_PARSE_XML_ATTR(itemXml, subItem., title)
+				LAYOUT_CONTROL_PARSE_XML_ATTR(itemXml, subItem., value)
+				LAYOUT_CONTROL_PARSE_XML_ATTR(itemXml, subItem., selected)
+				subItem.element = itemXml;
+				if (!(attr->items.add(subItem))) {
+					_logError(itemXml, _g_sdev_sapp_error_out_of_memory);
+					return sl_false;
+				}
+			}
+		}
+	} else if (op == OP_GENERATE_CPP) {
+		ListLocker<SAppLayoutSelectItem> selectItems(attr->items);
+		if (selectItems.count > 0) {
+			sl_size indexSelected = 0;
+			sl_bool flagSelected = sl_false;
+			params->sbDefineInit->add(String::format("%s%s->setItemsCount(%d, slib::UIUpdateMode::Init);%n", strTab, name, selectItems.count));
+			for (sl_size i = 0; i < selectItems.count; i++) {
+				SAppLayoutSelectItem& selectItem = selectItems[i];
+				if (!(_checkStringValueAvailable(selectItem.title, selectItem.element))) {
+					return sl_false;
+				}
+				if (selectItem.title.flagDefined) {
+					params->sbDefineInit->add(String::format("%s%s->setItemTitle(%d, %s, slib::UIUpdateMode::Init);%n", strTab, name, i, selectItem.title.getAccessString()));
+				}
+				if (!(_checkStringValueAvailable(selectItem.value, selectItem.element))) {
+					return sl_false;
+				}
+				if (selectItem.value.flagDefined) {
+					params->sbDefineInit->add(String::format("%s%s->setItemValue(%d, %s);%n", strTab, name, i, selectItem.value.getAccessString()));
+				}
+				if (selectItem.selected.flagDefined && selectItem.selected.value) {
+					flagSelected = sl_true;
+					indexSelected = i;
+				}
+			}
+			if (flagSelected) {
+				params->sbDefineInit->add(String::format("%s%s->selectIndex(%d, slib::UIUpdateMode::Init);%n", strTab, name, indexSelected));
+			}
+		}
+	} else if (op == OP_SIMULATE) {
+		if (!flagOnLayout) {
+			ListLocker<SAppLayoutSelectItem> selectItems(attr->items);
+			if (selectItems.count > 0) {
+				sl_uint32 indexSelected = 0;
+				sl_bool flagSelected = sl_false;
+				sl_uint32 n = (sl_uint32)(selectItems.count);
+				view->setItemsCount(n, UIUpdateMode::Init);
+				for (sl_uint32 i = 0; i < n; i++) {
+					SAppLayoutSelectItem& selectItem = selectItems[i];
+					if (!(_checkStringValueAvailable(selectItem.title, selectItem.element))) {
+						return sl_false;
+					}
+					if (selectItem.title.flagDefined) {
+						view->setItemTitle(i, _getStringValue(selectItem.title), UIUpdateMode::Init);
+					}
+					if (!(_checkStringValueAvailable(selectItem.value, selectItem.element))) {
+						return sl_false;
+					}
+					if (selectItem.value.flagDefined) {
+						view->setItemValue(i, _getStringValue(selectItem.value));
+					}
+					if (selectItem.selected.flagDefined && selectItem.selected.value) {
+						flagSelected = sl_true;
+						indexSelected = i;
+					}
+				}
+				if (flagSelected) {
+					if (!flagOnLayout) {
+						view->selectIndex(indexSelected, UIUpdateMode::Init);
+					}
+				}
+			}
+		}
+	}
+	
+	LAYOUT_CONTROL_ADD_STATEMENT
+	
+}
+END_PROCESS_LAYOUT_CONTROL
 
 SLIB_SDEV_NAMESPACE_END

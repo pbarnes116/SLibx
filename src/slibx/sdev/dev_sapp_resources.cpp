@@ -220,6 +220,14 @@ sl_bool SAppLayoutTabAttributes::isNotRequiredNative()
 	return sl_false;
 }
 
+sl_bool SAppLayoutPickerAttributes::isNotRequiredNative()
+{
+	if (textColor.flagDefined) {
+		return sl_true;
+	}
+	return sl_false;
+}
+
 
 SAppLayoutResourceItem::SAppLayoutResourceItem()
 {
@@ -271,6 +279,7 @@ SAppLayoutResource::SAppLayoutResource()
 	nAutoIncreaseNameSplit = 0;
 	nAutoIncreaseNameProgress = 0;
 	nAutoIncreaseNameSlider = 0;
+	nAutoIncreaseNamePicker = 0;
 	nAutoIncreaseNameOther = 0;
 }
 
@@ -371,6 +380,10 @@ String SAppLayoutResource::getAutoIncreasingName(int type)
 			prefix = "slider";
 			pN = &nAutoIncreaseNameSlider;
 			break;
+		case typePicker:
+			prefix = "picker";
+			pN = &nAutoIncreaseNamePicker;
+			break;
 		default:
 			prefix = "other";
 			pN = &nAutoIncreaseNameOther;
@@ -435,6 +448,8 @@ int SAppLayoutResource::getTypeFromName(const String &strType)
 		type = SAppLayoutResource::typeProgress;
 	} else if (strType == "slider") {
 		type = SAppLayoutResource::typeSlider;
+	} else if (strType == "picker") {
+		type = SAppLayoutResource::typePicker;
 	}
 	return type;
 }
@@ -515,7 +530,7 @@ void SAppLayoutSimulationWindow::open(SAppDocument* doc, SAppLayoutResource* lay
 		m_simulationContentView = getContentView();
 	} else {
 		setCenterScreenOnCreate(sl_true);
-		setSize(800, 450);
+		setSize(450, 800);
 		setResizable(sl_true);
 		viewContent = new ViewGroup;
 		m_simulationContentView = viewContent;

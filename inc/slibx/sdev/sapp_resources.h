@@ -587,6 +587,18 @@ public:
 	
 };
 
+class SAppLayoutPickerAttributes : public Referable
+{
+public:
+	SAppColorValue textColor;
+	
+	CList<SAppLayoutSelectItem> items;
+	
+public:
+	sl_bool isNotRequiredNative();
+	
+};
+
 class SAppLayoutStyle : public Referable
 {
 public:
@@ -634,7 +646,8 @@ public:
 		typeSplit = 0x0238,
 		
 		typeProgress = 0x0240,
-		typeSlider = 0x0241
+		typeSlider = 0x0241,
+		typePicker = 0x0242
 		
 	};
 	
@@ -667,6 +680,7 @@ public:
 	Ref<SAppLayoutWebAttributes> attrsWeb;
 	Ref<SAppLayoutProgressAttributes> attrsProgress;
 	Ref<SAppLayoutSliderAttributes> attrsSlider;
+	Ref<SAppLayoutPickerAttributes> attrsPicker;
 
 	CList< Ref<SAppLayoutStyle> > styles;
 	CList< Ref<SAppLayoutResourceItem> > children;
@@ -711,6 +725,7 @@ public:
 	sl_uint32 nAutoIncreaseNameSplit;
 	sl_uint32 nAutoIncreaseNameProgress;
 	sl_uint32 nAutoIncreaseNameSlider;
+	sl_uint32 nAutoIncreaseNamePicker;
 	sl_uint32 nAutoIncreaseNameOther;
 	
 public:
