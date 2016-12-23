@@ -151,6 +151,7 @@ protected:
 	sl_bool _processLayoutResourceControl_Progress(LayoutControlProcessParams* params);
 	sl_bool _processLayoutResourceControl_Slider(LayoutControlProcessParams* params);
 	sl_bool _processLayoutResourceControl_Picker(LayoutControlProcessParams* params);
+	sl_bool _processLayoutResourceControl_Pager(LayoutControlProcessParams* params);
 	
 private:
 	sl_bool m_flagOpened;

@@ -483,6 +483,38 @@ public:
 	
 };
 
+class SAppUIReturnKeyTypeValue
+{
+public:
+	sl_bool flagDefined;
+	UIReturnKeyType value;
+	
+public:
+	SAppUIReturnKeyTypeValue();
+	
+public:
+	String getAccessString();
+	
+	sl_bool parse(const String& str);
+	
+};
+
+class SAppUIKeyboardTypeValue
+{
+public:
+	sl_bool flagDefined;
+	UIKeyboardType value;
+	
+public:
+	SAppUIKeyboardTypeValue();
+	
+public:
+	String getAccessString();
+	
+	sl_bool parse(const String& str);
+	
+};
+
 SLIB_SDEV_NAMESPACE_END
 
 #endif

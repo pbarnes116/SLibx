@@ -280,6 +280,7 @@ SAppLayoutResource::SAppLayoutResource()
 	nAutoIncreaseNameProgress = 0;
 	nAutoIncreaseNameSlider = 0;
 	nAutoIncreaseNamePicker = 0;
+	nAutoIncreaseNamePager = 0;
 	nAutoIncreaseNameOther = 0;
 }
 
@@ -384,6 +385,10 @@ String SAppLayoutResource::getAutoIncreasingName(int type)
 			prefix = "picker";
 			pN = &nAutoIncreaseNamePicker;
 			break;
+		case typePager:
+			prefix = "pager";
+			pN = &nAutoIncreaseNamePager;
+			break;
 		default:
 			prefix = "other";
 			pN = &nAutoIncreaseNameOther;
@@ -450,6 +455,8 @@ int SAppLayoutResource::getTypeFromName(const String &strType)
 		type = SAppLayoutResource::typeSlider;
 	} else if (strType == "picker") {
 		type = SAppLayoutResource::typePicker;
+	} else if (strType == "pager") {
+		type = SAppLayoutResource::typePager;
 	}
 	return type;
 }

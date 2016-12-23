@@ -1868,4 +1868,223 @@ sl_bool SAppRedrawModeValue::parse(const String& _str)
 }
 
 
+/************************************************
+ 				UIReturnKeyType
+************************************************/
+
+SAppUIReturnKeyTypeValue::SAppUIReturnKeyTypeValue()
+: flagDefined(sl_false), value(UIReturnKeyType::Default)
+{
+}
+
+String SAppUIReturnKeyTypeValue::getAccessString()
+{
+	if (!flagDefined) {
+		return "slib::UIReturnKeyType::Default";
+	}
+	switch (value) {
+		case UIReturnKeyType::Default:
+			return "slib::UIReturnKeyType::Default";
+		case UIReturnKeyType::Return:
+			return "slib::UIReturnKeyType::Return";
+		case UIReturnKeyType::Done:
+			return "slib::UIReturnKeyType::Done";
+		case UIReturnKeyType::Search:
+			return "slib::UIReturnKeyType::Search";
+		case UIReturnKeyType::Next:
+			return "slib::UIReturnKeyType::Next";
+		case UIReturnKeyType::Continue:
+			return "slib::UIReturnKeyType::Continue";
+		case UIReturnKeyType::Go:
+			return "slib::UIReturnKeyType::Go";
+		case UIReturnKeyType::Send:
+			return "slib::UIReturnKeyType::Send";
+		case UIReturnKeyType::Join:
+			return "slib::UIReturnKeyType::Join";
+		case UIReturnKeyType::Route:
+			return "slib::UIReturnKeyType::Route";
+		case UIReturnKeyType::EmergencyCall:
+			return "slib::UIReturnKeyType::EmergencyCall";
+		case UIReturnKeyType::Google:
+			return "slib::UIReturnKeyType::Google";
+		case UIReturnKeyType::Yahoo:
+			return "slib::UIReturnKeyType::Yahoo";
+		default:
+			break;
+	}
+	return "slib::UIReturnKeyType::Default";
+}
+
+sl_bool SAppUIReturnKeyTypeValue::parse(const String& _str)
+{
+	String str = _str.trim();
+	if (str.isEmpty()) {
+		flagDefined = sl_false;
+		return sl_true;
+	}
+	str = str.toLower();
+	if (str == "default") {
+		value = UIReturnKeyType::Default;
+		flagDefined = sl_true;
+		return sl_true;
+	} else if (str == "return") {
+		value = UIReturnKeyType::Return;
+		flagDefined = sl_true;
+		return sl_true;
+	} else if (str == "done") {
+		value = UIReturnKeyType::Done;
+		flagDefined = sl_true;
+		return sl_true;
+	} else if (str == "search") {
+		value = UIReturnKeyType::Search;
+		flagDefined = sl_true;
+		return sl_true;
+	} else if (str == "next") {
+		value = UIReturnKeyType::Next;
+		flagDefined = sl_true;
+		return sl_true;
+	} else if (str == "continue") {
+		value = UIReturnKeyType::Continue;
+		flagDefined = sl_true;
+		return sl_true;
+	} else if (str == "go") {
+		value = UIReturnKeyType::Go;
+		flagDefined = sl_true;
+		return sl_true;
+	} else if (str == "send") {
+		value = UIReturnKeyType::Send;
+		flagDefined = sl_true;
+		return sl_true;
+	} else if (str == "route") {
+		value = UIReturnKeyType::Route;
+		flagDefined = sl_true;
+		return sl_true;
+	} else if (str == "emergency") {
+		value = UIReturnKeyType::EmergencyCall;
+		flagDefined = sl_true;
+		return sl_true;
+	} else if (str == "google") {
+		value = UIReturnKeyType::Google;
+		flagDefined = sl_true;
+		return sl_true;
+	} else if (str == "yahoo") {
+		value = UIReturnKeyType::Yahoo;
+		flagDefined = sl_true;
+		return sl_true;
+	}
+	return sl_false;
+}
+
+
+/************************************************
+			UIKeyboardType
+************************************************/
+
+SAppUIKeyboardTypeValue::SAppUIKeyboardTypeValue()
+: flagDefined(sl_false), value(UIKeyboardType::Default)
+{
+}
+
+String SAppUIKeyboardTypeValue::getAccessString()
+{
+	if (!flagDefined) {
+		return "slib::UIKeyboardType::Default";
+	}
+	switch (value) {
+		case UIKeyboardType::Default:
+			return "slib::UIKeyboardType::Default";
+		case UIKeyboardType::Numpad:
+			return "slib::UIKeyboardType::Numpad";
+		case UIKeyboardType::Phone:
+			return "slib::UIKeyboardType::Phone";
+		case UIKeyboardType::Email:
+			return "slib::UIKeyboardType::Email";
+		case UIKeyboardType::Decimal:
+			return "slib::UIKeyboardType::Decimal";
+		case UIKeyboardType::Alphabet:
+			return "slib::UIKeyboardType::Alphabet";
+		case UIKeyboardType::Url:
+			return "slib::UIKeyboardType::Url";
+		case UIKeyboardType::WebSearch:
+			return "slib::UIKeyboardType::WebSearch";
+		case UIKeyboardType::Twitter:
+			return "slib::UIKeyboardType::Twitter";
+		case UIKeyboardType::NumbersAndPunctation:
+			return "slib::UIKeyboardType::NumbersAndPunctation";
+		case UIKeyboardType::NamePhone:
+			return "slib::UIKeyboardType::NamePhone";
+		case UIKeyboardType::Ascii:
+			return "slib::UIKeyboardType::Ascii";
+		case UIKeyboardType::AsciiNumpad:
+			return "slib::UIKeyboardType::AsciiNumpad";
+		default:
+			break;
+	}
+	return "slib::UIKeyboardType::Default";
+}
+
+sl_bool SAppUIKeyboardTypeValue::parse(const String& _str)
+{
+	String str = _str.trim();
+	if (str.isEmpty()) {
+		flagDefined = sl_false;
+		return sl_true;
+	}
+	str = str.toLower();
+	if (str == "default") {
+		value = UIKeyboardType::Default;
+		flagDefined = sl_true;
+		return sl_true;
+	} else if (str == "numpad") {
+		value = UIKeyboardType::Numpad;
+		flagDefined = sl_true;
+		return sl_true;
+	} else if (str == "phone") {
+		value = UIKeyboardType::Phone;
+		flagDefined = sl_true;
+		return sl_true;
+	} else if (str == "email") {
+		value = UIKeyboardType::Email;
+		flagDefined = sl_true;
+		return sl_true;
+	} else if (str == "decimal") {
+		value = UIKeyboardType::Decimal;
+		flagDefined = sl_true;
+		return sl_true;
+	} else if (str == "alphabet") {
+		value = UIKeyboardType::Alphabet;
+		flagDefined = sl_true;
+		return sl_true;
+	} else if (str == "url") {
+		value = UIKeyboardType::Url;
+		flagDefined = sl_true;
+		return sl_true;
+	} else if (str == "web-search") {
+		value = UIKeyboardType::WebSearch;
+		flagDefined = sl_true;
+		return sl_true;
+	} else if (str == "twitter") {
+		value = UIKeyboardType::Twitter;
+		flagDefined = sl_true;
+		return sl_true;
+	} else if (str == "numbers-and-punctation") {
+		value = UIKeyboardType::NumbersAndPunctation;
+		flagDefined = sl_true;
+		return sl_true;
+	} else if (str == "name-phone") {
+		value = UIKeyboardType::NamePhone;
+		flagDefined = sl_true;
+		return sl_true;
+	} else if (str == "ascii") {
+		value = UIKeyboardType::Ascii;
+		flagDefined = sl_true;
+		return sl_true;
+	} else if (str == "ascii-numpad") {
+		value = UIKeyboardType::AsciiNumpad;
+		flagDefined = sl_true;
+		return sl_true;
+	}
+	return sl_false;
+}
+
 SLIB_SDEV_NAMESPACE_END

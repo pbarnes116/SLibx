@@ -360,6 +360,8 @@ public:
 	SAppBooleanValue readOnly;
 	SAppBooleanValue multiLine;
 	SAppColorValue textColor;
+	SAppUIReturnKeyTypeValue returnKey;
+	SAppUIKeyboardTypeValue keyboard;
 	
 public:
 	sl_bool isNotRequiredNative();
@@ -599,6 +601,25 @@ public:
 	
 };
 
+struct SAppLayoutPagerItem
+{
+	SAppBooleanValue selected;
+	Ref<SAppLayoutResourceItem> view;
+	
+	Ref<XmlElement> element;
+	
+};
+
+class SAppLayoutPagerAttributes : public Referable
+{
+public:
+	SAppBooleanValue swipe;
+	
+	CList<SAppLayoutPagerItem> items;
+	
+};
+
+
 class SAppLayoutStyle : public Referable
 {
 public:
@@ -647,7 +668,8 @@ public:
 		
 		typeProgress = 0x0240,
 		typeSlider = 0x0241,
-		typePicker = 0x0242
+		typePicker = 0x0242,
+		typePager = 0x0243
 		
 	};
 	
@@ -681,6 +703,7 @@ public:
 	Ref<SAppLayoutProgressAttributes> attrsProgress;
 	Ref<SAppLayoutSliderAttributes> attrsSlider;
 	Ref<SAppLayoutPickerAttributes> attrsPicker;
+	Ref<SAppLayoutPagerAttributes> attrsPager;
 
 	CList< Ref<SAppLayoutStyle> > styles;
 	CList< Ref<SAppLayoutResourceItem> > children;
@@ -726,6 +749,7 @@ public:
 	sl_uint32 nAutoIncreaseNameProgress;
 	sl_uint32 nAutoIncreaseNameSlider;
 	sl_uint32 nAutoIncreaseNamePicker;
+	sl_uint32 nAutoIncreaseNamePager;
 	sl_uint32 nAutoIncreaseNameOther;
 	
 public:

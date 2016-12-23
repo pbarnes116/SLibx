@@ -2843,6 +2843,7 @@ sl_bool SAppDocument::_processLayoutResourceControl(LayoutControlProcessParams *
 		PROCESS_CONTROL_SWITCH(Progress)
 		PROCESS_CONTROL_SWITCH(Slider)
 		PROCESS_CONTROL_SWITCH(Picker)
+		PROCESS_CONTROL_SWITCH(Pager)
 		default:
 			return sl_false;
 	}
@@ -4432,6 +4433,8 @@ BEGIN_PROCESS_LAYOUT_CONTROL(Edit, EditView)
 	LAYOUT_CONTROL_GENERIC_ATTR_NOREDRAW(readOnly, setReadOnly)
 	LAYOUT_CONTROL_GENERIC_ATTR_NOREDRAW(multiLine, setMultiLine)
 	LAYOUT_CONTROL_GENERIC_ATTR_NOREDRAW(textColor, setTextColor)
+	LAYOUT_CONTROL_GENERIC_ATTR(returnKey, setReturnKeyType)
+	LAYOUT_CONTROL_GENERIC_ATTR(keyboard, setKeyboardType)
 	
 	LAYOUT_CONTROL_SET_NATIVE_WIDGET
 	
@@ -5454,6 +5457,108 @@ BEGIN_PROCESS_LAYOUT_CONTROL(Picker, PickerView)
 	}
 	
 	LAYOUT_CONTROL_ADD_STATEMENT
+	
+}
+END_PROCESS_LAYOUT_CONTROL
+
+BEGIN_PROCESS_LAYOUT_CONTROL(Pager, ViewPager)
+{
+	LAYOUT_CONTROL_PROCESS_SUPER(View)
+	
+	LAYOUT_CONTROL_GENERIC_ATTR(swipe, setSwipeNavigation)
+	
+	if (op == OP_PARSE) {
+		ListLocker< Ref<XmlElement> > itemXmls(_getLayoutItemChildElements(resourceItem, "item"));
+		for (sl_size i = 0; i < itemXmls.count; i++) {
+			Ref<XmlElement>& itemXml = itemXmls[i];
+			if (itemXml.isNotNull()) {
+				SAppLayoutPagerItem subItem;
+				LAYOUT_CONTROL_PARSE_XML_ATTR(itemXml, subItem., selected)
+				
+				sl_size nViews = itemXml->getChildElementsCount();
+				if (nViews > 0) {
+					if (nViews != 1) {
+						_logError(itemXml, _g_sdev_sapp_error_resource_layout_item_must_contain_one_child);
+						return sl_false;
+					}
+					Ref<XmlElement> xmlView= itemXml->getFirstChildElement();
+					if (xmlView.isNotNull()) {
+						Ref<SAppLayoutResourceItem> subItemView = _parseLayoutResourceItemChild(params->resource, resourceItem, xmlView);
+						if (subItemView.isNull()) {
+							return sl_false;
+						}
+						subItem.view = subItemView;
+					}
+				}
+				
+				subItem.element = itemXml;
+				
+				if (!(attr->items.add(subItem))) {
+					_logError(itemXml, _g_sdev_sapp_error_out_of_memory);
+					return sl_false;
+				}
+			}
+		}
+	} else if (op == OP_GENERATE_CPP) {
+		/* see below */
+	} else if (op == OP_SIMULATE) {
+		ListLocker<SAppLayoutPagerItem> subItems(attr->items);
+		if (subItems.count > 0) {
+			
+			sl_uint32 indexSelected = 0;
+			
+			sl_uint32 nSubItems = (sl_uint32)(subItems.count);
+			
+			for (sl_uint32 i = 0; i < nSubItems; i++) {
+				
+				SAppLayoutPagerItem& subItem = subItems[i];
+				
+				if (subItem.selected.flagDefined && subItem.selected.value) {
+					indexSelected = i;
+				}
+				
+				if (subItem.view.isNotNull()) {
+					Ref<View> contentView = _simulateLayoutCreateOrLayoutView(params->simulator, subItem.view.ptr, resourceItem, view, flagOnLayout);
+					if (contentView.isNotNull()) {
+						if (!flagOnLayout) {
+							view->addPage(contentView, UIUpdateMode::Init);
+						}
+					} else {
+						return sl_false;
+					}
+				}
+				
+				if (!flagOnLayout) {
+					view->selectPage(indexSelected, UIUpdateMode::Init);
+				}
+				
+			}
+			
+		}
+		
+	}
+	
+	LAYOUT_CONTROL_ADD_STATEMENT
+	
+	if (op == OP_GENERATE_CPP) {
+		ListLocker<SAppLayoutPagerItem> subItems(attr->items);
+		if (subItems.count > 0) {
+			sl_size indexSelected = 0;
+			for (sl_size i = 0; i < subItems.count; i++) {
+				SAppLayoutPagerItem& subItem = subItems[i];
+				if (subItem.view.isNotNull()) {
+					String addChildStatement = String::format("%s%s->addPage(%s, slib::UIUpdateMode::Init);%n%n", strTab, name, subItem.view->name);
+					if (!(_generateLayoutsCppItem(params->resource, subItem.view.ptr, resourceItem, *(params->sbDeclare), *(params->sbDefineInit), *(params->sbDefineLayout), addChildStatement))) {
+						return sl_false;
+					}
+				}
+				if (subItem.selected.flagDefined && subItem.selected.value) {
+					indexSelected = i;
+				}
+			}
+			params->sbDefineInit->add(String::format("%s%s->selectPage(%d, slib::UIUpdateMode::Init);%n", strTab, name, indexSelected));
+		}
+	}
 	
 }
 END_PROCESS_LAYOUT_CONTROL
