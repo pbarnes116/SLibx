@@ -67,7 +67,7 @@ protected:
 	virtual void _writeIPv4Packet(const void* packet, sl_uint32 size) = 0;
 
 protected:
-	SafeWeakRef<SRouter> m_router;
+	AtomicWeakRef<SRouter> m_router;
 
 	sl_uint32 m_mtuOutgoing;
 
@@ -186,7 +186,7 @@ protected:
 
 protected:
 	sl_bool m_flagTcp;
-	SafeRef<TcpDatagramClient> m_tcp;
+	AtomicRef<TcpDatagramClient> m_tcp;
 	SocketAddress m_address;
 	String m_key;
 	

@@ -59,7 +59,7 @@ sl_bool SecureFilePackage::createFromFiles(String filePath, const CreateParam& p
 	Ref<File> file = File::openForWrite(filePath);
 
 	if (file.isNull()) {
-		SLIB_LOG_ERROR(TAG, "Can not open target file (" + filePath + ")");
+		LogError(TAG, "Can not open target file (%s)", filePath);
 		return sl_false;
 	}
 
@@ -86,7 +86,7 @@ sl_bool SecureFilePackage::createFromFiles(String filePath, const CreateParam& p
 		SHA256::hash(password, 32, header.password_hash);
 	}
 	if (file->write(&header, sizeof(header)) != sizeof(header)) {
-		SLIB_LOG_ERROR(TAG, "Writing header error");
+		LogError(TAG, "Writing header error");
 		file->close();
 		return sl_false;
 	}
@@ -101,14 +101,14 @@ sl_bool SecureFilePackage::createFromFiles(String filePath, const CreateParam& p
 
 	sl_int64 posIndexHeader = file->getPosition();
 	if (file->write(&indexHeader, sizeof(indexHeader)) != sizeof(indexHeader)) {
-		SLIB_LOG_ERROR(TAG, "Writing index header error");
+		LogError(TAG, "Writing index header error");
 		file->close();
 		return sl_false;
 	}
 
 	sl_size nFiles = listSourceFilePaths.getCount();
 	if (nFiles > (sl_uint32)(-1) / sizeof(_SECURE_FILE_PACKAGE_INDEX) / 4) {
-		SLIB_LOG_ERROR(TAG, "Maximum file count reached");
+		LogError(TAG, "Maximum file count reached");
 		file->close();
 		return sl_false;
 	}
@@ -117,13 +117,13 @@ sl_bool SecureFilePackage::createFromFiles(String filePath, const CreateParam& p
 	_SECURE_FILE_PACKAGE_INDEX* indexes = (_SECURE_FILE_PACKAGE_INDEX*)(Base::createMemory(sizeIndex));
 	Math::randomMemory(indexes, sizeIndex);
 	if (!indexes) {
-		SLIB_LOG_ERROR(TAG, "Index creation - out of memory");
+		LogError(TAG, "Index creation - out of memory");
 		file->close();
 		return sl_false;
 	}
 	sl_int64 posIndexes = file->getPosition();
 	if (file->write(indexes, sizeIndex) != sizeIndex) {
-		SLIB_LOG_ERROR(TAG, "Write index table failed");
+		LogError(TAG, "Write index table failed");
 		Base::freeMemory(indexes);
 		file->close();
 		return sl_false;
@@ -157,7 +157,7 @@ sl_bool SecureFilePackage::createFromFiles(String filePath, const CreateParam& p
 			sl_uint32 lenFileName = (sl_uint32)(fileName16.getLength());
 			if (lenFileName > LEN_FILE_NAME-1) {
 				lenFileName = LEN_FILE_NAME-1;
-				SLIB_LOG(TAG, "Filename length over - " + fileName);
+				Log(TAG, "Filename length over - %s", fileName);
 			}
 			Base::copyMemory(indexes[i].fileName, fileName16.getData(), lenFileName * sizeof(sl_char16));
 			indexes[i].fileName[lenFileName] = 0;
@@ -191,7 +191,7 @@ sl_bool SecureFilePackage::createFromFiles(String filePath, const CreateParam& p
 					}
 
 					if (file->write(contentHeader, sizeContentHeader) != sizeContentHeader) {
-						SLIB_LOG_ERROR(TAG, "Write content header failed");
+						LogError(TAG, "Write content header failed");
 						Base::freeMemory(contentHeader);
 						Base::freeMemory(indexes);
 						Base::freeMemory(block);
@@ -212,7 +212,7 @@ sl_bool SecureFilePackage::createFromFiles(String filePath, const CreateParam& p
 							enc.encryptBlocks(block, block, r16);
 						}
 						if (file->write(block, r16) != r16) {
-							SLIB_LOG_ERROR(TAG, "Write content failed");
+							LogError(TAG, "Write content failed");
 							Base::freeMemory(indexes);
 							Base::freeMemory(block);
 							fileSource->close();
@@ -236,17 +236,17 @@ sl_bool SecureFilePackage::createFromFiles(String filePath, const CreateParam& p
 						}
 					}
 					if (sizeFileSum != (((sizeFile - 1) | 15) + 1)) {
-						SLIB_LOG(TAG, "Size mismatch - " + path);
+						Log(TAG, "Size mismatch - %s", path);
 					}
 					fileSource->close();
 				} else {
-					SLIB_LOG(TAG, "File open failed - " + path);
+					Log(TAG, "File open failed - %s", path);
 					indexes[i].type = indexTypeEmpty;
 					indexHeader.nFilesEmpty++;
 				}
 			}
 		} else {
-			SLIB_LOG(TAG, "File does not exist - " + path);
+			Log(TAG, "File does not exist - %s", path);
 			indexes[i].type = indexTypeEmpty;
 			indexHeader.nFilesEmpty++;
 		}
@@ -258,7 +258,7 @@ sl_bool SecureFilePackage::createFromFiles(String filePath, const CreateParam& p
 		enc.encryptBlocks(&indexHeader, &indexHeader, sizeof(indexHeader));
 	}
 	if (file->write(&indexHeader, sizeof(indexHeader)) != sizeof(indexHeader)) {
-		SLIB_LOG_ERROR(TAG, "Write encrypted index header failed");
+		LogError(TAG, "Write encrypted index header failed");
 		Base::freeMemory(indexes);
 		file->close();
 		return sl_false;
@@ -269,7 +269,7 @@ sl_bool SecureFilePackage::createFromFiles(String filePath, const CreateParam& p
 		enc.encryptBlocks(indexes, indexes, sizeIndex);
 	}
 	if (file->write(indexes, sizeIndex) != sizeIndex) {
-		SLIB_LOG_ERROR(TAG, "Write encrypted index table failed");
+		LogError(TAG, "Write encrypted index table failed");
 		Base::freeMemory(indexes);
 		file->close();
 		return sl_false;
@@ -343,7 +343,7 @@ List<SecureFilePackage::FileDesc> SecureFilePackage::getFiles()
 
 	Ref<File> file = File::openForRead(m_filePath);
 	if (file.isNull()) {
-		SLIB_LOG_ERROR(TAG, "can not open file - " + m_filePath);
+		LogError(TAG, "can not open file - %s", m_filePath);
 		return list;
 	}
 
@@ -351,7 +351,7 @@ List<SecureFilePackage::FileDesc> SecureFilePackage::getFiles()
 
 	_SECURE_FILE_PACKAGE_INDEX_HEADER indexHeader;
 	if (file->read(&indexHeader, sizeof(indexHeader)) != sizeof(indexHeader)) {
-		SLIB_LOG_ERROR(TAG, "index header read error - " + m_filePath);
+		LogError(TAG, "index header read error - %s", m_filePath);
 		file->close();
 		return list;
 	}
@@ -367,7 +367,7 @@ List<SecureFilePackage::FileDesc> SecureFilePackage::getFiles()
 	for (sl_uint32 i = 0; i < n; i++) {
 		_SECURE_FILE_PACKAGE_INDEX index;
 		if (file->read(&index, sizeof(index)) != sizeof(index)) {
-			SLIB_LOG(TAG, "index " + String::fromUint32(i) + " read error - " + m_filePath);
+			Log(TAG, "index %d read error - %s", i, m_filePath);
 			break;
 		} else {
 			if (m_flagPassword) {
@@ -401,7 +401,7 @@ sl_bool SecureFilePackage::findFile(String fileName, FileDesc* output)
 
 	Ref<File> file = File::openForRead(m_filePath);
 	if (file.isNull()) {
-		SLIB_LOG_ERROR(TAG, "can not open file - " + m_filePath);
+		LogError(TAG, "can not open file - %s", m_filePath);
 		return sl_false;
 	}
 
@@ -409,7 +409,7 @@ sl_bool SecureFilePackage::findFile(String fileName, FileDesc* output)
 
 	_SECURE_FILE_PACKAGE_INDEX_HEADER indexHeader;
 	if (file->read(&indexHeader, sizeof(indexHeader)) != sizeof(indexHeader)) {
-		SLIB_LOG_ERROR(TAG, "index header read error - " + m_filePath);
+		LogError(TAG, "index header read error - %s", m_filePath);
 		file->close();
 		return sl_false;
 	}
@@ -423,7 +423,7 @@ sl_bool SecureFilePackage::findFile(String fileName, FileDesc* output)
 
 	int n = (int)(indexHeader.nFilesTotal);
 	if (n <= 0) {
-		SLIB_LOG(TAG, "index is empty - " + m_filePath);
+		Log(TAG, "index is empty - %s", m_filePath);
 		file->close();
 		return sl_false;
 	}
@@ -439,7 +439,7 @@ sl_bool SecureFilePackage::findFile(String fileName, FileDesc* output)
 		_SECURE_FILE_PACKAGE_INDEX index;
 		file->seek(pre + mid * sizeof(_SECURE_FILE_PACKAGE_INDEX), SeekPosition::Begin);
 		if (file->read(&index, sizeof(index)) != sizeof(index)) {
-			SLIB_LOG(TAG, "index " + String::fromUint32(mid) + " read error" + m_filePath);
+			Log(TAG, "index %d read error - %s", mid, m_filePath);
 			break;
 		} else {
 			if (m_flagPassword) {
@@ -493,7 +493,7 @@ Memory SecureFilePackage::readFile(sl_int64 position, String* pFileName)
 
 	Ref<File> file = File::openForRead(m_filePath);
 	if (file.isNull()) {
-		SLIB_LOG_ERROR(TAG, "can not open file - " + m_filePath);
+		LogError(TAG, "can not open file - %s", m_filePath);
 		return ret;
 	}
 
@@ -513,7 +513,7 @@ Memory SecureFilePackage::readFile(sl_int64 position, String* pFileName)
 	if (pFileName) {
 		sl_int32 n = contentHeader.sizeHeader - sizeof(_SECURE_FILE_CONTENT_HEADER);
 		if ((sl_int32)(contentHeader.lengthFileName * sizeof(sl_char16)) > n) {
-			SLIB_LOG_ERROR(TAG, "filename length out on block " + String::fromInt64(position) + " - " + m_filePath);
+			LogError(TAG, "filename length out on block %d - %s", position, m_filePath);
 			file->close();
 			return ret;
 		}
@@ -521,7 +521,7 @@ Memory SecureFilePackage::readFile(sl_int64 position, String* pFileName)
 		if (buf) {
 			Base::resetMemory(buf, 0, n);
 			if (file->read(buf, n) != n) {
-				SLIB_LOG_ERROR(TAG, "read filename failed on block " + String::fromInt64(position) + " - " + m_filePath);
+				LogError(TAG, "read filename failed on block %d - %s", position, m_filePath);
 				Base::freeMemory(buf);
 				file->close();
 				return ret;
@@ -533,7 +533,7 @@ Memory SecureFilePackage::readFile(sl_int64 position, String* pFileName)
 			*pFileName = str;
 			Base::freeMemory(buf);
 		} else {
-			SLIB_LOG_ERROR(TAG, "out of memory on filename on block " + String::fromInt64(position) + " - " + m_filePath);
+			LogError(TAG, "out of memory on filename on block %d - %s", position, m_filePath);
 			file->close();
 			return ret;
 		}
@@ -567,7 +567,7 @@ Memory SecureFilePackage::readFile(sl_int64 position, String* pFileName)
 		nRead += m;
 	}
 	if (nRead != fileSize) {
-		SLIB_LOG(TAG, "file size mismatch the content on block " + String::fromInt64(position) + " - " + m_filePath);
+		Log(TAG, "file size mismatch the content on block %d - %s", position, m_filePath);
 	}
 
 	Base::freeMemory(block);

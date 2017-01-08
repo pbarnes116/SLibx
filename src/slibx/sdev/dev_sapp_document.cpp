@@ -147,9 +147,7 @@ sl_bool SAppDocument::openResources()
 	_freeResources();
 	
 	{
-		ListItems<String> list(File::getFiles(m_pathApp));
-		for (sl_size i = 0; i < list.count; i++) {
-			const String& fileName = list[i];
+		for (auto fileName : File::getFiles(m_pathApp)) {
 			if (fileName.isNotNull()) {
 				if (fileName == "image") {
 					if (!(_registerImageResources("image", m_pathApp + "/image", Locale::Unknown))) {
@@ -181,9 +179,7 @@ sl_bool SAppDocument::openResources()
 		for (int i = 0; i < sizeof(arrDirs)/sizeof(const char*); i++) {
 			String dirName = arrDirs[i];
 			String pathDir = m_pathApp + "/" + dirName;
-			ListItems<String> list(File::getFiles(pathDir));
-			for (sl_size k = 0; k < list.count; k++) {
-				const String& fileName = list[k];
+			for (auto fileName : File::getFiles(pathDir)) {
 				if (fileName.isNotNull()) {
 					String path = pathDir + "/" + fileName;
 					if (File::exists(path)) {
@@ -261,7 +257,7 @@ List< Ref<SAppLayoutResource> > SAppDocument::getLayouts()
 		return List< Ref<SAppLayoutResource> >::null();
 	}
 	
-	return m_layouts.values();
+	return m_layouts.getAllValues();
 	
 }
 
@@ -275,7 +271,7 @@ void SAppDocument::simulateLayoutInWindow(const String& layoutName)
 
 	Ref<SAppLayoutResource> layout = m_layouts.getValue(layoutName, Ref<SAppLayoutResource>::null());
 	if (layout.isNotNull()) {
-		_simulateLayoutInWindow(layout.ptr);
+		_simulateLayoutInWindow(layout.get());
 	}
 	
 }
@@ -286,25 +282,25 @@ void SAppDocument::simulateLayoutInWindow(const String& layoutName)
 
 void SAppDocument::_log(const String& text)
 {
-	SLIB_LOG(TAG, text);
+	Log(TAG, text);
 }
 
 void SAppDocument::_logError(const String& text)
 {
-	SLIB_LOG_ERROR(TAG, text);
+	LogError(TAG, text);
 }
 
 void SAppDocument::_logError(const String& filePath, sl_size line, sl_size col, const String& text)
 {
-	SLIB_LOG_ERROR(TAG, String::format("%s(%d:%d)%n%s", filePath, line, col, text));
+	LogError(TAG, "%s(%d:%d)%n%s", filePath, line, col, text);
 }
 
 void SAppDocument::_logError(const Ref<XmlElement>& element, const String& text)
 {
 	if (element.isNotNull()) {
-		SLIB_LOG_ERROR(TAG, String::format("%s(%d:%d)%n%s", element->getSourceFilePath(), element->getLineNumberInSource(), element->getColumnNumberInSource(), text));
+		LogError(TAG, "%s(%d:%d)%n%s", element->getSourceFilePath(), element->getLineNumberInSource(), element->getColumnNumberInSource(), text);
 	} else {
-		SLIB_LOG_ERROR(TAG, text);
+		LogError(TAG, text);
 	}
 }
 
@@ -624,10 +620,8 @@ sl_bool SAppDocument::_generateRawsCpp(const String& targetPath)
 	
 	StringBuffer sbData;
 	
-	Iterator< Pair<String, Ref<SAppRawResource> > > iterator = m_raws.iterator();
-	Pair< String, Ref<SAppRawResource> > pair;
-	
-	while (iterator.next(&pair)) {
+	for (auto pair : m_raws) {
+		
 		if (pair.value.isNotNull()) {
 			
 			Ref<SAppRawResource> res = pair.value;
@@ -711,14 +705,11 @@ sl_bool SAppDocument::_generateDrawablesCpp(const String& targetPath)
 	
 	// iterate image resources
 	{
-		Iterator< Pair<String, Ref<SAppDrawableResource> > > iterator = m_drawables.iterator();
-		Pair< String, Ref<SAppDrawableResource> > pair;
-		
-		while (iterator.next(&pair)) {
+		for (auto pair : m_drawables) {
 			if (pair.value.isNotNull()) {
 				Ref<SAppDrawableResource>& res = pair.value;
 				if (res->type == SAppDrawableResource::typeImage) {
-					_generateDrawablesCpp_Image(res.ptr, sbHeader, sbCpp, sbMap);
+					_generateDrawablesCpp_Image(res.get(), sbHeader, sbCpp, sbMap);
 				}
 			}
 		}
@@ -726,16 +717,13 @@ sl_bool SAppDocument::_generateDrawablesCpp(const String& targetPath)
 	
 	// iterate other resources
 	{
-		Iterator< Pair<String, Ref<SAppDrawableResource> > > iterator = m_drawables.iterator();
-		Pair< String, Ref<SAppDrawableResource> > pair;
-		
-		while (iterator.next(&pair)) {
+		for (auto pair : m_drawables) {
 			if (pair.value.isNotNull()) {
 				Ref<SAppDrawableResource>& res = pair.value;
 				if (res->type == SAppDrawableResource::typeNinePieces) {
-					_generateDrawablesCpp_NinePieces(res.ptr, sbHeader, sbCpp, sbMap);
+					_generateDrawablesCpp_NinePieces(res.get(), sbHeader, sbCpp, sbMap);
 				} else if (res->type == SAppDrawableResource::typeNinePatch) {
-					_generateDrawablesCpp_NinePatch(res.ptr, sbHeader, sbCpp, sbMap);
+					_generateDrawablesCpp_NinePatch(res.get(), sbHeader, sbCpp, sbMap);
 				}
 			}
 		}
@@ -785,11 +773,11 @@ Ref<Drawable> SAppDocument::_getDrawableValue(SAppDrawableValue& value)
 	
 	Ref<Drawable> drawable;
 	if (res->type == SAppDrawableResource::typeImage) {
-		drawable = _getDrawableValue_Image(res.ptr);
+		drawable = _getDrawableValue_Image(res.get());
 	} else if (res->type == SAppDrawableResource::typeNinePieces) {
-		drawable = _getDrawableValue_NinePieces(res.ptr);
+		drawable = _getDrawableValue_NinePieces(res.get());
 	} else if (res->type == SAppDrawableResource::typeNinePatch) {
-		drawable = _getDrawableValue_NinePatch(res.ptr);
+		drawable = _getDrawableValue_NinePatch(res.get());
 	}
 	if (drawable.isNotNull()) {
 		if (!(value.flagWhole)) {
@@ -813,14 +801,11 @@ Ref<Image> SAppDocument::_getImageValue(SAppDrawableValue& value)
 		return Ref<Image>::null();
 	}
 	Ref<Drawable> drawable = _getDrawableValue(value);
-	if (Image::checkInstance(drawable.ptr)) {
+	if (IsInstanceOf<Image>(drawable)) {
 		return Ref<Image>::from(drawable);
-	} else if (MipmapDrawable::checkInstance(drawable.ptr)) {
-		MipmapDrawable* mipmap = (MipmapDrawable*)(drawable.ptr);
+	} else if (MipmapDrawable* mipmap = CastInstance<MipmapDrawable>(drawable.get())) {
 		drawable = mipmap->getSource(0);
-		if (Image::checkInstance(drawable.ptr)) {
-			return Ref<Image>::from(drawable);
-		}
+		return CastRef<Image>(drawable);
 	}
 	return Ref<Image>::null();
 }
@@ -830,7 +815,7 @@ sl_bool SAppDocument::_registerImageResources(const String& resourcePath, const 
 	_log(_g_sdev_sapp_log_open_drawables_begin.arg(fileDirPath));
 	List<String> _list = File::getFiles(fileDirPath);
 	_list.sort();
-	ListItems<String> list(_list);
+	ListElements<String> list(_list);
 	for (sl_size i = 0; i < list.count; i++) {
 		const String& fileName = list[i];
 		String ext = File::getFileExtension(fileName);
@@ -874,7 +859,7 @@ sl_bool SAppDocument::_registerImageResources(const String& resourcePath, const 
 				return sl_false;
 			}
 			
-			SAppDrawableResourceImageAttributes* imageAttr = res->imageAttrs.ptr;
+			SAppDrawableResourceImageAttributes* imageAttr = res->imageAttrs.get();
 			
 			List< Ref<SAppDrawableResourceImageItem> > list;
 			if (locale == Locale::Unknown) {
@@ -926,7 +911,7 @@ sl_bool SAppDocument::_registerImageResources(const String& resourcePath, const 
 
 sl_bool SAppDocument::_generateDrawablesCpp_Image(SAppDrawableResource* res, StringBuffer& sbHeader, StringBuffer& sbCpp, StringBuffer& sbMap)
 {
-	SAppDrawableResourceImageAttributes* imageAttr = res->imageAttrs.ptr;
+	SAppDrawableResourceImageAttributes* imageAttr = res->imageAttrs.get();
 	
 	Ref<SAppDrawableResourceImageItem> item;
 	
@@ -935,7 +920,7 @@ sl_bool SAppDocument::_generateDrawablesCpp_Image(SAppDrawableResource* res, Str
 	sl_uint32 defaultWidth = 0;
 	sl_uint32 defaultHeight = 0;
 	
-	if (imageAttr->defaultImages.getItem(0, &item)) {
+	if (imageAttr->defaultImages.getAt(0, &item)) {
 		
 		Ref<Image> image = item->loadImage();
 		
@@ -966,9 +951,7 @@ sl_bool SAppDocument::_generateDrawablesCpp_Image(SAppDrawableResource* res, Str
 		CList< Pair<Locale, List< Ref<SAppDrawableResourceImageItem> > > > listPairs;
 		// locales
 		{
-			Iterator< Pair<Locale, List< Ref<SAppDrawableResourceImageItem> > > > iteratorItems = imageAttr->images.iterator();
-			Pair<Locale, List< Ref<SAppDrawableResourceImageItem> > > pairItems;
-			while (iteratorItems.next(&pairItems)) {
+			for (auto pairItems : imageAttr->images) {
 				if (pairItems.key.getCountry() != Country::Unknown) {
 					if (!(listPairs.add_NoLock(pairItems))) {
 						_logError(_g_sdev_sapp_error_out_of_memory);
@@ -979,9 +962,7 @@ sl_bool SAppDocument::_generateDrawablesCpp_Image(SAppDrawableResource* res, Str
 		}
 		// languages
 		{
-			Iterator< Pair<Locale, List< Ref<SAppDrawableResourceImageItem> > > > iteratorItems = imageAttr->images.iterator();
-			Pair<Locale, List< Ref<SAppDrawableResourceImageItem> > > pairItems;
-			while (iteratorItems.next(&pairItems)) {
+			for (auto pairItems : imageAttr->images) {
 				if (pairItems.key.getCountry() == Country::Unknown) {
 					if (!(listPairs.add_NoLock(pairItems))) {
 						_logError(_g_sdev_sapp_error_out_of_memory);
@@ -1001,7 +982,7 @@ sl_bool SAppDocument::_generateDrawablesCpp_Image(SAppDrawableResource* res, Str
 			}
 		}
 		
-		ListItems< Pair<Locale, List< Ref<SAppDrawableResourceImageItem> > > > pairs(listPairs);
+		ListElements< Pair<Locale, List< Ref<SAppDrawableResourceImageItem> > > > pairs(listPairs);
 		for (sl_size iPair = 0; iPair < pairs.count; iPair++) {
 			
 			String strLocale = pairs[iPair].key.toString();
@@ -1045,13 +1026,13 @@ sl_bool SAppDocument::_generateDrawablesCpp_Image(SAppDrawableResource* res, Str
 
 Ref<Drawable> SAppDocument::_getDrawableValue_Image(SAppDrawableResource* res)
 {
-	SAppDrawableResourceImageAttributes* imageAttr = res->imageAttrs.ptr;
+	SAppDrawableResourceImageAttributes* imageAttr = res->imageAttrs.get();
 	
 	Ref<SAppDrawableResourceImageItem> item;
 
 	sl_size n = imageAttr->defaultImages.getCount();
 	if (n == 1) {
-		if (imageAttr->defaultImages.getItem(0, &item)) {
+		if (imageAttr->defaultImages.getAt(0, &item)) {
 			if (item.isNotNull()) {
 				Ref<Image> image = item->loadImage();
 				if (image.isNotNull()) {
@@ -1138,7 +1119,7 @@ sl_bool SAppDocument::_parseNinePiecesDrawableResource(const Ref<XmlElement>& el
 		return sl_false;
 	}
 	
-	SAppDrawableResourceNinePiecesAttributes* attr = res->ninePiecesAttrs.ptr;
+	SAppDrawableResourceNinePiecesAttributes* attr = res->ninePiecesAttrs.get();
 
 	attr->element = element;
 	
@@ -1183,7 +1164,7 @@ sl_bool SAppDocument::_parseNinePiecesDrawableResource(const Ref<XmlElement>& el
 
 sl_bool SAppDocument::_generateDrawablesCpp_NinePieces(SAppDrawableResource* res, StringBuffer& sbHeader, StringBuffer& sbCpp, StringBuffer& sbMap)
 {
-	SAppDrawableResourceNinePiecesAttributes* attr = res->ninePiecesAttrs.ptr;
+	SAppDrawableResourceNinePiecesAttributes* attr = res->ninePiecesAttrs.get();
 	
 	sbHeader.add(String::format("\t\tSLIB_DECLARE_NINEPIECES_RESOURCE(%s)%n", res->name));
 	
@@ -1224,7 +1205,7 @@ sl_bool SAppDocument::_generateDrawablesCpp_NinePieces(SAppDrawableResource* res
 
 Ref<Drawable> SAppDocument::_getDrawableValue_NinePieces(SAppDrawableResource* res)
 {
-	SAppDrawableResourceNinePiecesAttributes* attr = res->ninePiecesAttrs.ptr;
+	SAppDrawableResourceNinePiecesAttributes* attr = res->ninePiecesAttrs.get();
 	
 	do {
 		if (!(_checkDrawableValueAvailable(attr->topLeft, attr->element))) {
@@ -1306,7 +1287,7 @@ sl_bool SAppDocument::_parseNinePatchDrawableResource(const Ref<XmlElement>& ele
 		return sl_false;
 	}
 	
-	SAppDrawableResourceNinePatchAttributes* attr = res->ninePatchAttrs.ptr;
+	SAppDrawableResourceNinePatchAttributes* attr = res->ninePatchAttrs.get();
 	
 	attr->element = element;
 	
@@ -1383,7 +1364,7 @@ sl_bool SAppDocument::_parseNinePatchDrawableResource(const Ref<XmlElement>& ele
 
 sl_bool SAppDocument::_generateDrawablesCpp_NinePatch(SAppDrawableResource* res, StringBuffer& sbHeader, StringBuffer& sbCpp, StringBuffer& sbMap)
 {
-	SAppDrawableResourceNinePatchAttributes* attr = res->ninePatchAttrs.ptr;
+	SAppDrawableResourceNinePatchAttributes* attr = res->ninePatchAttrs.get();
 	
 	sbHeader.add(String::format("\t\tSLIB_DECLARE_NINEPATCH_RESOURCE(%s)%n", res->name));
 	
@@ -1400,7 +1381,7 @@ sl_bool SAppDocument::_generateDrawablesCpp_NinePatch(SAppDrawableResource* res,
 
 Ref<Drawable> SAppDocument::_getDrawableValue_NinePatch(SAppDrawableResource* res)
 {
-	SAppDrawableResourceNinePatchAttributes* attr = res->ninePatchAttrs.ptr;
+	SAppDrawableResourceNinePatchAttributes* attr = res->ninePatchAttrs.get();
 	if (!(_checkDrawableValueAvailable(attr->src, attr->element))) {
 		return Ref<Drawable>::null();
 	}
@@ -1571,10 +1552,8 @@ sl_bool SAppDocument::_generateStringsCpp(const String& targetPath)
 	
 	sbMap.add("\t\tSLIB_DEFINE_STRING_RESOURCE_MAP_BEGIN\r\n");
 	
-	Iterator< Pair<String, Ref<SAppStringResource> > > iterator = m_strings.iterator();
-	Pair< String, Ref<SAppStringResource> > pair;
-	
-	while (iterator.next(&pair)) {
+	for (auto pair : m_strings) {
+		
 		if (pair.value.isNotNull()) {
 			
 			sbHeader.add(String::format("\t\tSLIB_DECLARE_STRING_RESOURCE(%s)%n", pair.key));
@@ -1589,9 +1568,7 @@ sl_bool SAppDocument::_generateStringsCpp(const String& targetPath)
 				
 				// locales
 				{
-					Iterator< Pair<Locale, String> > iteratorValues = pair.value->values.iterator();
-					Pair< Locale, String > pairValues;
-					while (iteratorValues.next(&pairValues)) {
+					for (auto pairValues : pair.value->values) {
 						if (pairValues.key.getCountry() != Country::Unknown) {
 							sbCpp.add(String::format("\t\t\tSLIB_DEFINE_STRING_RESOURCE_VALUE(%s, \"%s\")%n", pairValues.key.toString(), pairValues.value.applyBackslashEscapes(sl_true, sl_false, sl_true)));
 						}
@@ -1599,9 +1576,7 @@ sl_bool SAppDocument::_generateStringsCpp(const String& targetPath)
 				}
 				// languages
 				{
-					Iterator< Pair<Locale, String> > iteratorValues = pair.value->values.iterator();
-					Pair< Locale, String > pairValues;
-					while (iteratorValues.next(&pairValues)) {
+					for (auto pairValues : pair.value->values) {
 						if (pairValues.key.getCountry() == Country::Unknown) {
 							sbCpp.add(String::format("\t\t\tSLIB_DEFINE_STRING_RESOURCE_VALUE(%s, \"%s\")%n", pairValues.key.toString(), pairValues.value.applyBackslashEscapes(sl_true, sl_false, sl_true)));
 						}
@@ -1709,7 +1684,7 @@ sl_bool SAppDocument::_parseMenuResource(const Ref<XmlElement>& element)
 	for (sl_size i = 0; i < children.count; i++) {
 		Ref<XmlElement>& child = children[i];
 		if (child.isNotNull()) {
-			Ref<SAppMenuResourceItem> menuItem = _parseMenuResourceItem(child, menu.ptr, SAppMenuResourceItem::all_platforms);
+			Ref<SAppMenuResourceItem> menuItem = _parseMenuResourceItem(child, menu.get(), SAppMenuResourceItem::all_platforms);
 			if (menuItem.isNull()) {
 				return sl_false;
 			}
@@ -1922,10 +1897,7 @@ sl_bool SAppDocument::_generateMenusCpp(const String& targetPath)
 							 , m_conf.generate_cpp_namespace));
 	
 	
-	Iterator< Pair<String, Ref<SAppMenuResource> > > iterator = m_menus.iterator();
-	Pair< String, Ref<SAppMenuResource> > pair;
-	
-	while (iterator.next(&pair)) {
+	for (auto pair : m_menus) {
 		if (pair.value.isNotNull()) {
 			
 			sbHeader.add(String::format("\t\tSLIB_DECLARE_MENU_BEGIN(%s)%n", pair.key));
@@ -1935,7 +1907,7 @@ sl_bool SAppDocument::_generateMenusCpp(const String& targetPath)
 			for (sl_size i = 0; i < items.count; i++) {
 				Ref<SAppMenuResourceItem>& item = items[i];
 				if (item.isNotNull()) {
-					if (!_generateMenusCpp_Item("root", SAppMenuResourceItem::all_platforms, item.ptr, sbHeader, sbCpp, 3)) {
+					if (!_generateMenusCpp_Item("root", SAppMenuResourceItem::all_platforms, item.get(), sbHeader, sbCpp, 3)) {
 						return sl_false;
 					}
 				}
@@ -2038,7 +2010,7 @@ sl_bool SAppDocument::_generateMenusCpp_Item(const String& parentName, int paren
 		for (sl_size i = 0; i < items.count; i++) {
 			Ref<SAppMenuResourceItem>& childItem = items[i];
 			if (childItem.isNotNull()) {
-				_generateMenusCpp_Item(item->name, item->platformFlags, childItem.ptr, sbHeader, sbCpp, tabLevel + 1);
+				_generateMenusCpp_Item(item->name, item->platformFlags, childItem.get(), sbHeader, sbCpp, tabLevel + 1);
 			}
 		}
 		
@@ -2098,7 +2070,7 @@ Ref<Menu> SAppDocument::_getMenuValue(const SAppMenuValue& value)
 	for (sl_size i = 0; i < items.count; i++) {
 		Ref<SAppMenuResourceItem>& item = items[i];
 		if (item.isNotNull()) {
-			if (!(_getMenuValue_Item(menu, item.ptr))) {
+			if (!(_getMenuValue_Item(menu, item.get()))) {
 				return Ref<Menu>::null();
 			}
 		}
@@ -2152,7 +2124,7 @@ sl_bool SAppDocument::_getMenuValue_Item(const Ref<Menu>& parent, SAppMenuResour
 		for (sl_size i = 0; i < items.count; i++) {
 			Ref<SAppMenuResourceItem>& childItem = items[i];
 			if (childItem.isNotNull()) {
-				if (!(_getMenuValue_Item(submenu.ptr, childItem.ptr))) {
+				if (!(_getMenuValue_Item(submenu.get(), childItem.get()))) {
 					return sl_false;
 				}
 			}
@@ -2323,7 +2295,7 @@ sl_bool SAppDocument::_parseLayoutResource(const Ref<XmlElement>& element)
 		return sl_false;
 	}
 	
-	if (!(_parseLayoutResourceItem(layout.ptr, layout.ptr, sl_null))) {
+	if (!(_parseLayoutResourceItem(layout.get(), layout.get(), sl_null))) {
 		return sl_false;
 	}
 	
@@ -2425,7 +2397,7 @@ Ref<SAppLayoutResourceItem> SAppDocument::_parseLayoutResourceItemChild(SAppLayo
 	childItem->type = type;
 	childItem->element = element;
 	
-	if (!(_parseLayoutResourceItem(layout, childItem.ptr, parentItem))) {
+	if (!(_parseLayoutResourceItem(layout, childItem.get(), parentItem))) {
 		return Ref<SAppLayoutResourceItem>::null();
 	}
 	
@@ -2481,9 +2453,7 @@ sl_bool SAppDocument::_generateLayoutsCpp(const String& targetPath)
 								, m_conf.generate_cpp_namespace));
 
 	{
-		Iterator< Pair<String, Ref<SAppLayoutResource> > > iterator = m_layouts.iterator();
-		Pair< String, Ref<SAppLayoutResource> > pair;
-		while (iterator.next(&pair)) {
+		for (auto pair : m_layouts) {
 			if (pair.value.isNotNull()) {
 				Ref<SAppLayoutResource> layout = pair.value;
 				sbHeader.add(String::format("\t\tclass %s;%n", pair.key));
@@ -2494,10 +2464,7 @@ sl_bool SAppDocument::_generateLayoutsCpp(const String& targetPath)
 	sbHeader.add("\r\n");
 	
 	{
-		Iterator< Pair<String, Ref<SAppLayoutResource> > > iterator = m_layouts.iterator();
-		Pair< String, Ref<SAppLayoutResource> > pair;
-		
-		while (iterator.next(&pair)) {
+		for (auto pair : m_layouts) {
 			
 			if (pair.value.isNotNull()) {
 				
@@ -2519,7 +2486,7 @@ sl_bool SAppDocument::_generateLayoutsCpp(const String& targetPath)
 				sbCpp.add(String::format("\t\tvoid %s::initialize()%n\t\t{%n", pair.key));
 				
 				{
-					ListItems<String> radioGroups(layout->radioGroups.keys());
+					ListElements<String> radioGroups(layout->radioGroups.getAllKeys());
 					for (sl_size i = 0; i < radioGroups.count; i++) {
 						sbHeader.add(String::format("\t\t\tslib::Ref<slib::RadioGroup> " RADIOGROUP_NAME_PREFIX "%s;%n", radioGroups[i]));
 						sbCpp.add(String::format("\t\t\t" RADIOGROUP_NAME_PREFIX "%s = new slib::RadioGroup;%n", radioGroups[i]));
@@ -2540,7 +2507,7 @@ sl_bool SAppDocument::_generateLayoutsCpp(const String& targetPath)
 					}
 				}
 				
-				if (!(_generateLayoutsCppItem(layout.ptr, layout.ptr, sl_null, sbHeader, sbCpp, sbLayout, String::null()))) {
+				if (!(_generateLayoutsCppItem(layout.get(), layout.get(), sl_null, sbHeader, sbCpp, sbLayout, String::null()))) {
 					return sl_false;
 				}
 				
@@ -2677,11 +2644,11 @@ Ref<View> SAppDocument::_simulateLayoutCreateOrLayoutView(SAppLayoutSimulator* s
 	
 	LayoutControlProcessParams pp;
 	pp.op = OP_SIMULATE;
-	pp.resource = layout.ptr;
+	pp.resource = layout.get();
 	pp.resourceItem = item;
 	pp.parentResourceItem = parent;
 	pp.simulator = simulator;
-	pp.window = window.ptr;
+	pp.window = window.get();
 	pp.view = view;
 	pp.parentView = parentView;
 	pp.flagOnLayout = flagOnLayout;
@@ -2885,7 +2852,7 @@ sl_bool SAppDocument::_processLayoutResourceControl(LayoutControlProcessParams *
 					Ref<SAppLayoutResourceItem>& child = children[i];
 					if (child.isNotNull()) {
 						String addStatement = String::format("\t\t\t%s->addChild(%s, slib::UIUpdateMode::Init);%n%n", name, child->name);
-						if (!(_generateLayoutsCppItem(params->resource, child.ptr, resourceItem, *(params->sbDeclare), *(params->sbDefineInit), *(params->sbDefineLayout), addStatement) )) {
+						if (!(_generateLayoutsCppItem(params->resource, child.get(), resourceItem, *(params->sbDeclare), *(params->sbDefineInit), *(params->sbDefineLayout), addStatement) )) {
 							return sl_false;
 						}
 					}
@@ -2899,7 +2866,7 @@ sl_bool SAppDocument::_processLayoutResourceControl(LayoutControlProcessParams *
 				for (sl_size i = 0; i < children.count; i++) {
 					Ref<SAppLayoutResourceItem>& child = children[i];
 					if (child.isNotNull()) {
-						Ref<View> childView = _simulateLayoutCreateOrLayoutView(params->simulator, child.ptr, resourceItem, params->view.ptr, params->flagOnLayout);
+						Ref<View> childView = _simulateLayoutCreateOrLayoutView(params->simulator, child.get(), resourceItem, params->view.get(), params->flagOnLayout);
 						if (childView.isNotNull()) {
 							if (!(params->flagOnLayout)) {
 								params->view->addChild(childView, UIUpdateMode::Init);
@@ -2947,7 +2914,7 @@ sl_bool SAppDocument::_processLayoutResourceControl_##NAME(LayoutControlProcessP
 			} \
 		} \
 	} \
-	VIEWTYPE* view = (VIEWTYPE*)(params->view.ptr); \
+	VIEWTYPE* view = (VIEWTYPE*)(params->view.get()); \
 	SLIB_UNUSED(view)
 
 
@@ -4087,12 +4054,12 @@ BEGIN_PROCESS_LAYOUT_CONTROL(Import, SAppLayoutImportView)
 		if (!flagOnLayout) {
 			Ref<SAppLayoutImportView> _view = new SAppLayoutImportView;
 			if (_view.isNotNull()) {
-				_view->init(params->simulator, layoutImport.ptr);
+				_view->init(params->simulator, layoutImport.get());
 			} else {
 				return sl_false;
 			}
 			params->view = _view;
-			view = _view.ptr;
+			view = _view.get();
 		} else {
 			if (!view) {
 				return sl_false;
@@ -4511,7 +4478,7 @@ BEGIN_PROCESS_LAYOUT_CONTROL(Select, SelectView)
 	LAYOUT_CONTROL_SET_NATIVE_WIDGET
 	
 	if (op == OP_PARSE) {
-		ListItems< Ref<XmlElement> > itemXmls(_getLayoutItemChildElements(resourceItem, "item"));
+		ListElements< Ref<XmlElement> > itemXmls(_getLayoutItemChildElements(resourceItem, "item"));
 		for (sl_size i = 0; i < itemXmls.count; i++) {
 			Ref<XmlElement>& itemXml = itemXmls[i];
 			if (itemXml.isNotNull()) {
@@ -4638,13 +4605,13 @@ BEGIN_PROCESS_LAYOUT_CONTROL(Scroll, ScrollView)
 	} else if (op == OP_GENERATE_CPP) {
 		if (attr->content.isNotNull()) {
 			String addChildStatement = String::format("%s%s->setContentView(%s, slib::UIUpdateMode::Init);%n%n", strTab, name, attr->content->name);
-			if (!(_generateLayoutsCppItem(params->resource, attr->content.ptr, resourceItem, *(params->sbDeclare), *(params->sbDefineInit), *(params->sbDefineLayout), addChildStatement))) {
+			if (!(_generateLayoutsCppItem(params->resource, attr->content.get(), resourceItem, *(params->sbDeclare), *(params->sbDefineInit), *(params->sbDefineLayout), addChildStatement))) {
 				return sl_false;
 			}
 		}
 	} else if (op == OP_SIMULATE) {
 		if (attr->content.isNotNull()) {
-			Ref<View> contentView = _simulateLayoutCreateOrLayoutView(params->simulator, attr->content.ptr, resourceItem, view, flagOnLayout);
+			Ref<View> contentView = _simulateLayoutCreateOrLayoutView(params->simulator, attr->content.get(), resourceItem, view, flagOnLayout);
 			if (contentView.isNotNull()) {
 				if (!flagOnLayout) {
 					view->setContentView(contentView, UIUpdateMode::Init);
@@ -4695,7 +4662,7 @@ public:
 		}
 		Ref<SAppLayoutImportView> view = new SAppLayoutImportView;
 		if (view.isNotNull()) {
-			view->init(simulator, layout.ptr);
+			view->init(simulator, layout.get());
 		}
 		return view;
 	}
@@ -4973,7 +4940,7 @@ BEGIN_PROCESS_LAYOUT_CONTROL(Tab, TabView)
 				}
 				
 				if (subItem.view.isNotNull()) {
-					Ref<View> contentView = _simulateLayoutCreateOrLayoutView(params->simulator, subItem.view.ptr, resourceItem, view, flagOnLayout);
+					Ref<View> contentView = _simulateLayoutCreateOrLayoutView(params->simulator, subItem.view.get(), resourceItem, view, flagOnLayout);
 					if (contentView.isNotNull()) {
 						if (!flagOnLayout) {
 							view->setTabContentView(i, contentView, UIUpdateMode::Init);
@@ -5005,7 +4972,7 @@ BEGIN_PROCESS_LAYOUT_CONTROL(Tab, TabView)
 			SAppLayoutTabItem& subItem = subItems[i];
 			if (subItem.view.isNotNull()) {
 				String addChildStatement = String::format("%s%s->setTabContentView(%d, %s, slib::UIUpdateMode::Init);%n%n", strTab, name, i, subItem.view->name);
-				if (!(_generateLayoutsCppItem(params->resource, subItem.view.ptr, resourceItem, *(params->sbDeclare), *(params->sbDefineInit), *(params->sbDefineLayout), addChildStatement))) {
+				if (!(_generateLayoutsCppItem(params->resource, subItem.view.get(), resourceItem, *(params->sbDeclare), *(params->sbDefineInit), *(params->sbDefineLayout), addChildStatement))) {
 					return sl_false;
 				}
 			}
@@ -5220,7 +5187,7 @@ BEGIN_PROCESS_LAYOUT_CONTROL(Split, SplitView)
 					}
 				}
 				if (subItem.view.isNotNull()) {
-					Ref<View> contentView = _simulateLayoutCreateOrLayoutView(params->simulator, subItem.view.ptr, resourceItem, view, flagOnLayout);
+					Ref<View> contentView = _simulateLayoutCreateOrLayoutView(params->simulator, subItem.view.get(), resourceItem, view, flagOnLayout);
 					if (contentView.isNotNull()) {
 						if (!flagOnLayout) {
 							view->setItemView(i, contentView, UIUpdateMode::NoRedraw);
@@ -5244,7 +5211,7 @@ BEGIN_PROCESS_LAYOUT_CONTROL(Split, SplitView)
 			SAppLayoutSplitItem& subItem = subItems[i];
 			if (subItem.view.isNotNull()) {
 				String addChildStatement = String::format("%s%s->setItemView(%d, %s, slib::UIUpdateMode::Init);%n%n", strTab, name, i, subItem.view->name);
-				if (!(_generateLayoutsCppItem(params->resource, subItem.view.ptr, resourceItem, *(params->sbDeclare), *(params->sbDefineInit), *(params->sbDefineLayout), addChildStatement))) {
+				if (!(_generateLayoutsCppItem(params->resource, subItem.view.get(), resourceItem, *(params->sbDeclare), *(params->sbDefineInit), *(params->sbDefineLayout), addChildStatement))) {
 					return sl_false;
 				}
 			}
@@ -5376,7 +5343,7 @@ BEGIN_PROCESS_LAYOUT_CONTROL(Picker, PickerView)
 	LAYOUT_CONTROL_SET_NATIVE_WIDGET
 	
 	if (op == OP_PARSE) {
-		ListItems< Ref<XmlElement> > itemXmls(_getLayoutItemChildElements(resourceItem, "item"));
+		ListElements< Ref<XmlElement> > itemXmls(_getLayoutItemChildElements(resourceItem, "item"));
 		for (sl_size i = 0; i < itemXmls.count; i++) {
 			Ref<XmlElement>& itemXml = itemXmls[i];
 			if (itemXml.isNotNull()) {
@@ -5518,7 +5485,7 @@ BEGIN_PROCESS_LAYOUT_CONTROL(Pager, ViewPager)
 				}
 				
 				if (subItem.view.isNotNull()) {
-					Ref<View> contentView = _simulateLayoutCreateOrLayoutView(params->simulator, subItem.view.ptr, resourceItem, view, flagOnLayout);
+					Ref<View> contentView = _simulateLayoutCreateOrLayoutView(params->simulator, subItem.view.get(), resourceItem, view, flagOnLayout);
 					if (contentView.isNotNull()) {
 						if (!flagOnLayout) {
 							view->addPage(contentView, UIUpdateMode::Init);
@@ -5548,7 +5515,7 @@ BEGIN_PROCESS_LAYOUT_CONTROL(Pager, ViewPager)
 				SAppLayoutPagerItem& subItem = subItems[i];
 				if (subItem.view.isNotNull()) {
 					String addChildStatement = String::format("%s%s->addPage(%s, slib::UIUpdateMode::Init);%n%n", strTab, name, subItem.view->name);
-					if (!(_generateLayoutsCppItem(params->resource, subItem.view.ptr, resourceItem, *(params->sbDeclare), *(params->sbDefineInit), *(params->sbDefineLayout), addChildStatement))) {
+					if (!(_generateLayoutsCppItem(params->resource, subItem.view.get(), resourceItem, *(params->sbDeclare), *(params->sbDefineInit), *(params->sbDefineLayout), addChildStatement))) {
 						return sl_false;
 					}
 				}

@@ -35,7 +35,7 @@ public:
 	String fileName;
 	String filePath;
 	String rawName;
-	SafeRef<Image> image;
+	AtomicRef<Image> image;
 	
 public:
 	Ref<Image> loadImage();
@@ -799,11 +799,11 @@ public:
 	Ref<View> getSimulationContentView();
 	
 protected:
-	SafeWeakRef<Referable> m_refer;
-	SafeWeakRef<SAppDocument> m_document;
-	SafeRef<SAppLayoutResource> m_layoutResource;
-	SafeWeakRef<SAppLayoutSimulationWindow> m_simulationWindow;
-	SafeWeakRef<View> m_simulationContentView;
+	AtomicWeakRef<Referable> m_refer;
+	AtomicWeakRef<SAppDocument> m_document;
+	AtomicRef<SAppLayoutResource> m_layoutResource;
+	AtomicWeakRef<SAppLayoutSimulationWindow> m_simulationWindow;
+	AtomicWeakRef<View> m_simulationContentView;
 	HashMap< String, Ref<View> > m_views;
 	HashMap< String, Ref<RadioGroup> > m_radioGroups;
 

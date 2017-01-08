@@ -122,7 +122,7 @@ void SRouterInterface::writeIPv4Packet(const void* packet, sl_uint32 size)
 		}
 	}
 	if (m_mtuOutgoing > 0) {
-		ListItems<Memory> packets(m_fragmentation.makeFragments(header, header->getContent(), header->getContentSize(), m_mtuOutgoing));
+		ListElements<Memory> packets(m_fragmentation.makeFragments(header, header->getContent(), header->getContentSize(), m_mtuOutgoing));
 		for (sl_size i = 0; i < packets.count; i++) {
 			_writeIPv4Packet(packets[i].getData(), (sl_uint32)(packets[i].getSize()));
 		}
@@ -185,7 +185,7 @@ Ref<SRouterDevice> SRouterDevice::create(const SRouterDeviceParam& param)
 			if (ret->m_device.isNull()) {
 				NetCaptureParam ncp;
 				ncp.deviceName = dev.name;
-				ncp.listener = ret.ptr;
+				ncp.listener = ret.get();
 				ncp.sizeBuffer = 1024 * 1024 * 20;
 				ncp.flagPromiscuous = sl_true;
 				if (param.is_ethernet) {
@@ -207,13 +207,13 @@ Ref<SRouterDevice> SRouterDevice::create(const SRouterDeviceParam& param)
 #endif
 				}
 				if (ret->m_device.isNull()) {
-					SLIB_LOG_ERROR(TAG, "Can not capture on network device - " + param.iface_name + "(" + dev.name + ")");
+					LogError(TAG, "Can not capture on network device - %s(%s)", param.iface_name, dev.name);
 					return Ref<SRouterDevice>::null();
 				}
 			}
 			ret->m_macAddressDevice = dev.macAddress;
 		} else {
-			SLIB_LOG_ERROR(TAG, "Network device is not found - " + param.iface_name);
+			LogError(TAG, "Network device is not found - %s", param.iface_name);
 			return Ref<SRouterDevice>::null();
 		}
 		ret->initWithParam(param);
@@ -358,7 +358,7 @@ void SRouterDevice::_idle()
 		m_macAddressDevice = dev.macAddress;
 		if (dev.addresses_IPv4.isNotEmpty()) {
 			IPv4AddressInfo addr;
-			dev.addresses_IPv4.getItem(0, &addr);
+			dev.addresses_IPv4.getAt(0, &addr);
 			m_ipAddressDevice = addr.address;
 			if (m_flagNatDynamicTarget) {
 				setNatIp(m_ipAddressDevice);
@@ -426,7 +426,7 @@ Ref<SRouterRemote> SRouterRemote::create(const SRouterRemoteParam& param)
 String SRouterRemote::getStatus()
 {
 	if (m_timeLastKeepAliveReceive.isNotZero()) {
-		return String("Last Keep Alive - ") + (Time::now() - m_timeLastKeepAliveReceive).getSecondsCount() + "s";
+		return String::format("Last Keep Alive - %ds", (Time::now() - m_timeLastKeepAliveReceive).getSecondsCount());
 	} else {
 		return "Not Connected";
 	}
@@ -507,8 +507,8 @@ sl_bool SRouterRoute::parseConfig(SRouter* router, const Variant& conf)
 		flagTcp = sl_false;
 		flagUdp = sl_false;
 		flagIcmp = sl_false;
-		for (sl_size i = 0; i < protocols.getListItemsCount(); i++) {
-			String protocol = protocols.getListItem(i).getString().toLower();
+		for (sl_size i = 0; i < protocols.getListElementsCount(); i++) {
+			String protocol = protocols.getListElement(i).getString().toLower();
 			if (protocol == "tcp") {
 				flagTcp = sl_true;
 			} else if (protocol == "udp") {
@@ -565,15 +565,15 @@ sl_bool SRouterRoute::parseConfig(SRouter* router, const Variant& conf)
 
 	Variant varTargets = conf.getField("targets");
 	if (varTargets.isNotNull()) {
-		sl_uint32 n = (sl_uint32)(varTargets.getListItemsCount());
+		sl_uint32 n = (sl_uint32)(varTargets.getListElementsCount());
 		arrTargets = Array< Ref<SRouterInterface> >::create(n);
 		targets = arrTargets.getData();
 		countTargets = (sl_uint32)(arrTargets.getCount());
 		for (sl_uint32 i = 0; i < n; i++) {
-			String target = varTargets.getListItem(i).getString();
+			String target = varTargets.getListElement(i).getString();
 			targets[i] = router->getInterface(target);
 			if (targets[i].isNull()) {
-				SLIB_LOG_ERROR(TAG, "Failed to resolve route target: " + target);
+				LogError(TAG, "Failed to resolve route target: %s", target);
 				return sl_false;
 			}
 		}
@@ -599,7 +599,7 @@ sl_bool SRouterArpProxy::parseConfig(SRouter* router, const Variant& conf)
 			if (device.isNotNull()) {
 				return sl_true;
 			} else {
-				SLIB_LOG_ERROR(TAG, "Failed to resolve ARP proxy device: " + str);
+				LogError(TAG, "Failed to resolve ARP proxy device: %s", str);
 			}
 		}
 	}
@@ -641,31 +641,31 @@ Ref<SRouter> SRouter::create(const SRouterParam& param)
 			ret->m_loop = loop;
 			ret->m_ioLoop = ioLoop;
 
-			Ref<AsyncUdpSocket> udpServer = AsyncUdpSocket::create(param.udp_server_port, ret.ptr, MESSAGE_SIZE + 32, ioLoop, sl_false);
+			Ref<AsyncUdpSocket> udpServer = AsyncUdpSocket::create(param.udp_server_port, ret.get(), MESSAGE_SIZE + 32, ioLoop, sl_false);
 			if (udpServer.isNotNull()) {
 				ret->m_udpServer = udpServer;
 			} else {
-				SLIB_LOG_ERROR(TAG, "Failed to create UDP server on port " + String::fromUint32(param.udp_server_port));
+				LogError(TAG, "Failed to create UDP server on port %d", param.udp_server_port);
 				return Ref<SRouter>::null();
 			}
 			if (param.tcp_server_port > 0) {
 				TcpDatagramServerParam tp;
 				tp.bindAddress.port = param.tcp_server_port;
 				tp.ioLoop = ioLoop;
-				tp.listener = ret.ptr;
+				tp.listener = ret.get();
 				tp.maxWaitingBytesForSending = param.tcp_send_buffer_size;
 				tp.flagAutoStart = sl_false;
 				Ref<TcpDatagramServer> tcpServer = TcpDatagramServer::create(tp);
 				if (tcpServer.isNotNull()) {
 					ret->m_tcpServer = tcpServer;
 				} else {
-					SLIB_LOG_ERROR(TAG, "Failed to create TCP server on port " + String::fromUint32(param.tcp_server_port));
+					LogError(TAG, "Failed to create TCP server on port %d", param.tcp_server_port);
 					return Ref<SRouter>::null();
 				}
 			}
 			ret->m_aesPacket.setKey_SHA256(param.server_key);
 
-			ret->m_timerIdle = loop->addTimer(SLIB_CALLBACK_CLASS(SRouter, _onIdle, ret.ptr), 1000);
+			ret->m_timerIdle = loop->addTimer(SLIB_FUNCTION_CLASS(SRouter, _onIdle, ret.get()), 1000);
 
 			ret->m_flagInit = sl_true;
 
@@ -693,55 +693,51 @@ Ref<SRouter> SRouter::createFromConfiguration(const Variant& varConfig)
 	if (ret.isNotNull()) {
 		// add devices
 		{
-			ListItems< Pair<String, Variant> > varDevices(varConfig.getField("devices").getVariantMap().pairs());
-			for (sl_size i = 0; i < varDevices.count; i++) {
+			for (auto item : varConfig.getField("devices").getVariantMap()) {
 				SRouterDeviceParam dp;
 				dp.fragment_expiring_seconds = fragment_expiring_seconds;
 				dp.loop = ret->m_loop;
-				dp.parseConfig(varDevices[i].value);
+				dp.parseConfig(item.value);
 				Ref<SRouterDevice> device = SRouterDevice::create(dp);
 				if (device.isNotNull()) {
-					ret->registerDevice(varDevices[i].key, device);
+					ret->registerDevice(item.key, device);
 				}
 			}
 		}
 		// add remotes
 		{
-			ListItems< Pair<String, Variant> > varRemotes(varConfig.getField("remotes").getVariantMap().pairs());
-			for (sl_size i = 0; i < varRemotes.count; i++) {
+			for (auto item : varConfig.getField("remotes").getVariantMap()) {
 				SRouterRemoteParam rp;
 				rp.fragment_expiring_seconds = fragment_expiring_seconds;
 				rp.loop = ret->m_loop;
 				rp.tcp_send_buffer_size = param.tcp_send_buffer_size;
-				rp.parseConfig(varRemotes[i].value);
+				rp.parseConfig(item.value);
 				Ref<SRouterRemote> remote = SRouterRemote::create(rp);
 				if (remote.isNotNull()) {
-					ret->registerRemote(varRemotes[i].key, remote);
+					ret->registerRemote(item.key, remote);
 				}
 			}
 		}
 		// add routes
 		{
-			ListItems<Variant> varRoutes(varConfig.getField("routes").getVariantList());
-			for (sl_size i = 0; i < varRoutes.count; i++) {
+			for (auto item : varConfig.getField("routes").getVariantList()) {
 				SRouterRoute route;
-				if (route.parseConfig(ret.ptr, varRoutes[i])) {
+				if (route.parseConfig(ret.get(), item)) {
 					ret->m_listRoutes.add_NoLock(route);
 				} else {
-					SLIB_LOG_ERROR(TAG, "Failed to parse route element: " + varRoutes[i].toJsonString());
+					LogError(TAG, "Failed to parse route element: %s", item.toJsonString());
 					return Ref<SRouter>::null();
 				}
 			}
 		}
 		// add arp proxies
 		{
-			ListItems<Variant> varArps(varConfig.getField("arp_proxies").getVariantList());
-			for (sl_size i = 0; i < varArps.count; i++) {
+			for (auto item : varConfig.getField("arp_proxies").getVariantList()) {
 				SRouterArpProxy arp;
-				if (arp.parseConfig(ret.ptr, varArps[i])) {
+				if (arp.parseConfig(ret.get(), item)) {
 					ret->m_listArpProxies.add_NoLock(arp);
 				} else {
-					SLIB_LOG_ERROR(TAG, "Failed to parse ARP proxy element: " + varArps[i].toJsonString());
+					LogError(TAG, "Failed to parse ARP proxy element: %s", item.toJsonString());
 					return Ref<SRouter>::null();
 				}
 			}
@@ -776,7 +772,7 @@ void SRouter::release()
 		m_tcpServer->close();
 	}
 	{
-		ListLocker< Ref<SRouterDevice> > devices(m_mapDevices.values());
+		ListElements< Ref<SRouterDevice> > devices(m_mapDevices.getAllValues());
 		for (sl_size i = 0; i < devices.count; i++) {
 			if (devices[i].isNotNull()) {
 				devices[i]->release();
@@ -806,7 +802,7 @@ void SRouter::start()
 	m_ioLoop->start();
 
 	{
-		ListLocker< Ref<SRouterDevice> > devices(m_mapDevices.values());
+		ListElements< Ref<SRouterDevice> > devices(m_mapDevices.getAllValues());
 		for (sl_size i = 0; i < devices.count; i++) {
 			if (devices[i].isNotNull()) {
 				devices[i]->start();
@@ -862,7 +858,7 @@ void SRouter::registerRemote(const String& name, const Ref<SRouterRemote>& remot
 					tcp = remote->m_tcp;
 				}
 				if (tcp.isNotNull()) {
-					m_mapRemotesByTcpClient.put(tcp.ptr, remote);
+					m_mapRemotesByTcpClient.put(tcp.get(), remote);
 				}
 			} else {
 				m_mapRemotesBySocketAddress.put(remote->m_address, remote);
@@ -1121,12 +1117,12 @@ void SRouter::_receiveRemoteMessage(const SocketAddress& address, TcpDatagramCli
 	switch (method) {
 	case 10: // Compressed Raw IPv4 Packet
 		if (remote.isNotNull()) {
-			_receiveCompressedRawIPv4PacketFromRemote(remote.ptr, data + 1, size - 1);
+			_receiveCompressedRawIPv4PacketFromRemote(remote.get(), data + 1, size - 1);
 		}
 		break;
 	case 11: // Not-Compressed Raw IPv4 Packet
 		if (remote.isNotNull()) {
-			_receiveRawIPv4PacketFromRemote(remote.ptr, data + 1, size - 1);
+			_receiveRawIPv4PacketFromRemote(remote.get(), data + 1, size - 1);
 		}
 		break;
 	case 50: // Router Keep-Alive Notification
@@ -1209,18 +1205,18 @@ void SRouter::onReceiveFrom(TcpDatagramClient* client, void* data, sl_uint32 siz
 void SRouter::_onIdle()
 {
 	{
-		ListLocker< Ref<SRouterDevice> > devices(m_mapDevices.values());
-		for (sl_size i = 0; i < devices.count; i++) {
-			if (devices[i].isNotNull()) {
-				devices[i]->_idle();
+		MutexLocker lock(m_mapDevices.getLocker());
+		for (auto item : m_mapDevices) {
+			if (item.value.isNotNull()) {
+				item.value->_idle();
 			}
 		}
 	}
 	{
-		ListLocker< Ref<SRouterRemote> > remotes(m_mapRemotes.values());
-		for (sl_size i = 0; i < remotes.count; i++) {
-			if (remotes[i].isNotNull()) {
-				remotes[i]->_idle();
+		MutexLocker lock(m_mapRemotes.getLocker());
+		for (auto item : m_mapRemotes) {
+			if (item.value.isNotNull()) {
+				item.value->_idle();
 			}
 		}
 	}
@@ -1231,12 +1227,12 @@ String SRouter::getStatusReport()
 	StringBuffer ret;
 	ret.add("Devices:\r\n");
 	{
-		ListLocker< Pair< String, Ref<SRouterDevice> > > devices(m_mapDevices.pairs());
-		for (sl_size i = 0; i < devices.count; i++) {
-			if (devices[i].value.isNotNull()) {
-				ret.add(devices[i].key);
+		MutexLocker lock(m_mapDevices.getLocker());
+		for (auto item : m_mapDevices) {
+			if (item.value.isNotNull()) {
+				ret.add(item.key);
 				ret.add(": ");
-				ret.add(devices[i].value->getStatus());
+				ret.add(item.value->getStatus());
 				ret.add("\r\n");
 			}
 		}
@@ -1244,12 +1240,12 @@ String SRouter::getStatusReport()
 	ret.add("\r\n");
 	ret.add("Remotes:\r\n");
 	{
-		ListLocker< Pair< String, Ref<SRouterRemote> > > remotes(m_mapRemotes.pairs());
-		for (sl_size i = 0; i < remotes.count; i++) {
-			if (remotes[i].value.isNotNull()) {
-				ret.add(remotes[i].key);
+		MutexLocker lock(m_mapRemotes.getLocker());
+		for (auto item : m_mapRemotes) {
+			if (item.value.isNotNull()) {
+				ret.add(item.key);
 				ret.add(": ");
-				ret.add(remotes[i].value->getStatus());
+				ret.add(item.value->getStatus());
 				ret.add("\r\n");
 			}
 		}

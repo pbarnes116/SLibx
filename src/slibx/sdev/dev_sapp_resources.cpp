@@ -524,7 +524,7 @@ void SAppLayoutSimulationWindow::open(SAppDocument* doc, SAppLayoutResource* lay
 	m_document = doc;
 	m_layoutResource = layout;
 	{
-		ListItems<String> radioGroups(layout->radioGroups.keys());
+		ListElements<String> radioGroups(layout->radioGroups.getAllKeys());
 		for (sl_size i = 0; i < radioGroups.count; i++) {
 			Ref<RadioGroup> group = new RadioGroup;
 			if (group.isNotNull()) {
@@ -559,7 +559,7 @@ void SAppLayoutSimulationWindow::layoutViews(sl_ui_len width, sl_ui_len height)
 	Ref<SAppDocument> doc = m_document;
 	Ref<SAppLayoutResource> layout = m_layoutResource;
 	if (doc.isNotNull() && layout.isNotNull()) {
-		doc->_simulateLayoutCreateOrLayoutView(this, layout.ptr, sl_null, sl_null, sl_true);
+		doc->_simulateLayoutCreateOrLayoutView(this, layout.get(), sl_null, sl_null, sl_true);
 	} 
 }
 
@@ -585,7 +585,7 @@ void SAppLayoutImportView::init(SAppLayoutSimulator* simulator, SAppLayoutResour
 	m_simulationWindow = simulator->getSimulationWindow();
 	m_layoutResource = layout;
 	{
-		ListItems<String> radioGroups(layout->radioGroups.keys());
+		ListElements<String> radioGroups(layout->radioGroups.getAllKeys());
 		for (sl_size i = 0; i < radioGroups.count; i++) {
 			Ref<RadioGroup> group = new RadioGroup;
 			if (group.isNotNull()) {
@@ -606,7 +606,7 @@ void SAppLayoutImportView::layoutViews(sl_ui_len width, sl_ui_len height)
 	Ref<SAppDocument> doc = m_document;
 	Ref<SAppLayoutResource> layout = m_layoutResource;
 	if (doc.isNotNull() && layout.isNotNull()) {
-		doc->_simulateLayoutCreateOrLayoutView(this, layout.ptr, sl_null, sl_null, sl_true);
+		doc->_simulateLayoutCreateOrLayoutView(this, layout.get(), sl_null, sl_null, sl_true);
 	}
 }
 
