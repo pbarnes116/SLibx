@@ -693,7 +693,7 @@ Ref<SRouter> SRouter::createFromConfiguration(const Variant& varConfig)
 	if (ret.isNotNull()) {
 		// add devices
 		{
-			for (auto item : varConfig.getField("devices").getVariantMap()) {
+			for (auto item : varConfig["devices"].getVariantMap()) {
 				SRouterDeviceParam dp;
 				dp.fragment_expiring_seconds = fragment_expiring_seconds;
 				dp.loop = ret->m_loop;
@@ -706,7 +706,7 @@ Ref<SRouter> SRouter::createFromConfiguration(const Variant& varConfig)
 		}
 		// add remotes
 		{
-			for (auto item : varConfig.getField("remotes").getVariantMap()) {
+			for (auto item : varConfig["remotes"].getVariantMap()) {
 				SRouterRemoteParam rp;
 				rp.fragment_expiring_seconds = fragment_expiring_seconds;
 				rp.loop = ret->m_loop;
@@ -720,25 +720,29 @@ Ref<SRouter> SRouter::createFromConfiguration(const Variant& varConfig)
 		}
 		// add routes
 		{
-			for (auto item : varConfig.getField("routes").getVariantList()) {
-				SRouterRoute route;
-				if (route.parseConfig(ret.get(), item)) {
-					ret->m_listRoutes.add_NoLock(route);
-				} else {
-					LogError(TAG, "Failed to parse route element: %s", item.toJsonString());
-					return Ref<SRouter>::null();
+			for (auto item : varConfig["routes"].getVariantList()) {
+				if (item.isNotNull()) {
+					SRouterRoute route;
+					if (route.parseConfig(ret.get(), item)) {
+						ret->m_listRoutes.add_NoLock(route);
+					} else {
+						LogError(TAG, "Failed to parse route element: %s", item.toJsonString());
+						return Ref<SRouter>::null();
+					}
 				}
 			}
 		}
 		// add arp proxies
 		{
-			for (auto item : varConfig.getField("arp_proxies").getVariantList()) {
-				SRouterArpProxy arp;
-				if (arp.parseConfig(ret.get(), item)) {
-					ret->m_listArpProxies.add_NoLock(arp);
-				} else {
-					LogError(TAG, "Failed to parse ARP proxy element: %s", item.toJsonString());
-					return Ref<SRouter>::null();
+			for (auto item : varConfig["arp_proxies"].getVariantList()) {
+				if (item.isNotNull()) {					
+					SRouterArpProxy arp;
+					if (arp.parseConfig(ret.get(), item)) {
+						ret->m_listArpProxies.add_NoLock(arp);
+					} else {
+						LogError(TAG, "Failed to parse ARP proxy element: %s", item.toJsonString());
+						return Ref<SRouter>::null();
+					}
 				}
 			}
 		}
