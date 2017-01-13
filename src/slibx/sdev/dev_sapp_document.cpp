@@ -4567,7 +4567,12 @@ END_PROCESS_LAYOUT_CONTROL
 BEGIN_PROCESS_LAYOUT_CONTROL(Scroll, ScrollView)
 {
 	if (op == OP_PARSE) {
-		LAYOUT_CONTROL_PARSE_ATTR(attr->, scrolling)
+		if (resourceItem->element->getName() == "hscroll") {
+			attr->scrolling.horizontal = true;
+			attr->scrolling.vertical = false;
+		} else {
+			LAYOUT_CONTROL_PARSE_ATTR(attr->, scrolling)
+		}
 	} else if (op == OP_GENERATE_CPP) {
 		if (attr->scrolling.horizontal || attr->scrolling.vertical) {
 			params->sbDefineInit->add(String::format("%s%s->setHorizontalScrolling(%s);%n", strTab, name, (attr->scrolling.horizontal?"sl_true":"sl_false")));

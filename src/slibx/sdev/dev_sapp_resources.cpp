@@ -431,7 +431,7 @@ int SAppLayoutResource::getTypeFromName(const String &strType)
 		type = SAppLayoutResource::typeImage;
 	} else if (strType == "select") {
 		type = SAppLayoutResource::typeSelect;
-	} else if (strType == "scroll") {
+	} else if (strType == "scroll" || strType == "hscroll") {
 		type = SAppLayoutResource::typeScroll;
 	} else if (strType == "linear") {
 		type = SAppLayoutResource::typeLinear;
