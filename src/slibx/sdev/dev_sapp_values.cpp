@@ -26,7 +26,7 @@ String SAppStringValue::getAccessString()
 	if (flagReferResource) {
 		return String::format("string::%s::get()", valueOrName);
 	} else {
-		return String::format("\"%s\"", valueOrName.applyBackslashEscapes(sl_true, sl_false, sl_true));
+		return String::format("\"%s\"", ParseUtil::applyBackslashEscapes(valueOrName, sl_true, sl_false, sl_true));
 	}
 }
 
@@ -2081,6 +2081,64 @@ sl_bool SAppUIKeyboardTypeValue::parse(const String& _str)
 		return sl_true;
 	} else if (str == "ascii-numpad") {
 		value = UIKeyboardType::AsciiNumpad;
+		flagDefined = sl_true;
+		return sl_true;
+	}
+	return sl_false;
+}
+
+
+/************************************************
+		UIAutoCapitalizationType
+************************************************/
+
+SAppUIAutoCapitalizationType::SAppUIAutoCapitalizationType()
+: flagDefined(sl_false), value(UIAutoCapitalizationType::None)
+{
+}
+
+String SAppUIAutoCapitalizationType::getAccessString()
+{
+	if (!flagDefined) {
+		return "slib::UIAutoCapitalizationType::None";
+	}
+	switch (value) {
+		case UIAutoCapitalizationType::None:
+			return "slib::UIAutoCapitalizationType::None";
+		case UIAutoCapitalizationType::Words:
+			return "slib::UIAutoCapitalizationType::Words";
+		case UIAutoCapitalizationType::Sentences:
+			return "slib::UIAutoCapitalizationType::Sentences";
+		case UIAutoCapitalizationType::AllCharacters:
+			return "slib::UIAutoCapitalizationType::AllCharacters";
+		default:
+			break;
+	}
+	return "slib::UIAutoCapitalizationType::None";
+}
+
+sl_bool SAppUIAutoCapitalizationType::parse(const String& _str)
+{
+	String str = _str.trim();
+	if (str.isEmpty()) {
+		flagDefined = sl_false;
+		return sl_true;
+	}
+	str = str.toLower();
+	if (str == "none") {
+		value = UIAutoCapitalizationType::None;
+		flagDefined = sl_true;
+		return sl_true;
+	} else if (str == "words") {
+		value = UIAutoCapitalizationType::Words;
+		flagDefined = sl_true;
+		return sl_true;
+	} else if (str == "sentences") {
+		value = UIAutoCapitalizationType::Sentences;
+		flagDefined = sl_true;
+		return sl_true;
+	} else if (str == "all") {
+		value = UIAutoCapitalizationType::AllCharacters;
 		flagDefined = sl_true;
 		return sl_true;
 	}

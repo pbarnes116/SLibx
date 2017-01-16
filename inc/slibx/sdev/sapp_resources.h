@@ -362,6 +362,7 @@ public:
 	SAppColorValue textColor;
 	SAppUIReturnKeyTypeValue returnKey;
 	SAppUIKeyboardTypeValue keyboard;
+	SAppUIAutoCapitalizationType autoCap;
 	
 public:
 	sl_bool isNotRequiredNative();
@@ -407,6 +408,7 @@ class SAppLayoutScrollAttributes : public Referable
 {
 public:
 	SAppScrollingValue scrolling;
+	SAppBooleanValue paging;
 	
 	Ref<SAppLayoutResourceItem> content;
 	

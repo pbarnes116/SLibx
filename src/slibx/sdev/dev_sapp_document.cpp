@@ -1561,16 +1561,16 @@ sl_bool SAppDocument::_generateStringsCpp(const String& targetPath)
 			String defValue = pair.value->defaultValue;
 			
 			if (pair.value->values.isEmpty()) {
-				sbCpp.add(String::format("\t\tSLIB_DEFINE_STRING_RESOURCE_SIMPLE(%s, \"%s\")%n%n", pair.key, defValue.applyBackslashEscapes(sl_true, sl_false, sl_true)));
+				sbCpp.add(String::format("\t\tSLIB_DEFINE_STRING_RESOURCE_SIMPLE(%s, \"%s\")%n%n", pair.key, ParseUtil::applyBackslashEscapes(defValue, sl_true, sl_false, sl_true)));
 			} else {
 				
-				sbCpp.add(String::format("\t\tSLIB_DEFINE_STRING_RESOURCE_BEGIN(%s, \"%s\")%n", pair.key, defValue.applyBackslashEscapes(sl_true, sl_false, sl_true)));
+				sbCpp.add(String::format("\t\tSLIB_DEFINE_STRING_RESOURCE_BEGIN(%s, \"%s\")%n", pair.key, ParseUtil::applyBackslashEscapes(defValue, sl_true, sl_false, sl_true)));
 				
 				// locales
 				{
 					for (auto pairValues : pair.value->values) {
 						if (pairValues.key.getCountry() != Country::Unknown) {
-							sbCpp.add(String::format("\t\t\tSLIB_DEFINE_STRING_RESOURCE_VALUE(%s, \"%s\")%n", pairValues.key.toString(), pairValues.value.applyBackslashEscapes(sl_true, sl_false, sl_true)));
+							sbCpp.add(String::format("\t\t\tSLIB_DEFINE_STRING_RESOURCE_VALUE(%s, \"%s\")%n", pairValues.key.toString(), ParseUtil::applyBackslashEscapes(pairValues.value, sl_true, sl_false, sl_true)));
 						}
 					}
 				}
@@ -1578,7 +1578,7 @@ sl_bool SAppDocument::_generateStringsCpp(const String& targetPath)
 				{
 					for (auto pairValues : pair.value->values) {
 						if (pairValues.key.getCountry() == Country::Unknown) {
-							sbCpp.add(String::format("\t\t\tSLIB_DEFINE_STRING_RESOURCE_VALUE(%s, \"%s\")%n", pairValues.key.toString(), pairValues.value.applyBackslashEscapes(sl_true, sl_false, sl_true)));
+							sbCpp.add(String::format("\t\t\tSLIB_DEFINE_STRING_RESOURCE_VALUE(%s, \"%s\")%n", pairValues.key.toString(), ParseUtil::applyBackslashEscapes(pairValues.value, sl_true, sl_false, sl_true)));
 						}
 					}
 				}
@@ -4402,6 +4402,7 @@ BEGIN_PROCESS_LAYOUT_CONTROL(Edit, EditView)
 	LAYOUT_CONTROL_GENERIC_ATTR_NOREDRAW(textColor, setTextColor)
 	LAYOUT_CONTROL_GENERIC_ATTR(returnKey, setReturnKeyType)
 	LAYOUT_CONTROL_GENERIC_ATTR(keyboard, setKeyboardType)
+	LAYOUT_CONTROL_GENERIC_ATTR(autoCap, setAutoCapitalizationType)
 	
 	LAYOUT_CONTROL_SET_NATIVE_WIDGET
 	
@@ -4588,6 +4589,8 @@ BEGIN_PROCESS_LAYOUT_CONTROL(Scroll, ScrollView)
 	}
 	
 	LAYOUT_CONTROL_PROCESS_SUPER(View)
+	
+	LAYOUT_CONTROL_GENERIC_ATTR(paging, setPaging)
 	
 	LAYOUT_CONTROL_ADD_STATEMENT
 	

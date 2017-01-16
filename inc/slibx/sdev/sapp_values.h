@@ -515,6 +515,22 @@ public:
 	
 };
 
+class SAppUIAutoCapitalizationType
+{
+public:
+	sl_bool flagDefined;
+	UIAutoCapitalizationType value;
+	
+public:
+	SAppUIAutoCapitalizationType();
+	
+public:
+	String getAccessString();
+	
+	sl_bool parse(const String& str);
+	
+};
+
 SLIB_SDEV_NAMESPACE_END
 
 #endif
