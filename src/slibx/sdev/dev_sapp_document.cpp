@@ -3961,30 +3961,36 @@ BEGIN_PROCESS_LAYOUT_CONTROL(View, View)
 	}
 	
 	if (op == OP_PARSE) {
-		LAYOUT_CONTROL_PARSE_ATTR(attr->, scrollBars)
-	} else if (op == OP_GENERATE_CPP) {
-		if (attr->scrollBars.horizontalScrollBar) {
-			if (attr->scrollBars.verticalScrollBar) {
-				params->sbDefineInit->add(String::format("%s%s->createScrollBars(slib::UIUpdateMode::NoRedraw);%n", strTab, name));
-			} else {
-				params->sbDefineInit->add(String::format("%s%s->createHorizontalScrollBar(slib::UIUpdateMode::NoRedraw);%n", strTab, name));
-			}
+		if (resourceItem->element->getName() == "hscroll") {
+			attr->scrolling.flagDefined = sl_true;
+			attr->scrolling.horizontal = sl_true;
+			attr->scrolling.vertical = sl_false;
 		} else {
-			if (attr->scrollBars.verticalScrollBar) {
-				params->sbDefineInit->add(String::format("%s%s->createVerticalScrollBar(slib::UIUpdateMode::NoRedraw);%n", strTab, name));
-			}
+			LAYOUT_CONTROL_PARSE_ATTR(attr->, scrolling)
+		}
+	} else if (op == OP_GENERATE_CPP) {
+		if (attr->scrolling.flagDefined) {
+			params->sbDefineInit->add(String::format("%s%s->setHorizontalScrolling(%s);%n", strTab, name, (attr->scrolling.horizontal?"sl_true":"sl_false")));
+			params->sbDefineInit->add(String::format("%s%s->setVerticalScrolling(%s);%n", strTab, name, (attr->scrolling.vertical?"sl_true":"sl_false")));
 		}
 	} else if (op == OP_SIMULATE) {
-		if (attr->scrollBars.horizontalScrollBar) {
-			if (attr->scrollBars.verticalScrollBar) {
-				view->createScrollBars(UIUpdateMode::NoRedraw);
-			} else {
-				view->createHorizontalScrollBar(UIUpdateMode::NoRedraw);
+		if (!flagOnLayout) {
+			if (attr->scrolling.flagDefined) {
+				view->setHorizontalScrolling(attr->scrolling.horizontal?sl_true:sl_false);
+				view->setVerticalScrolling(attr->scrolling.vertical?sl_true:sl_false);
 			}
-		} else {
-			if (attr->scrollBars.verticalScrollBar) {
-				view->createVerticalScrollBar(UIUpdateMode::NoRedraw);
-			}
+		}
+	}
+	
+	if (op == OP_PARSE) {
+		LAYOUT_CONTROL_PARSE_ATTR(attr->, scrollBars)
+	} else if (op == OP_GENERATE_CPP) {
+		if (attr->scrollBars.flagDefined) {
+			params->sbDefineInit->add(String::format("%s%s->setScrollBarsVisible(%s, %s, slib::UIUpdateMode::Init);%n", strTab, name, attr->scrollBars.horizontalScrollBar ? "sl_true" : "sl_false", attr->scrollBars.verticalScrollBar ? "sl_true" : "sl_false"));
+		}
+	} else if (op == OP_SIMULATE) {
+		if (attr->scrollBars.flagDefined) {
+			view->setScrollBarsVisible(attr->scrollBars.horizontalScrollBar, attr->scrollBars.verticalScrollBar, UIUpdateMode::NoRedraw);
 		}
 	}
 	LAYOUT_CONTROL_GENERIC_ATTR(scrollingByMouse, setContentScrollingByMouse)
@@ -4567,30 +4573,12 @@ END_PROCESS_LAYOUT_CONTROL
 
 BEGIN_PROCESS_LAYOUT_CONTROL(Scroll, ScrollView)
 {
-	if (op == OP_PARSE) {
-		if (resourceItem->element->getName() == "hscroll") {
-			attr->scrolling.horizontal = true;
-			attr->scrolling.vertical = false;
-		} else {
-			LAYOUT_CONTROL_PARSE_ATTR(attr->, scrolling)
-		}
-	} else if (op == OP_GENERATE_CPP) {
-		if (attr->scrolling.horizontal || attr->scrolling.vertical) {
-			params->sbDefineInit->add(String::format("%s%s->setHorizontalScrolling(%s);%n", strTab, name, (attr->scrolling.horizontal?"sl_true":"sl_false")));
-			params->sbDefineInit->add(String::format("%s%s->setVerticalScrolling(%s);%n", strTab, name, (attr->scrolling.vertical?"sl_true":"sl_false")));
-		}
-	} else if (op == OP_SIMULATE) {
-		if (!flagOnLayout) {
-			if (attr->scrolling.horizontal || attr->scrolling.vertical) {
-				view->setHorizontalScrolling(attr->scrolling.horizontal?sl_true:sl_false);
-				view->setVerticalScrolling(attr->scrolling.vertical?sl_true:sl_false);
-			}
-		}
-	}
-	
+
 	LAYOUT_CONTROL_PROCESS_SUPER(View)
 	
 	LAYOUT_CONTROL_GENERIC_ATTR(paging, setPaging)
+	LAYOUT_CONTROL_INT_DIMENSION_ATTR(pageWidth, setPageWidth, checkScalarSize)
+	LAYOUT_CONTROL_INT_DIMENSION_ATTR(pageHeight, setPageHeight, checkScalarSize)
 	
 	LAYOUT_CONTROL_ADD_STATEMENT
 	

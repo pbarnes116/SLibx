@@ -1039,7 +1039,7 @@ sl_bool SAppPenStyleValue::parse(const String& _str)
 ************************************************/
 
 SAppScrollBarsValue::SAppScrollBarsValue()
-: horizontalScrollBar(sl_false), verticalScrollBar(sl_false)
+: flagDefined(sl_false), horizontalScrollBar(sl_false), verticalScrollBar(sl_false)
 {
 }
 
@@ -1047,24 +1047,29 @@ sl_bool SAppScrollBarsValue::parse(const String& _str)
 {
 	String str = _str.trim();
 	if (str.isEmpty()) {
+		flagDefined = sl_false;
 		horizontalScrollBar = sl_false;
 		verticalScrollBar = sl_false;
 		return sl_true;
 	}
 	str = str.toLower();
 	if (str == "none") {
+		flagDefined = sl_true;
 		horizontalScrollBar = sl_false;
 		verticalScrollBar = sl_false;
 		return sl_true;
 	} else if (str == "horizontal") {
+		flagDefined = sl_true;
 		horizontalScrollBar = sl_true;
 		verticalScrollBar = sl_false;
 		return sl_true;
 	} else if (str == "vertical") {
+		flagDefined = sl_true;
 		horizontalScrollBar = sl_false;
 		verticalScrollBar = sl_true;
 		return sl_true;
 	} else if (str == "both") {
+		flagDefined = sl_true;
 		horizontalScrollBar = sl_true;
 		verticalScrollBar = sl_true;
 		return sl_true;
@@ -1574,7 +1579,7 @@ sl_bool SAppAlignLayoutValue::parse(const String& _str)
 ************************************************/
 
 SAppScrollingValue::SAppScrollingValue()
-: horizontal(sl_false), vertical(sl_false)
+: flagDefined(sl_false), horizontal(sl_false), vertical(sl_false)
 {
 }
 
@@ -1582,20 +1587,24 @@ sl_bool SAppScrollingValue::parse(const String& _str)
 {
 	String str = _str.trim();
 	if (str.isEmpty()) {
+		flagDefined = sl_false;
 		horizontal = sl_false;
 		vertical = sl_false;
 		return sl_true;
 	}
 	str = str.toLower();
 	if (str == "horizontal") {
+		flagDefined = sl_true;
 		horizontal = sl_true;
 		vertical = sl_false;
 		return sl_true;
 	} else if (str == "vertical") {
+		flagDefined = sl_true;
 		horizontal = sl_false;
 		vertical = sl_true;
 		return sl_true;
 	} else if (str == "both") {
+		flagDefined = sl_true;
 		horizontal = sl_true;
 		vertical = sl_true;
 		return sl_true;

@@ -286,6 +286,7 @@ public:
 class SAppScrollBarsValue
 {
 public:
+	sl_bool flagDefined;
 	sl_bool horizontalScrollBar;
 	sl_bool verticalScrollBar;
 	
@@ -392,6 +393,7 @@ public:
 class SAppScrollingValue
 {
 public:
+	sl_bool flagDefined;
 	sl_bool horizontal;
 	sl_bool vertical;
 	
