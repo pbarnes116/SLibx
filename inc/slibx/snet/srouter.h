@@ -34,7 +34,7 @@ public:
 	sl_uint16 nat_port_begin;
 	sl_uint16 nat_port_end;
 
-	Ref<AsyncLoop> loop;
+	Ref<Dispatcher> dispatcher;
 
 public:
 	SRouterInterfaceParam();
@@ -362,14 +362,14 @@ protected:
 	sl_bool m_flagInit;
 	sl_bool m_flagRunning;
 
-	Ref<AsyncLoop> m_loop;
+	Ref<Dispatcher> m_dispatcher;
 	Ref<AsyncIoLoop> m_ioLoop;
 
 	Ref<AsyncUdpSocket> m_udpServer;
 	Ref<TcpDatagramServer> m_tcpServer;
 	AES m_aesPacket;
 
-	Ref<AsyncTimer> m_timerIdle;
+	Ref<Timer> m_timerIdle;
 
 	HashMap< String, Ref<SRouterInterface> > m_mapInterfaces;
 	HashMap< String, Ref<SRouterDevice> > m_mapDevices;
