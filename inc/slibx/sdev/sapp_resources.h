@@ -221,7 +221,6 @@ public:
 	SAppVisibilityValue visibility;
 	SAppBooleanValue visible;
 	SAppBooleanValue enabled;
-	SAppBooleanValue occurringClick;
 	
 	SAppDrawableValue background;
 	SAppDrawableValue pressedBackground;

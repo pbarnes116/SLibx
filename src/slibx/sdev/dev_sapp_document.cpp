@@ -3761,7 +3761,6 @@ BEGIN_PROCESS_LAYOUT_CONTROL(View, View)
 		LAYOUT_CONTROL_GENERIC_ATTR_NOREDRAW(visible, setVisible)
 		LAYOUT_CONTROL_GENERIC_ATTR_NOREDRAW(enabled, setEnabled)
 	}
-	LAYOUT_CONTROL_GENERIC_ATTR(occurringClick, setOccurringClick)
 	LAYOUT_CONTROL_DRAWABLE_ATTR(background, setBackground)
 	LAYOUT_CONTROL_DRAWABLE_ATTR(pressedBackground, setPressedBackground)
 	LAYOUT_CONTROL_DRAWABLE_ATTR(hoverBackground, setHoverBackground)
