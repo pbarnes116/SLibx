@@ -3730,12 +3730,12 @@ BEGIN_PROCESS_LAYOUT_CONTROL(View, View)
 		SAppDimensionValue padding;
 		LAYOUT_CONTROL_PARSE_ATTR(, padding)
 		if (flagRoot) {
-			if (!(padding.checkPosition())) {
+			if (!(padding.checkForRootViewPosition())) {
 				LOG_ERROR_LAYOUT_CONTROL_ATTR(padding)
 				return sl_false;
 			}
 		} else {
-			if (!(padding.checkForRootViewPosition())) {
+			if (!(padding.checkPosition())) {
 				LOG_ERROR_LAYOUT_CONTROL_ATTR(padding)
 				return sl_false;
 			}
@@ -3864,12 +3864,12 @@ BEGIN_PROCESS_LAYOUT_CONTROL(View, View)
 		}
 		LAYOUT_CONTROL_PARSE_ATTR(attr->, fontSize)
 		if (flagRoot) {
-			if (!(attr->fontSize.checkPosition())) {
+			if (!(attr->fontSize.checkForRootViewPosition())) {
 				LOG_ERROR_LAYOUT_CONTROL_ATTR(fontSize)
 				return sl_false;
 			}
 		} else {
-			if (!(attr->fontSize.checkForRootViewPosition())) {
+			if (!(attr->fontSize.checkPosition())) {
 				LOG_ERROR_LAYOUT_CONTROL_ATTR(fontSize)
 				return sl_false;
 			}
