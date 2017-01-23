@@ -2285,16 +2285,7 @@ sl_bool SAppDocument::_parseLayoutResource(const Ref<XmlElement>& element)
 		return sl_false;
 	}
 	layout->name = name;
-	
-	String strSP = layout->getXmlAttribute("sp");
-	if (!(layout->sp.parse(strSP))) {
-		_logError(element, _g_sdev_sapp_error_resource_layout_attribute_invalid.arg("sp", strSP));
-	}
-	if (!(layout->sp.checkSP())) {
-		_logError(element, _g_sdev_sapp_error_resource_layout_attribute_invalid.arg("sp", strSP));
-		return sl_false;
-	}
-	
+		
 	if (!(_parseLayoutResourceItem(layout.get(), layout.get(), sl_null))) {
 		return sl_false;
 	}
@@ -2368,6 +2359,17 @@ sl_bool SAppDocument::_parseLayoutResourceItem(SAppLayoutResource* layout, SAppL
 			return sl_false;
 		}
 	}
+    
+    if (!parent) {
+        String strSP = layout->getXmlAttribute("sp");
+        if (!(layout->sp.parse(strSP))) {
+            _logError(element, _g_sdev_sapp_error_resource_layout_attribute_invalid.arg("sp", strSP));
+        }
+        if (!(layout->sp.checkSP())) {
+            _logError(element, _g_sdev_sapp_error_resource_layout_attribute_invalid.arg("sp", strSP));
+            return sl_false;
+        }
+    }
 	
 	if (parent) {
 		if (!(layout->itemsByName.put(item->name, item))) {
