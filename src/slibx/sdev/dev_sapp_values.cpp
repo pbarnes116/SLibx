@@ -290,7 +290,7 @@ sl_bool SAppDimensionValue::parse(const String& _str)
 					amount = f;
 					unit = SH;
 					break;
-				} else if (sz[pos + 1] == 'x') {
+				} else if (sz[pos + 1] == 'p') {
 					amount = f;
 					unit = SP;
 					break;
