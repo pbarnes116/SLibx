@@ -56,6 +56,7 @@ protected:
 	sl_bool _generateResourcesH(const String& targetPath);
 	
 	// Raw Resources
+	sl_bool _registerRawResources(const String& resourcePath, const String& fileDirPath);
 	sl_bool _registerRawResource(const String& path, const String& filePath, String& outName);
 	sl_bool _generateRawsCpp(const String& targetPath);
 

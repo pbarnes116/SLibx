@@ -15,6 +15,7 @@ SLIB_SDEV_NAMESPACE_BEGIN
 SLIB_STATIC_STRING(_g_sdev_sapp_log_appconf_begin, "Opening app configuration file: %s")
 SLIB_STATIC_STRING(_g_sdev_sapp_log_appconf_end, "Finished app configuration")
 SLIB_STATIC_STRING(_g_sdev_sapp_log_open_drawables_begin, "Opening drwable resources: %s")
+SLIB_STATIC_STRING(_g_sdev_sapp_log_open_raws_begin, "Opening raw resources: %s")
 SLIB_STATIC_STRING(_g_sdev_sapp_log_open_resource_begin, "Opening resource file: %s")
 SLIB_STATIC_STRING(_g_sdev_sapp_log_generate_cpp_begin, "Generating C++ files: %s")
 SLIB_STATIC_STRING(_g_sdev_sapp_error_generate_cpp_target_path_is_empty, "App configuration: <generate-cpp>/<target-path> is empty")
@@ -164,6 +165,10 @@ sl_bool SAppDocument::openResources()
 						return sl_false;
 					}
 					if (!(_registerImageResources(fileName, m_pathApp + "/" + fileName, locale))) {
+						return sl_false;
+					}
+				} else if (fileName == "raw") {
+					if (!(_registerRawResources("raw", m_pathApp + "/raw"))) {
 						return sl_false;
 					}
 				}
@@ -573,6 +578,24 @@ sl_bool SAppDocument::_generateResourcesH(const String& targetPath)
 				Raw Resources
 ***************************************************/
 
+sl_bool SAppDocument::_registerRawResources(const String& resourcePath, const String& fileDirPath)
+{
+	_log(_g_sdev_sapp_log_open_raws_begin.arg(fileDirPath));
+	List<String> _list = File::getFiles(fileDirPath);
+	_list.sort();
+	ListElements<String> list(_list);
+	for (sl_size i = 0; i < list.count; i++) {
+		const String& fileName = list[i];
+		if (fileName.isNotEmpty() && !(fileName.startsWith('.'))) {
+			String name;
+			if (!(_registerRawResource(fileName, fileDirPath + "/" + fileName, name))) {
+				return sl_false;
+			}
+		}
+	}
+	return sl_true;
+}
+
 sl_bool SAppDocument::_registerRawResource(const String& path, const String& filePath, String& outName)
 {
 	String name = Resources::makeResourceName(path);
@@ -818,90 +841,93 @@ sl_bool SAppDocument::_registerImageResources(const String& resourcePath, const 
 	ListElements<String> list(_list);
 	for (sl_size i = 0; i < list.count; i++) {
 		const String& fileName = list[i];
-		String ext = File::getFileExtension(fileName);
-		if (ext == "png" || ext == "jpg" || ext == "jpeg") {
-			String name = File::getFileNameOnly(fileName);
-			sl_reg indexSharp = name.indexOf('#');
-			sl_bool flagMain = sl_true;
-			if (indexSharp >= 0) {
-				flagMain = sl_false;
-				name = name.substring(0, indexSharp);
-			}
-			if (!(SDevUtil::checkName(name.getData(), name.getLength()))) {
-				_logError(_g_sdev_sapp_error_resource_drawable_filename_invalid.arg(resourcePath + "/" + fileName));
-				return sl_false;
-			}
-			Ref<SAppDrawableResource> res = m_drawables.getValue(name, Ref<SAppDrawableResource>::null());
-			if (res.isNull()) {
-				if (locale != Locale::Unknown) {
-					_logError(_g_sdev_sapp_error_resource_drawable_not_defined_default.arg(name));
+		if (!(fileName.startsWith('.'))) {
+			String ext = File::getFileExtension(fileName);
+			if (ext == "png" || ext == "jpg" || ext == "jpeg") {
+				String name = File::getFileNameOnly(fileName);
+				sl_reg indexSharp = name.indexOf('#');
+				sl_bool flagMain = sl_true;
+				if (indexSharp >= 0) {
+					flagMain = sl_false;
+					name = name.substring(0, indexSharp);
+				}
+				if (name.isEmpty()) {
+					_logError(_g_sdev_sapp_error_resource_drawable_filename_invalid.arg(resourcePath + "/" + fileName));
 					return sl_false;
 				}
-				res = new SAppDrawableResource;
+				name = Resources::makeResourceName(name);
+				Ref<SAppDrawableResource> res = m_drawables.getValue(name, Ref<SAppDrawableResource>::null());
 				if (res.isNull()) {
-					_logError(_g_sdev_sapp_error_out_of_memory);
+					if (locale != Locale::Unknown) {
+						_logError(_g_sdev_sapp_error_resource_drawable_not_defined_default.arg(name));
+						return sl_false;
+					}
+					res = new SAppDrawableResource;
+					if (res.isNull()) {
+						_logError(_g_sdev_sapp_error_out_of_memory);
+						return sl_false;
+					}
+					res->name = name;
+					res->type = SAppDrawableResource::typeImage;
+					res->imageAttrs = new SAppDrawableResourceImageAttributes;
+					if (res->imageAttrs.isNull()) {
+						_logError(_g_sdev_sapp_error_out_of_memory);
+						return sl_false;
+					}
+					if (!(m_drawables.put(name, res))) {
+						_logError(_g_sdev_sapp_error_out_of_memory);
+						return sl_false;
+					}
+				}
+				if (res->type != SAppDrawableResource::typeImage) {
+					_logError(_g_sdev_sapp_error_resource_drawable_type_duplicated.arg(resourcePath + "/" + fileName));
 					return sl_false;
 				}
-				res->name = name;
-				res->type = SAppDrawableResource::typeImage;
-				res->imageAttrs = new SAppDrawableResourceImageAttributes;
-				if (res->imageAttrs.isNull()) {
-					_logError(_g_sdev_sapp_error_out_of_memory);
-					return sl_false;
-				}
-				if (!(m_drawables.put(name, res))) {
-					_logError(_g_sdev_sapp_error_out_of_memory);
-					return sl_false;
-				}
-			}
-			if (res->type != SAppDrawableResource::typeImage) {
-				_logError(_g_sdev_sapp_error_resource_drawable_type_duplicated.arg(resourcePath + "/" + fileName));
-				return sl_false;
-			}
-			
-			SAppDrawableResourceImageAttributes* imageAttr = res->imageAttrs.get();
-			
-			List< Ref<SAppDrawableResourceImageItem> > list;
-			if (locale == Locale::Unknown) {
-				list = imageAttr->defaultImages;
-				if (list.isNull()) {
-					_logError(_g_sdev_sapp_error_out_of_memory);
-					return sl_false;
-				}
-			} else {
-				imageAttr->images.get(locale, &list);
-				if (list.isNull()) {
-					list = List< Ref<SAppDrawableResourceImageItem> >::create();
+				
+				SAppDrawableResourceImageAttributes* imageAttr = res->imageAttrs.get();
+				
+				List< Ref<SAppDrawableResourceImageItem> > list;
+				if (locale == Locale::Unknown) {
+					list = imageAttr->defaultImages;
 					if (list.isNull()) {
 						_logError(_g_sdev_sapp_error_out_of_memory);
 						return sl_false;
 					}
-					if (!(imageAttr->images.put(locale, list))) {
+				} else {
+					imageAttr->images.get(locale, &list);
+					if (list.isNull()) {
+						list = List< Ref<SAppDrawableResourceImageItem> >::create();
+						if (list.isNull()) {
+							_logError(_g_sdev_sapp_error_out_of_memory);
+							return sl_false;
+						}
+						if (!(imageAttr->images.put(locale, list))) {
+							_logError(_g_sdev_sapp_error_out_of_memory);
+							return sl_false;
+						}
+					}
+				}
+				
+				Ref<SAppDrawableResourceImageItem> item = new SAppDrawableResourceImageItem;
+				if (item.isNull()) {
+					_logError(_g_sdev_sapp_error_out_of_memory);
+					return sl_false;
+				}
+				item->fileName = fileName;
+				item->filePath = fileDirPath + "/" + fileName;
+				if (!(_registerRawResource(resourcePath + "/" + fileName, item->filePath, item->rawName))) {
+					return sl_false;
+				}
+				if (flagMain) {
+					if (!(list.insert(0, item))) {
 						_logError(_g_sdev_sapp_error_out_of_memory);
 						return sl_false;
 					}
-				}
-			}
-			
-			Ref<SAppDrawableResourceImageItem> item = new SAppDrawableResourceImageItem;
-			if (item.isNull()) {
-				_logError(_g_sdev_sapp_error_out_of_memory);
-				return sl_false;
-			}
-			item->fileName = fileName;
-			item->filePath = fileDirPath + "/" + fileName;
-			if (!(_registerRawResource(resourcePath + "/" + fileName, item->filePath, item->rawName))) {
-				return sl_false;
-			}
-			if (flagMain) {
-				if (!(list.insert(0, item))) {
-					_logError(_g_sdev_sapp_error_out_of_memory);
-					return sl_false;
-				}
-			} else {
-				if (!(list.add(item))) {
-					_logError(_g_sdev_sapp_error_out_of_memory);
-					return sl_false;
+				} else {
+					if (!(list.add(item))) {
+						_logError(_g_sdev_sapp_error_out_of_memory);
+						return sl_false;
+					}
 				}
 			}
 		}
