@@ -3634,6 +3634,48 @@ BEGIN_PROCESS_LAYOUT_CONTROL(View, View)
 		}
 	}
 	
+	
+	if (flagRoot) {
+		LAYOUT_CONTROL_INT_DIMENSION_ATTR_NOREDRAW(minWidth, setMinimumWidth, checkForRootViewScalarSize)
+		LAYOUT_CONTROL_INT_DIMENSION_ATTR_NOREDRAW(maxWidth, setMaximumWidth, checkForRootViewScalarSize)
+		LAYOUT_CONTROL_INT_DIMENSION_ATTR_NOREDRAW(minHeight, setMinimumHeight, checkForRootViewScalarSize)
+		LAYOUT_CONTROL_INT_DIMENSION_ATTR_NOREDRAW(maxHeight, setMaximumHeight, checkForRootViewScalarSize)
+	} else {
+		LAYOUT_CONTROL_INT_DIMENSION_ATTR_NOREDRAW(minWidth, setMinimumWidth, checkScalarSize)
+		LAYOUT_CONTROL_INT_DIMENSION_ATTR_NOREDRAW(maxWidth, setMaximumWidth, checkScalarSize)
+		LAYOUT_CONTROL_INT_DIMENSION_ATTR_NOREDRAW(minHeight, setMinimumHeight, checkScalarSize)
+		LAYOUT_CONTROL_INT_DIMENSION_ATTR_NOREDRAW(maxHeight, setMaximumHeight, checkScalarSize)
+	}
+	
+	LAYOUT_CONTROL_GENERIC_ATTR_NOREDRAW(aspectRatio, setAspectRatio)
+	if (op == OP_GENERATE_CPP) {
+		if (attr->aspectRatio.flagDefined) {
+			if (attr->width.flagDefined) {
+				if (!(attr->height.flagDefined)) {
+					params->sbDefineInit->add(String::format("%s%s->setAspectRatioMode(slib::AspectRatioMode::AdjustHeight, slib::UIUpdateMode::Init);%n", strTab, name));
+				}
+			} else {
+				if (attr->height.flagDefined) {
+					params->sbDefineInit->add(String::format("%s%s->setAspectRatioMode(slib::AspectRatioMode::AdjustWidth, slib::UIUpdateMode::Init);%n", strTab, name));
+				}
+			}
+		}
+	} else if (op == OP_SIMULATE) {
+		if (attr->aspectRatio.flagDefined) {
+			if (!flagOnLayout) {
+				if (attr->width.flagDefined) {
+					if (!(attr->height.flagDefined)) {
+						view->setAspectRatioMode(AspectRatioMode::AdjustHeight, slib::UIUpdateMode::Init);
+					}
+				} else {
+					if (attr->height.flagDefined) {
+						view->setAspectRatioMode(AspectRatioMode::AdjustWidth, slib::UIUpdateMode::Init);
+					}
+				}
+			}
+		}
+	}
+	
 	if (flagView) {
 		if (op == OP_PARSE) {
 			if (flagRoot) {
@@ -4475,8 +4517,33 @@ BEGIN_PROCESS_LAYOUT_CONTROL(Image, ImageView)
 	LAYOUT_CONTROL_GENERIC_ATTR_NOREDRAW(gravity, setGravity)
 	LAYOUT_CONTROL_GENERIC_ATTR_NOREDRAW(scale, setScaleMode)
 	
-	LAYOUT_CONTROL_ADD_STATEMENT
+	if (!(resourceItem->attrsView->aspectRatio.flagDefined)) {
+		if (op == OP_GENERATE_CPP) {
+			if (resourceItem->attrsView->width.flagDefined) {
+				if (!(resourceItem->attrsView->height.flagDefined)) {
+					params->sbDefineInit->add(String::format("%s%s->setAspectRatioMode(slib::AspectRatioMode::AdjustHeight, slib::UIUpdateMode::Init);%n", strTab, name));
+				}
+			} else {
+				if (resourceItem->attrsView->height.flagDefined) {
+					params->sbDefineInit->add(String::format("%s%s->setAspectRatioMode(slib::AspectRatioMode::AdjustWidth, slib::UIUpdateMode::Init);%n", strTab, name));
+				}
+			}
+		} else if (op == OP_SIMULATE) {
+			if (!flagOnLayout) {
+				if (resourceItem->attrsView->width.flagDefined) {
+					if (!(resourceItem->attrsView->height.flagDefined)) {
+						view->setAspectRatioMode(AspectRatioMode::AdjustHeight, slib::UIUpdateMode::Init);
+					}
+				} else {
+					if (resourceItem->attrsView->height.flagDefined) {
+						view->setAspectRatioMode(AspectRatioMode::AdjustWidth, slib::UIUpdateMode::Init);
+					}
+				}
+			}
+		}
+	}
 	
+	LAYOUT_CONTROL_ADD_STATEMENT
 }
 END_PROCESS_LAYOUT_CONTROL
 

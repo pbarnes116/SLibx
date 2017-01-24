@@ -207,6 +207,13 @@ public:
 	
 	SAppDimensionValue left;
 	SAppDimensionValue top;
+	
+	SAppDimensionValue minWidth;
+	SAppDimensionValue maxWidth;
+	SAppDimensionValue minHeight;
+	SAppDimensionValue maxHeight;
+	
+	SAppFloatValue aspectRatio;
 
 	SAppDimensionValue marginLeft;
 	SAppDimensionValue marginTop;
