@@ -34,7 +34,7 @@ public:
 	sl_uint16 nat_port_begin;
 	sl_uint16 nat_port_end;
 
-	Ref<Dispatcher> dispatcher;
+	Ref<DispatchLoop> dispatchLoop;
 
 public:
 	SRouterInterfaceParam();
@@ -362,7 +362,7 @@ protected:
 	sl_bool m_flagInit;
 	sl_bool m_flagRunning;
 
-	Ref<Dispatcher> m_dispatcher;
+	Ref<DispatchLoop> m_dispatchLoop;
 	Ref<AsyncIoLoop> m_ioLoop;
 
 	Ref<AsyncUdpSocket> m_udpServer;

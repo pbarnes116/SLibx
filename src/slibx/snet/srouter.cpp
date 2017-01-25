@@ -75,7 +75,7 @@ void SRouterInterface::initWithParam(const SRouterInterfaceParam& param)
 			m_nat.setup(m_natParam);
 		}
 	}
-	m_fragmentation.setupExpiringDuration(param.fragment_expiring_seconds * 1000, param.dispatcher);
+	m_fragmentation.setupExpiringDuration(param.fragment_expiring_seconds * 1000, param.dispatchLoop);
 }
 
 void SRouterInterface::setNatIp(const IPv4Address& ip)
@@ -627,10 +627,10 @@ SRouter::~SRouter()
 
 Ref<SRouter> SRouter::create(const SRouterParam& param)
 {
-	Ref<Dispatcher> dispatcher = Dispatcher::create(sl_false);
+	Ref<DispatchLoop> dispatchLoop = DispatchLoop::create(sl_false);
 	Ref<AsyncIoLoop> ioLoop = AsyncIoLoop::create(sl_false);
 
-	if (dispatcher.isNotNull() && ioLoop.isNotNull()) {
+	if (dispatchLoop.isNotNull() && ioLoop.isNotNull()) {
 
 		Ref<SRouter> ret = new SRouter;
 		
@@ -638,7 +638,7 @@ Ref<SRouter> SRouter::create(const SRouterParam& param)
 
 			ret->m_name = param.name;
 
-			ret->m_dispatcher = dispatcher;
+			ret->m_dispatchLoop = dispatchLoop;
 			ret->m_ioLoop = ioLoop;
 
 			Ref<AsyncUdpSocket> udpServer = AsyncUdpSocket::create(param.udp_server_port, ret.get(), MESSAGE_SIZE + 32, ioLoop, sl_false);
@@ -665,7 +665,7 @@ Ref<SRouter> SRouter::create(const SRouterParam& param)
 			}
 			ret->m_aesPacket.setKey_SHA256(param.server_key);
 
-			ret->m_timerIdle = dispatcher->addTimer(SLIB_FUNCTION_CLASS(SRouter, _onIdle, ret.get()), 1000);
+			ret->m_timerIdle = Timer::createWithLoop(dispatchLoop, SLIB_FUNCTION_CLASS(SRouter, _onIdle, ret.get()), 1000);
 
 			ret->m_flagInit = sl_true;
 
@@ -696,7 +696,7 @@ Ref<SRouter> SRouter::createFromConfiguration(const Variant& varConfig)
 			for (auto item : varConfig["devices"].getVariantMap()) {
 				SRouterDeviceParam dp;
 				dp.fragment_expiring_seconds = fragment_expiring_seconds;
-				dp.dispatcher = ret->m_dispatcher;
+				dp.dispatchLoop = ret->m_dispatchLoop;
 				dp.parseConfig(item.value);
 				Ref<SRouterDevice> device = SRouterDevice::create(dp);
 				if (device.isNotNull()) {
@@ -709,7 +709,7 @@ Ref<SRouter> SRouter::createFromConfiguration(const Variant& varConfig)
 			for (auto item : varConfig["remotes"].getVariantMap()) {
 				SRouterRemoteParam rp;
 				rp.fragment_expiring_seconds = fragment_expiring_seconds;
-				rp.dispatcher = ret->m_dispatcher;
+				rp.dispatchLoop = ret->m_dispatchLoop;
 				rp.tcp_send_buffer_size = param.tcp_send_buffer_size;
 				rp.parseConfig(item.value);
 				Ref<SRouterRemote> remote = SRouterRemote::create(rp);
@@ -763,8 +763,8 @@ void SRouter::release()
 	m_flagInit = sl_false;
 
 	m_flagRunning = sl_false;
-	if (m_dispatcher.isNotNull()) {
-		m_dispatcher->release();
+	if (m_dispatchLoop.isNotNull()) {
+		m_dispatchLoop->release();
 	}
 	if (m_ioLoop.isNotNull()) {
 		m_ioLoop->release();
@@ -802,7 +802,7 @@ void SRouter::start()
 	if (m_tcpServer.isNotNull()) {
 		m_tcpServer->start();
 	}
-	m_dispatcher->start();
+	m_dispatchLoop->start();
 	m_ioLoop->start();
 
 	{
