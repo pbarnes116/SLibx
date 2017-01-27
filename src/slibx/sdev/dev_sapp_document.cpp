@@ -2839,6 +2839,7 @@ sl_bool SAppDocument::_processLayoutResourceControl(LayoutControlProcessParams *
 		PROCESS_CONTROL_SWITCH(Slider)
 		PROCESS_CONTROL_SWITCH(Picker)
 		PROCESS_CONTROL_SWITCH(Pager)
+		PROCESS_CONTROL_SWITCH(Video)
 		default:
 			return sl_false;
 	}
@@ -2848,8 +2849,14 @@ sl_bool SAppDocument::_processLayoutResourceControl(LayoutControlProcessParams *
 		case SAppLayoutResource::typePage:
 		case SAppLayoutResource::typeView:
 		case SAppLayoutResource::typeViewGroup:
+		case SAppLayoutResource::typeButton:
+		case SAppLayoutResource::typeLabel:
+		case SAppLayoutResource::typeImage:
+		case SAppLayoutResource::typeEdit:
+		case SAppLayoutResource::typePassword:
 		case SAppLayoutResource::typeLinear:
 		case SAppLayoutResource::typeRender:
+		case SAppLayoutResource::typeVideo:
 			if (op == OP_PARSE) {
 				ListLocker< Ref<XmlElement> > children(_getLayoutItemChildElements(resourceItem, String::null()));
 				for (sl_size i = 0; i < children.count; i++) {
@@ -5616,6 +5623,34 @@ BEGIN_PROCESS_LAYOUT_CONTROL(Pager, ViewPager)
 			params->sbDefineInit->add(String::format("%s%s->selectPage(%d, slib::UIUpdateMode::Init);%n", strTab, name, indexSelected));
 		}
 	}
+	
+}
+END_PROCESS_LAYOUT_CONTROL
+
+BEGIN_PROCESS_LAYOUT_CONTROL(Video, VideoView)
+{
+	LAYOUT_CONTROL_PROCESS_SUPER(View)
+	
+	LAYOUT_CONTROL_GENERIC_ATTR(repeat, setRepeat)
+	
+	if (op == OP_PARSE || op == OP_GENERATE_CPP) {
+		LAYOUT_CONTROL_STRING_ATTR(src, setSource)
+	} else {
+		if (!flagOnLayout) {
+			if (attr->src.flagDefined) {
+				if (!(_checkStringValueAvailable(attr->src, element))) {
+					return sl_false;
+				}
+				String value = _getStringValue(attr->src);
+				if (value.startsWith("asset://")) {
+					value = m_pathApp + "/asset/" + value.substring(8);
+				}
+				view->setSource(value);
+			}
+		}
+	}
+	
+	LAYOUT_CONTROL_ADD_STATEMENT
 	
 }
 END_PROCESS_LAYOUT_CONTROL

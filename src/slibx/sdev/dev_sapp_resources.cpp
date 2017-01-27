@@ -281,6 +281,7 @@ SAppLayoutResource::SAppLayoutResource()
 	nAutoIncreaseNameSlider = 0;
 	nAutoIncreaseNamePicker = 0;
 	nAutoIncreaseNamePager = 0;
+	nAutoIncreaseNameVideo = 0;
 	nAutoIncreaseNameOther = 0;
 }
 
@@ -389,6 +390,10 @@ String SAppLayoutResource::getAutoIncreasingName(int type)
 			prefix = "pager";
 			pN = &nAutoIncreaseNamePager;
 			break;
+		case typeVideo:
+			prefix = "video";
+			pN = &nAutoIncreaseNameVideo;
+			break;
 		default:
 			prefix = "other";
 			pN = &nAutoIncreaseNameOther;
@@ -457,6 +462,8 @@ int SAppLayoutResource::getTypeFromName(const String &strType)
 		type = SAppLayoutResource::typePicker;
 	} else if (strType == "pager") {
 		type = SAppLayoutResource::typePager;
+	} else if (strType == "video") {
+		type = SAppLayoutResource::typeVideo;
 	}
 	return type;
 }

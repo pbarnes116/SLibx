@@ -629,6 +629,14 @@ public:
 	
 };
 
+class SAppLayoutVideoAttributes : public Referable
+{
+public:
+	SAppStringValue src;
+	SAppBooleanValue repeat;
+	
+};
+
 
 class SAppLayoutStyle : public Referable
 {
@@ -679,7 +687,8 @@ public:
 		typeProgress = 0x0240,
 		typeSlider = 0x0241,
 		typePicker = 0x0242,
-		typePager = 0x0243
+		typePager = 0x0243,
+		typeVideo = 0x0244
 		
 	};
 	
@@ -714,6 +723,7 @@ public:
 	Ref<SAppLayoutSliderAttributes> attrsSlider;
 	Ref<SAppLayoutPickerAttributes> attrsPicker;
 	Ref<SAppLayoutPagerAttributes> attrsPager;
+	Ref<SAppLayoutVideoAttributes> attrsVideo;
 
 	CList< Ref<SAppLayoutStyle> > styles;
 	CList< Ref<SAppLayoutResourceItem> > children;
@@ -760,6 +770,7 @@ public:
 	sl_uint32 nAutoIncreaseNameSlider;
 	sl_uint32 nAutoIncreaseNamePicker;
 	sl_uint32 nAutoIncreaseNamePager;
+	sl_uint32 nAutoIncreaseNameVideo;
 	sl_uint32 nAutoIncreaseNameOther;
 	
 public:
