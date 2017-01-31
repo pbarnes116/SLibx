@@ -272,6 +272,7 @@ public:
 	SAppBooleanValue instance;
 	SAppBooleanValue childInstances;
 	SAppBooleanValue nativeWidget;
+	SAppBooleanValue hardwareLayer;
 	
 public:
 	SAppLayoutViewAttributes();

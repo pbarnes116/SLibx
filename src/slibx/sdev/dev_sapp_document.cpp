@@ -4082,6 +4082,7 @@ BEGIN_PROCESS_LAYOUT_CONTROL(View, View)
 	if (flagView) {
 		LAYOUT_CONTROL_GENERIC_ATTR(instance, setCreatingInstance)
 		LAYOUT_CONTROL_GENERIC_ATTR(nativeWidget, setCreatingNativeWidget)
+		LAYOUT_CONTROL_GENERIC_ATTR(hardwareLayer, setHardwareLayer)
 	}
 	LAYOUT_CONTROL_GENERIC_ATTR(childInstances, setCreatingChildInstances)
 	
