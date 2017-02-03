@@ -306,6 +306,7 @@ class SAppLayoutButtonAttributes : public Referable
 {
 public:
 	SAppStringValue text;
+	SAppBooleanValue multiLine;
 	SAppBooleanValue defaultButton;
 	SAppColorValue textColor;
 	SAppDrawableValue icon;
@@ -339,6 +340,7 @@ public:
 	SAppStringValue text;
 	SAppColorValue textColor;
 	SAppAlignmentValue gravity;
+	SAppMultiLineModeValue multiLine;
 	
 public:
 	sl_bool isNotRequiredNative();

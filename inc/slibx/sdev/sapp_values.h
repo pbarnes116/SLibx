@@ -485,6 +485,22 @@ public:
 	
 };
 
+class SAppMultiLineModeValue
+{
+public:
+	sl_bool flagDefined;
+	MultiLineMode value;
+	
+public:
+	SAppMultiLineModeValue();
+	
+public:
+	String getAccessString();
+	
+	sl_bool parse(const String& str);
+	
+};
+
 class SAppUIReturnKeyTypeValue
 {
 public:

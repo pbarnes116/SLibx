@@ -1878,6 +1878,61 @@ sl_bool SAppRedrawModeValue::parse(const String& _str)
 
 
 /************************************************
+				MultiLineMode
+************************************************/
+
+SAppMultiLineModeValue::SAppMultiLineModeValue()
+: flagDefined(sl_false), value(MultiLineMode::Single)
+{
+}
+
+String SAppMultiLineModeValue::getAccessString()
+{
+	if (!flagDefined) {
+		return "slib::MultiLineMode::Single";
+	}
+	switch (value) {
+		case MultiLineMode::Multiple:
+			return "slib::MultiLineMode::Multiple";
+		case MultiLineMode::WordWrap:
+			return "slib::MultiLineMode::WordWrap";
+		case MultiLineMode::BreakWord:
+			return "slib::MultiLineMode::BreakWord";
+		default:
+			break;
+	}
+	return "slib::MultiLineMode::Single";
+}
+
+sl_bool SAppMultiLineModeValue::parse(const String& _str)
+{
+	String str = _str.trim();
+	if (str.isEmpty()) {
+		flagDefined = sl_false;
+		return sl_true;
+	}
+	str = str.toLower();
+	if (str == "single" || str == "false") {
+		value = MultiLineMode::Single;
+		flagDefined = sl_true;
+		return sl_true;
+	} else if (str == "multiple" || str == "true") {
+		value = MultiLineMode::Multiple;
+		flagDefined = sl_true;
+		return sl_true;
+	} else if (str == "word-wrap") {
+		value = MultiLineMode::WordWrap;
+		flagDefined = sl_true;
+		return sl_true;
+	} else if (str == "break-word") {
+		value = MultiLineMode::BreakWord;
+		flagDefined = sl_true;
+		return sl_true;
+	}
+	return sl_false;
+}
+
+/************************************************
  				UIReturnKeyType
 ************************************************/
 
