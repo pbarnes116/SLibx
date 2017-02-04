@@ -3252,6 +3252,7 @@ BEGIN_PROCESS_LAYOUT_CONTROL(Window, View)
 	LAYOUT_CONTROL_GENERIC_ATTR(fullScreen, setFullScreenOnCreate)
 	LAYOUT_CONTROL_GENERIC_ATTR(centerScreen, setCenterScreenOnCreate)
 	
+	params->name = "m_contentView";
 	if (!(_processLayoutResourceControl_View(params))) {
 		return sl_false;
 	}
