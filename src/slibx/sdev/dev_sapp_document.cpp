@@ -3219,10 +3219,21 @@ BEGIN_PROCESS_LAYOUT_CONTROL(Window, View)
 	
 	LAYOUT_CONTROL_MENU_ATTR(menu, setMenu)
 	LAYOUT_CONTROL_STRING_ATTR(title, setTitle)
-	LAYOUT_CONTROL_INT_DIMENSION_ATTR(left, setLeft, checkForWindow)
-	LAYOUT_CONTROL_INT_DIMENSION_ATTR(top, setTop, checkForWindow)
-	LAYOUT_CONTROL_INT_DIMENSION_ATTR(width, setWidth, checkForWindow)
-	LAYOUT_CONTROL_INT_DIMENSION_ATTR(height, setHeight, checkForWindow)
+	if (op == OP_SIMULATE) {
+		if (!flagOnLayout) {
+			flagOnLayout = sl_true;
+			LAYOUT_CONTROL_INT_DIMENSION_ATTR(left, setLeft, checkForWindow)
+			LAYOUT_CONTROL_INT_DIMENSION_ATTR(top, setTop, checkForWindow)
+			LAYOUT_CONTROL_INT_DIMENSION_ATTR(width, setWidth, checkForWindow)
+			LAYOUT_CONTROL_INT_DIMENSION_ATTR(height, setHeight, checkForWindow)
+			flagOnLayout = sl_false;
+		}
+	} else {
+		LAYOUT_CONTROL_INT_DIMENSION_ATTR(left, setLeft, checkForWindow)
+		LAYOUT_CONTROL_INT_DIMENSION_ATTR(top, setTop, checkForWindow)
+		LAYOUT_CONTROL_INT_DIMENSION_ATTR(width, setWidth, checkForWindow)
+		LAYOUT_CONTROL_INT_DIMENSION_ATTR(height, setHeight, checkForWindow)		
+	}
 	LAYOUT_CONTROL_GENERIC_ATTR(minimized, setMinimized)
 	LAYOUT_CONTROL_GENERIC_ATTR(maximized, setMaximized)
 	LAYOUT_CONTROL_GENERIC_ATTR(visible, setVisible)
