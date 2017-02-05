@@ -2283,19 +2283,19 @@ sl_bool SAppDocument::_parseLayoutResource(const Ref<XmlElement>& element)
 	
 	layout->element = element;
 
-	int type;
+	SAppLayoutType type;
 	String strType = element->getAttribute("type");
 	if (strType.isEmpty() || strType == "view") {
-		type = SAppLayoutResource::typeView;
+		type = SAppLayoutType::View;
 	} else if (strType == "window") {
-		type = SAppLayoutResource::typeWindow;
+		type = SAppLayoutType::Window;
 	} else if (strType == "page") {
-		type = SAppLayoutResource::typePage;
+		type = SAppLayoutType::Page;
 	} else {
 		_logError(element, _g_sdev_sapp_error_resource_layout_type_invalid.arg(strType));
 		return sl_false;
 	}
-	layout->type = type;
+	layout->layoutType = type;
 	
 	String name = element->getAttribute("name");
 	if (name.isEmpty()) {
@@ -2359,7 +2359,7 @@ sl_bool SAppDocument::_parseLayoutResourceItem(SAppLayoutResource* layout, SAppL
 				return sl_false;
 			}
 		} else {
-			name = layout->getAutoIncreasingName(item->type);
+			name = layout->getAutoIncreasingName(item->itemType);
 			item->flagGeneratedName = sl_true;
 		}
 		item->name = name;
@@ -2410,8 +2410,8 @@ sl_bool SAppDocument::_parseLayoutResourceItem(SAppLayoutResource* layout, SAppL
 Ref<SAppLayoutResourceItem> SAppDocument::_parseLayoutResourceItemChild(SAppLayoutResource* layout, SAppLayoutResourceItem* parentItem, const Ref<XmlElement>& element)
 {
 	String strType = element->getName();
-	int type = SAppLayoutResource::getTypeFromName(strType);
-	if (type == SAppLayoutResource::typeUnknown) {
+	SAppLayoutItemType type = SAppLayoutResource::getTypeFromName(strType);
+	if (type == SAppLayoutItemType::Unknown) {
 		_logError(element, _g_sdev_sapp_error_resource_layout_type_invalid.arg(strType));
 		return Ref<SAppLayoutResourceItem>::null();
 	}
@@ -2422,7 +2422,7 @@ Ref<SAppLayoutResourceItem> SAppDocument::_parseLayoutResourceItemChild(SAppLayo
 		return Ref<SAppLayoutResourceItem>::null();
 	}
 	
-	childItem->type = type;
+	childItem->itemType = type;
 	childItem->element = element;
 	
 	if (!(_parseLayoutResourceItem(layout, childItem.get(), parentItem))) {
@@ -2498,13 +2498,13 @@ sl_bool SAppDocument::_generateLayoutsCpp(const String& targetPath)
 				
 				Ref<SAppLayoutResource> layout = pair.value;
 				
-				if (layout->type == SAppLayoutResource::typeWindow) {
+				if (layout->layoutType == SAppLayoutType::Window) {
 					sbHeader.add(String::format("\t\tSLIB_DECLARE_WINDOW_LAYOUT_BEGIN(%s)%n", pair.key));
 					sbCpp.add(String::format("\t\tSLIB_DEFINE_WINDOW_LAYOUT(%s)%n%n", pair.key));
-				} else if (layout->type == SAppLayoutResource::typePage) {
+				} else if (layout->layoutType == SAppLayoutType::Page) {
 					sbHeader.add(String::format("\t\tSLIB_DECLARE_PAGE_LAYOUT_BEGIN(%s)%n", pair.key));
 					sbCpp.add(String::format("\t\tSLIB_DEFINE_PAGE_LAYOUT(%s)%n%n", pair.key));
-				} else if (layout->type == SAppLayoutResource::typeView) {
+				} else if (layout->layoutType == SAppLayoutType::View) {
 					sbHeader.add(String::format("\t\tSLIB_DECLARE_VIEW_LAYOUT_BEGIN(%s)%n", pair.key));
 					sbCpp.add(String::format("\t\tSLIB_DEFINE_VIEW_LAYOUT(%s)%n%n", pair.key));
 				} else {
@@ -2544,13 +2544,13 @@ sl_bool SAppDocument::_generateLayoutsCpp(const String& targetPath)
 				static sl_char8 strEndCpp[] = "\t\t}\r\n\r\n";
 				sbCpp.addStatic(strEndCpp, sizeof(strEndCpp)-1);
 				
-				if (layout->type == SAppLayoutResource::typeWindow) {
+				if (layout->layoutType == SAppLayoutType::Window) {
 					static sl_char8 strEndHeader[] = "\t\tSLIB_DECLARE_WINDOW_LAYOUT_END\r\n\r\n";
 					sbHeader.addStatic(strEndHeader, sizeof(strEndHeader)-1);
-				} else if (layout->type == SAppLayoutResource::typePage) {
+				} else if (layout->layoutType == SAppLayoutType::Page) {
 					static sl_char8 strEndHeader[] = "\t\tSLIB_DECLARE_PAGE_LAYOUT_END\r\n\r\n";
 					sbHeader.addStatic(strEndHeader, sizeof(strEndHeader)-1);
-				} else if (layout->type == SAppLayoutResource::typeView) {
+				} else if (layout->layoutType == SAppLayoutType::View) {
 					static sl_char8 strEndHeader[] = "\t\tSLIB_DECLARE_VIEW_LAYOUT_END\r\n\r\n";
 					sbHeader.addStatic(strEndHeader, sizeof(strEndHeader)-1);
 				}
@@ -2649,7 +2649,7 @@ Ref<View> SAppDocument::_simulateLayoutCreateOrLayoutView(SAppLayoutSimulator* s
 		if (view.isNull()) {
 			return Ref<View>::null();
 		}
-		if (item->type == SAppLayoutResource::typeWindow) {
+		if (layout->layoutType == SAppLayoutType::Window) {
 			UISize size = UI::getScreenSize();
 			m_layoutSimulationParams.screenWidth = size.x;
 			m_layoutSimulationParams.screenHeight = size.y;
@@ -2800,7 +2800,7 @@ List< Ref<XmlElement> > SAppDocument::_getLayoutItemChildElements(SAppLayoutReso
 }
 
 #define PROCESS_CONTROL_SWITCH(NAME) \
-	case SAppLayoutResource::type##NAME: \
+	case SAppLayoutItemType::NAME: \
 		if (!(_processLayoutResourceControl_##NAME(params))) { \
 			return sl_false; \
 		} \
@@ -2810,12 +2810,32 @@ sl_bool SAppDocument::_processLayoutResourceControl(LayoutControlProcessParams *
 {
 	SAppLayoutResourceItem* resourceItem = params->resourceItem;
 	int op = params->op;
-	switch (resourceItem->type)
+	switch (resourceItem->itemType)
 	{
-		PROCESS_CONTROL_SWITCH(Window)
-		PROCESS_CONTROL_SWITCH(Page)
+		case SAppLayoutItemType::ViewGroup:
+			{
+				if (params->parentResourceItem) {
+					if (!(_processLayoutResourceControl_ViewGroup(params))) {
+						return sl_false;
+					}
+				} else {
+					if (params->resource->layoutType == SAppLayoutType::Window) {
+						if (!(_processLayoutResourceControl_Window(params))) {
+							return sl_false;
+						}
+					} else if (params->resource->layoutType == SAppLayoutType::Page) {
+						if (!(_processLayoutResourceControl_Page(params))) {
+							return sl_false;
+						}
+					} else {
+						if (!(_processLayoutResourceControl_ViewGroup(params))) {
+							return sl_false;
+						}
+					}
+				}
+			}
+			break;
 		PROCESS_CONTROL_SWITCH(View)
-		PROCESS_CONTROL_SWITCH(ViewGroup)
 		PROCESS_CONTROL_SWITCH(Import)
 		PROCESS_CONTROL_SWITCH(Button)
 		PROCESS_CONTROL_SWITCH(Label)
@@ -2844,19 +2864,10 @@ sl_bool SAppDocument::_processLayoutResourceControl(LayoutControlProcessParams *
 			return sl_false;
 	}
 	
-	switch (resourceItem->type) {
-		case SAppLayoutResource::typeWindow:
-		case SAppLayoutResource::typePage:
-		case SAppLayoutResource::typeView:
-		case SAppLayoutResource::typeViewGroup:
-		case SAppLayoutResource::typeButton:
-		case SAppLayoutResource::typeLabel:
-		case SAppLayoutResource::typeImage:
-		case SAppLayoutResource::typeEdit:
-		case SAppLayoutResource::typePassword:
-		case SAppLayoutResource::typeLinear:
-		case SAppLayoutResource::typeRender:
-		case SAppLayoutResource::typeVideo:
+	switch (resourceItem->itemType) {
+ 		case SAppLayoutItemType::ViewGroup:
+		case SAppLayoutItemType::Linear:
+		case SAppLayoutItemType::Render:
 			if (op == OP_PARSE) {
 				ListLocker< Ref<XmlElement> > children(_getLayoutItemChildElements(resourceItem, String::null()));
 				for (sl_size i = 0; i < children.count; i++) {
@@ -2893,7 +2904,7 @@ sl_bool SAppDocument::_processLayoutResourceControl(LayoutControlProcessParams *
 					}
 				}
 			} else if (op == OP_SIMULATE) {
-				if (!(params->parentResourceItem) && resourceItem->type != SAppLayoutResource::typeWindow) {
+				if (!(params->parentResourceItem) && params->resource->layoutType != SAppLayoutType::Window) {
 					m_layoutSimulationParams.viewportWidth = params->view->getWidth();
 					m_layoutSimulationParams.viewportHeight = params->view->getHeight();
 				}
@@ -3287,15 +3298,11 @@ END_PROCESS_LAYOUT_CONTROL
 
 BEGIN_PROCESS_LAYOUT_CONTROL(View, View)
 {
-	sl_bool flagWindow = params->parentResourceItem == sl_null && params->resourceItem->type == SAppLayoutResource::typeWindow;
-	sl_bool flagView = params->parentResourceItem != sl_null || params->resourceItem->type == SAppLayoutResource::typeView || params->resourceItem->type == SAppLayoutResource::typePage;
+	sl_bool flagView = params->parentResourceItem != sl_null || params->resource->layoutType != SAppLayoutType::Window;
 	sl_bool flagRoot = params->parentResourceItem == sl_null;
 
 	if (flagView) {
 		LAYOUT_CONTROL_STRING_ATTR(id, setId)
-	}
-	
-	if (!flagWindow) {
 		if (op == OP_PARSE) {
 			if (flagRoot) {
 				LAYOUT_CONTROL_INT_DIMENSION_ATTR_NOREDRAW(width, setWidth, checkForRootViewSize)
@@ -3363,9 +3370,7 @@ BEGIN_PROCESS_LAYOUT_CONTROL(View, View)
 				}
 			}
 		}
-	}
-	
-	if (!flagWindow) {
+		
 		if (flagRoot) {
 			LAYOUT_CONTROL_INT_DIMENSION_ATTR_NOREDRAW(left, setLeft, checkForRootViewPosition)
 			LAYOUT_CONTROL_INT_DIMENSION_ATTR_NOREDRAW(top, setTop, checkForRootViewPosition)
@@ -3373,9 +3378,7 @@ BEGIN_PROCESS_LAYOUT_CONTROL(View, View)
 			LAYOUT_CONTROL_INT_DIMENSION_ATTR_NOREDRAW(left, setLeft, checkPosition)
 			LAYOUT_CONTROL_INT_DIMENSION_ATTR_NOREDRAW(top, setTop, checkPosition)
 		}
-	}
-	
-	if (flagView) {
+
 		if (op == OP_PARSE) {
 			
 			attr->leftMode = PositionMode::Fixed;
@@ -3651,51 +3654,48 @@ BEGIN_PROCESS_LAYOUT_CONTROL(View, View)
 				}
 			}
 		}
-	}
-	
-	
-	if (flagRoot) {
-		LAYOUT_CONTROL_INT_DIMENSION_ATTR_NOREDRAW(minWidth, setMinimumWidth, checkForRootViewScalarSize)
-		LAYOUT_CONTROL_INT_DIMENSION_ATTR_NOREDRAW(maxWidth, setMaximumWidth, checkForRootViewScalarSize)
-		LAYOUT_CONTROL_INT_DIMENSION_ATTR_NOREDRAW(minHeight, setMinimumHeight, checkForRootViewScalarSize)
-		LAYOUT_CONTROL_INT_DIMENSION_ATTR_NOREDRAW(maxHeight, setMaximumHeight, checkForRootViewScalarSize)
-	} else {
-		LAYOUT_CONTROL_INT_DIMENSION_ATTR_NOREDRAW(minWidth, setMinimumWidth, checkScalarSize)
-		LAYOUT_CONTROL_INT_DIMENSION_ATTR_NOREDRAW(maxWidth, setMaximumWidth, checkScalarSize)
-		LAYOUT_CONTROL_INT_DIMENSION_ATTR_NOREDRAW(minHeight, setMinimumHeight, checkScalarSize)
-		LAYOUT_CONTROL_INT_DIMENSION_ATTR_NOREDRAW(maxHeight, setMaximumHeight, checkScalarSize)
-	}
-	
-	LAYOUT_CONTROL_GENERIC_ATTR_NOREDRAW(aspectRatio, setAspectRatio)
-	if (op == OP_GENERATE_CPP) {
-		if (attr->aspectRatio.flagDefined) {
-			if (attr->width.flagDefined) {
-				if (!(attr->height.flagDefined)) {
-					params->sbDefineInit->add(String::format("%s%s->setAspectRatioMode(slib::AspectRatioMode::AdjustHeight, slib::UIUpdateMode::Init);%n", strTab, name));
-				}
-			} else {
-				if (attr->height.flagDefined) {
-					params->sbDefineInit->add(String::format("%s%s->setAspectRatioMode(slib::AspectRatioMode::AdjustWidth, slib::UIUpdateMode::Init);%n", strTab, name));
-				}
-			}
+		
+		if (flagRoot) {
+			LAYOUT_CONTROL_INT_DIMENSION_ATTR_NOREDRAW(minWidth, setMinimumWidth, checkForRootViewScalarSize)
+			LAYOUT_CONTROL_INT_DIMENSION_ATTR_NOREDRAW(maxWidth, setMaximumWidth, checkForRootViewScalarSize)
+			LAYOUT_CONTROL_INT_DIMENSION_ATTR_NOREDRAW(minHeight, setMinimumHeight, checkForRootViewScalarSize)
+			LAYOUT_CONTROL_INT_DIMENSION_ATTR_NOREDRAW(maxHeight, setMaximumHeight, checkForRootViewScalarSize)
+		} else {
+			LAYOUT_CONTROL_INT_DIMENSION_ATTR_NOREDRAW(minWidth, setMinimumWidth, checkScalarSize)
+			LAYOUT_CONTROL_INT_DIMENSION_ATTR_NOREDRAW(maxWidth, setMaximumWidth, checkScalarSize)
+			LAYOUT_CONTROL_INT_DIMENSION_ATTR_NOREDRAW(minHeight, setMinimumHeight, checkScalarSize)
+			LAYOUT_CONTROL_INT_DIMENSION_ATTR_NOREDRAW(maxHeight, setMaximumHeight, checkScalarSize)
 		}
-	} else if (op == OP_SIMULATE) {
-		if (attr->aspectRatio.flagDefined) {
-			if (!flagOnLayout) {
+		
+		LAYOUT_CONTROL_GENERIC_ATTR_NOREDRAW(aspectRatio, setAspectRatio)
+		if (op == OP_GENERATE_CPP) {
+			if (attr->aspectRatio.flagDefined) {
 				if (attr->width.flagDefined) {
 					if (!(attr->height.flagDefined)) {
-						view->setAspectRatioMode(AspectRatioMode::AdjustHeight, slib::UIUpdateMode::Init);
+						params->sbDefineInit->add(String::format("%s%s->setAspectRatioMode(slib::AspectRatioMode::AdjustHeight, slib::UIUpdateMode::Init);%n", strTab, name));
 					}
 				} else {
 					if (attr->height.flagDefined) {
-						view->setAspectRatioMode(AspectRatioMode::AdjustWidth, slib::UIUpdateMode::Init);
+						params->sbDefineInit->add(String::format("%s%s->setAspectRatioMode(slib::AspectRatioMode::AdjustWidth, slib::UIUpdateMode::Init);%n", strTab, name));
+					}
+				}
+			}
+		} else if (op == OP_SIMULATE) {
+			if (attr->aspectRatio.flagDefined) {
+				if (!flagOnLayout) {
+					if (attr->width.flagDefined) {
+						if (!(attr->height.flagDefined)) {
+							view->setAspectRatioMode(AspectRatioMode::AdjustHeight, slib::UIUpdateMode::Init);
+						}
+					} else {
+						if (attr->height.flagDefined) {
+							view->setAspectRatioMode(AspectRatioMode::AdjustWidth, slib::UIUpdateMode::Init);
+						}
 					}
 				}
 			}
 		}
-	}
-	
-	if (flagView) {
+
 		if (op == OP_PARSE) {
 			if (flagRoot) {
 				LAYOUT_CONTROL_INT_DIMENSION_ATTR_NOREDRAW(marginLeft, setMarginLeft, checkForRootViewMargin)
@@ -4131,7 +4131,7 @@ BEGIN_PROCESS_LAYOUT_CONTROL(Import, SAppLayoutImportView)
 			_logError(element, _g_sdev_sapp_error_layout_not_found.arg(attr->layout));
 			return sl_false;
 		}
-		if (layoutImport->type != SAppLayoutResource::typeView && layoutImport->type != SAppLayoutResource::typePage) {
+		if (layoutImport->layoutType != SAppLayoutType::View && layoutImport->layoutType != SAppLayoutType::Page) {
 			_logError(element, _g_sdev_sapp_error_layout_is_not_view.arg(attr->layout));
 			return sl_false;
 		}
@@ -4142,7 +4142,7 @@ BEGIN_PROCESS_LAYOUT_CONTROL(Import, SAppLayoutImportView)
 			_logError(element, _g_sdev_sapp_error_layout_not_found.arg(attr->layout));
 			return sl_false;
 		}
-		if (layoutImport->type != SAppLayoutResource::typeView && layoutImport->type != SAppLayoutResource::typePage) {
+		if (layoutImport->layoutType != SAppLayoutType::View && layoutImport->layoutType != SAppLayoutType::Page) {
 			_logError(element, _g_sdev_sapp_error_layout_is_not_view.arg(attr->layout));
 			return sl_false;
 		}
@@ -4796,7 +4796,7 @@ BEGIN_PROCESS_LAYOUT_CONTROL(List, ListView)
 				_logError(element, _g_sdev_sapp_error_layout_not_found.arg(attr->itemLayout));
 				return sl_false;
 			}
-			if (layoutItem->type != SAppLayoutResource::typeView) {
+			if (layoutItem->layoutType != SAppLayoutType::View) {
 				_logError(element, _g_sdev_sapp_error_layout_is_not_view.arg(attr->itemLayout));
 				return sl_false;
 			}

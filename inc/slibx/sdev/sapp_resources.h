@@ -655,49 +655,54 @@ public:
 	String name;
 };
 
+enum class SAppLayoutType
+{
+	Window = 0,
+	Page = 1,
+	View = 2
+};
+
+enum class SAppLayoutItemType
+{
+	Unknown = 0,
+	
+	View = 0x0200,
+	ViewGroup = 0x0201,
+	Import = 0x0202,
+	
+	Button = 0x0210,
+	Label = 0x0211,
+	Check = 0x0212,
+	Radio = 0x0213,
+	Edit = 0x0214,
+	Password = 0x0215,
+	TextArea = 0x0216,
+	Image = 0x0217,
+	Select = 0x0218,
+	
+	Scroll = 0x0230,
+	Linear = 0x0231,
+	List = 0x0232,
+	ListReport = 0x0233,
+	Render = 0x0234,
+	Tab = 0x0235,
+	Tree = 0x0236,
+	Web = 0x0237,
+	Split = 0x0238,
+	
+	Progress = 0x0240,
+	Slider = 0x0241,
+	Picker = 0x0242,
+	Pager = 0x0243,
+	Video = 0x0244
+};
+
 class SAppLayoutResourceItem : public Referable
 {
 public:
-	enum {
-		typeUnknown = 0,
-		typeWindow = 0x0100,
-		typePage = 0x0101,
-		
-		typeView = 0x0200,
-		typeViewGroup = 0x0201,
-		typeImport = 0x0202,
-		
-		typeButton = 0x0210,
-		typeLabel = 0x0211,
-		typeCheck = 0x0212,
-		typeRadio = 0x0213,
-		typeEdit = 0x0214,
-		typePassword = 0x0215,
-		typeTextArea = 0x0216,
-		typeImage = 0x0217,
-		typeSelect = 0x0218,
-		
-		typeScroll = 0x0230,
-		typeLinear = 0x0231,
-		typeList = 0x0232,
-		typeListReport = 0x0233,
-		typeRender = 0x0234,
-		typeTab = 0x0235,
-		typeTree = 0x0236,
-		typeWeb = 0x0237,
-		typeSplit = 0x0238,
-		
-		typeProgress = 0x0240,
-		typeSlider = 0x0241,
-		typePicker = 0x0242,
-		typePager = 0x0243,
-		typeVideo = 0x0244
-		
-	};
-	
 	Ref<XmlElement> element;
 	
-	int type;
+	SAppLayoutItemType itemType;
 	String name;
 	sl_bool flagGeneratedName;
 	
@@ -742,6 +747,8 @@ public:
 class SAppLayoutResource : public SAppLayoutResourceItem
 {
 public:
+	SAppLayoutType layoutType;
+	
 	SAppDimensionFloatValue sp;
 	
 	HashMap< String, Ref<SAppLayoutResourceItem> > itemsByName;
@@ -774,15 +781,14 @@ public:
 	sl_uint32 nAutoIncreaseNamePicker;
 	sl_uint32 nAutoIncreaseNamePager;
 	sl_uint32 nAutoIncreaseNameVideo;
-	sl_uint32 nAutoIncreaseNameOther;
 	
 public:
 	SAppLayoutResource();
 	
 public:
-	String getAutoIncreasingName(int type);
+	String getAutoIncreasingName(SAppLayoutItemType type);
 	
-	static int getTypeFromName(const String& strType);
+	static SAppLayoutItemType getTypeFromName(const String& strType);
 	
 };
 

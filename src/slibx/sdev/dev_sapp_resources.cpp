@@ -231,7 +231,7 @@ sl_bool SAppLayoutPickerAttributes::isNotRequiredNative()
 
 SAppLayoutResourceItem::SAppLayoutResourceItem()
 {
-	type = typeUnknown;
+	itemType = SAppLayoutItemType::Unknown;
 	flagGeneratedName = sl_false;
 }
 
@@ -256,6 +256,8 @@ String SAppLayoutResourceItem::getXmlAttribute(const String& name)
 
 SAppLayoutResource::SAppLayoutResource()
 {
+	layoutType = SAppLayoutType::View;
+	itemType = SAppLayoutItemType::ViewGroup;
 	nAutoIncreaseNameView = 0;
 	nAutoIncreaseNameViewGroup = 0;
 	nAutoIncreaseNameImport = 0;
@@ -282,122 +284,121 @@ SAppLayoutResource::SAppLayoutResource()
 	nAutoIncreaseNamePicker = 0;
 	nAutoIncreaseNamePager = 0;
 	nAutoIncreaseNameVideo = 0;
-	nAutoIncreaseNameOther = 0;
 }
 
-String SAppLayoutResource::getAutoIncreasingName(int type)
+String SAppLayoutResource::getAutoIncreasingName(SAppLayoutItemType type)
 {
 	String prefix;
 	sl_uint32* pN;
 	switch (type) {
-		case typeView:
+		case SAppLayoutItemType::Unknown:
+			return String::null();
+		case SAppLayoutItemType::View:
 			prefix = "view";
 			pN = &nAutoIncreaseNameView;
 			break;
-		case typeViewGroup:
+		case SAppLayoutItemType::ViewGroup:
 			prefix = "group";
 			pN = &nAutoIncreaseNameViewGroup;
 			break;
-		case typeImport:
+		case SAppLayoutItemType::Import:
 			prefix = "import";
 			pN = &nAutoIncreaseNameImport;
 			break;
-		case typeButton:
+		case SAppLayoutItemType::Button:
 			prefix = "button";
 			pN = &nAutoIncreaseNameButton;
 			break;
-		case typeLabel:
+		case SAppLayoutItemType::Label:
 			prefix = "label";
 			pN = &nAutoIncreaseNameLabel;
 			break;
-		case typeCheck:
+		case SAppLayoutItemType::Check:
 			prefix = "check";
 			pN = &nAutoIncreaseNameCheck;
 			break;
-		case typeRadio:
+		case SAppLayoutItemType::Radio:
 			prefix = "radio";
 			pN = &nAutoIncreaseNameRadio;
 			break;
-		case typeEdit:
+		case SAppLayoutItemType::Edit:
 			prefix = "edit";
 			pN = &nAutoIncreaseNameEdit;
 			break;
-		case typePassword:
+		case SAppLayoutItemType::Password:
 			prefix = "password";
 			pN = &nAutoIncreaseNamePassword;
 			break;
-		case typeTextArea:
+		case SAppLayoutItemType::TextArea:
 			prefix = "textArea";
 			pN = &nAutoIncreaseNameTextArea;
 			break;
-		case typeImage:
+		case SAppLayoutItemType::Image:
 			prefix = "image";
 			pN = &nAutoIncreaseNameImage;
 			break;
-		case typeSelect:
+		case SAppLayoutItemType::Select:
 			prefix = "select";
 			pN = &nAutoIncreaseNameSelect;
 			break;
-		case typeScroll:
+		case SAppLayoutItemType::Scroll:
 			prefix = "scroll";
 			pN = &nAutoIncreaseNameScroll;
 			break;
-		case typeLinear:
+		case SAppLayoutItemType::Linear:
 			prefix = "linear";
 			pN = &nAutoIncreaseNameLinear;
 			break;
-		case typeList:
+		case SAppLayoutItemType::List:
 			prefix = "list";
 			pN = &nAutoIncreaseNameList;
 			break;
-		case typeListReport:
+		case SAppLayoutItemType::ListReport:
 			prefix = "listReport";
 			pN = &nAutoIncreaseNameListReport;
 			break;
-		case typeRender:
+		case SAppLayoutItemType::Render:
 			prefix = "render";
 			pN = &nAutoIncreaseNameRender;
 			break;
-		case typeTab:
+		case SAppLayoutItemType::Tab:
 			prefix = "tab";
 			pN = &nAutoIncreaseNameTab;
 			break;
-		case typeTree:
+		case SAppLayoutItemType::Tree:
 			prefix = "tree";
 			pN = &nAutoIncreaseNameTree;
 			break;
-		case typeWeb:
+		case SAppLayoutItemType::Web:
 			prefix = "web";
 			pN = &nAutoIncreaseNameWeb;
 			break;
-		case typeSplit:
+		case SAppLayoutItemType::Split:
 			prefix = "split";
 			pN = &nAutoIncreaseNameSplit;
 			break;
-		case typeProgress:
+		case SAppLayoutItemType::Progress:
 			prefix = "progress";
 			pN = &nAutoIncreaseNameProgress;
 			break;
-		case typeSlider:
+		case SAppLayoutItemType::Slider:
 			prefix = "slider";
 			pN = &nAutoIncreaseNameSlider;
 			break;
-		case typePicker:
+		case SAppLayoutItemType::Picker:
 			prefix = "picker";
 			pN = &nAutoIncreaseNamePicker;
 			break;
-		case typePager:
+		case SAppLayoutItemType::Pager:
 			prefix = "pager";
 			pN = &nAutoIncreaseNamePager;
 			break;
-		case typeVideo:
+		case SAppLayoutItemType::Video:
 			prefix = "video";
 			pN = &nAutoIncreaseNameVideo;
 			break;
 		default:
-			prefix = "other";
-			pN = &nAutoIncreaseNameOther;
-			break;
+			return String::null();
 	}
 	while (1) {
 		(*pN)++;
@@ -409,61 +410,61 @@ String SAppLayoutResource::getAutoIncreasingName(int type)
 	return String::null();
 }
 
-int SAppLayoutResource::getTypeFromName(const String &strType)
+SAppLayoutItemType SAppLayoutResource::getTypeFromName(const String &strType)
 {
-	int type = SAppLayoutResource::typeUnknown;
+	SAppLayoutItemType type = SAppLayoutItemType::Unknown;
 	if (strType == "view") {
-		type = SAppLayoutResource::typeView;
+		type = SAppLayoutItemType::View;
 	} else if (strType == "group") {
-		type = SAppLayoutResource::typeViewGroup;
+		type = SAppLayoutItemType::ViewGroup;
 	} else if (strType == "import") {
-		type = SAppLayoutResource::typeImport;
+		type = SAppLayoutItemType::Import;
 	} else if (strType == "button") {
-		type = SAppLayoutResource::typeButton;
+		type = SAppLayoutItemType::Button;
 	} else if (strType == "label") {
-		type = SAppLayoutResource::typeLabel;
+		type = SAppLayoutItemType::Label;
 	} else if (strType == "check") {
-		type = SAppLayoutResource::typeCheck;
+		type = SAppLayoutItemType::Check;
 	} else if (strType == "radio") {
-		type = SAppLayoutResource::typeRadio;
+		type = SAppLayoutItemType::Radio;
 	} else if (strType == "edit") {
-		type = SAppLayoutResource::typeEdit;
+		type = SAppLayoutItemType::Edit;
 	} else if (strType == "password") {
-		type = SAppLayoutResource::typePassword;
+		type = SAppLayoutItemType::Password;
 	} else if (strType == "textArea") {
-		type = SAppLayoutResource::typeTextArea;
+		type = SAppLayoutItemType::TextArea;
 	} else if (strType == "image") {
-		type = SAppLayoutResource::typeImage;
+		type = SAppLayoutItemType::Image;
 	} else if (strType == "select") {
-		type = SAppLayoutResource::typeSelect;
+		type = SAppLayoutItemType::Select;
 	} else if (strType == "scroll" || strType == "hscroll") {
-		type = SAppLayoutResource::typeScroll;
+		type = SAppLayoutItemType::Scroll;
 	} else if (strType == "linear") {
-		type = SAppLayoutResource::typeLinear;
+		type = SAppLayoutItemType::Linear;
 	} else if (strType == "list") {
-		type = SAppLayoutResource::typeList;
+		type = SAppLayoutItemType::List;
 	} else if (strType == "list-report") {
-		type = SAppLayoutResource::typeListReport;
+		type = SAppLayoutItemType::ListReport;
 	} else if (strType == "render") {
-		type = SAppLayoutResource::typeRender;
+		type = SAppLayoutItemType::Render;
 	} else if (strType == "tab") {
-		type = SAppLayoutResource::typeTab;
+		type = SAppLayoutItemType::Tab;
 	} else if (strType == "tree") {
-		type = SAppLayoutResource::typeTree;
+		type = SAppLayoutItemType::Tree;
 	} else if (strType == "web") {
-		type = SAppLayoutResource::typeWeb;
+		type = SAppLayoutItemType::Web;
 	} else if (strType == "split") {
-		type = SAppLayoutResource::typeSplit;
+		type = SAppLayoutItemType::Split;
 	} else if (strType == "progress") {
-		type = SAppLayoutResource::typeProgress;
+		type = SAppLayoutItemType::Progress;
 	} else if (strType == "slider") {
-		type = SAppLayoutResource::typeSlider;
+		type = SAppLayoutItemType::Slider;
 	} else if (strType == "picker") {
-		type = SAppLayoutResource::typePicker;
+		type = SAppLayoutItemType::Picker;
 	} else if (strType == "pager") {
-		type = SAppLayoutResource::typePager;
+		type = SAppLayoutItemType::Pager;
 	} else if (strType == "video") {
-		type = SAppLayoutResource::typeVideo;
+		type = SAppLayoutItemType::Video;
 	}
 	return type;
 }
@@ -540,7 +541,7 @@ void SAppLayoutSimulationWindow::open(SAppDocument* doc, SAppLayoutResource* lay
 		}
 	}
 	Ref<View> viewContent;
-	if (layout->type == SAppLayoutResource::typeWindow) {
+	if (layout->layoutType == SAppLayoutType::Window) {
 		m_simulationContentView = getContentView();
 	} else {
 		setCenterScreenOnCreate(sl_true);
@@ -552,7 +553,7 @@ void SAppLayoutSimulationWindow::open(SAppDocument* doc, SAppLayoutResource* lay
 	viewContent = doc->_simulateLayoutCreateOrLayoutView(this, layout, sl_null, sl_null, sl_false);
 	setInitialized();
 	if (viewContent.isNotNull()) {
-		if (layout->type != SAppLayoutResource::typeWindow) {
+		if (layout->layoutType != SAppLayoutType::Window) {
 			addView(viewContent);
 		}
 		doc->_simulateLayoutCreateOrLayoutView(this, layout, sl_null, sl_null, sl_true);
