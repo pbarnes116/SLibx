@@ -4043,10 +4043,11 @@ BEGIN_PROCESS_LAYOUT_CONTROL(View, View)
 	}
 	
 	if (flagView) {
-		LAYOUT_CONTROL_GENERIC_ATTR_NOREDRAW(opaque, setOpaque)
 		LAYOUT_CONTROL_GENERIC_ATTR_NOREDRAW(alpha, setAlpha)
-		LAYOUT_CONTROL_GENERIC_ATTR_NOREDRAW(layer, setLayer)
 	}
+	
+	LAYOUT_CONTROL_GENERIC_ATTR_NOREDRAW(opaque, setOpaque)
+	LAYOUT_CONTROL_GENERIC_ATTR_NOREDRAW(layer, setLayer)
 	
 	if (op == OP_PARSE) {
 		if (resourceItem->element->getName() == "hscroll") {
@@ -4069,6 +4070,10 @@ BEGIN_PROCESS_LAYOUT_CONTROL(View, View)
 			}
 		}
 	}
+	
+	LAYOUT_CONTROL_GENERIC_ATTR(paging, setPaging)
+	LAYOUT_CONTROL_INT_DIMENSION_ATTR(pageWidth, setPageWidth, checkScalarSize)
+	LAYOUT_CONTROL_INT_DIMENSION_ATTR(pageHeight, setPageHeight, checkScalarSize)
 	
 	if (op == OP_PARSE) {
 		LAYOUT_CONTROL_PARSE_ATTR(attr->, scrollBars)
@@ -4691,10 +4696,6 @@ BEGIN_PROCESS_LAYOUT_CONTROL(Scroll, ScrollView)
 {
 
 	LAYOUT_CONTROL_PROCESS_SUPER(View)
-	
-	LAYOUT_CONTROL_GENERIC_ATTR(paging, setPaging)
-	LAYOUT_CONTROL_INT_DIMENSION_ATTR(pageWidth, setPageWidth, checkScalarSize)
-	LAYOUT_CONTROL_INT_DIMENSION_ATTR(pageHeight, setPageHeight, checkScalarSize)
 	
 	LAYOUT_CONTROL_ADD_STATEMENT
 	

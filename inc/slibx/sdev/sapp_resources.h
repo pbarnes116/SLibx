@@ -261,6 +261,9 @@ public:
 	
 	SAppScrollingValue scrolling;
 	SAppScrollBarsValue scrollBars;
+	SAppBooleanValue paging;
+	SAppDimensionValue pageWidth;
+	SAppDimensionValue pageHeight;
 	SAppBooleanValue scrollingByMouse;
 	SAppBooleanValue scrollingByTouch;
 	SAppBooleanValue scrollingByMouseWheel;
@@ -417,10 +420,6 @@ public:
 class SAppLayoutScrollAttributes : public Referable
 {
 public:
-	SAppBooleanValue paging;
-	SAppDimensionValue pageWidth;
-	SAppDimensionValue pageHeight;
-	
 	Ref<SAppLayoutResourceItem> content;
 	
 };
