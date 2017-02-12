@@ -4050,12 +4050,13 @@ BEGIN_PROCESS_LAYOUT_CONTROL(View, View)
 	LAYOUT_CONTROL_GENERIC_ATTR_NOREDRAW(layer, setLayer)
 	
 	if (op == OP_PARSE) {
-		if (resourceItem->element->getName() == "hscroll") {
-			attr->scrolling.flagDefined = sl_true;
-			attr->scrolling.horizontal = sl_true;
-			attr->scrolling.vertical = sl_false;
-		} else {
-			LAYOUT_CONTROL_PARSE_ATTR(attr->, scrolling)
+		LAYOUT_CONTROL_PARSE_ATTR(attr->, scrolling)
+		if (!(attr->scrolling.flagDefined)) {
+			if (resourceItem->element->getName() == "hscroll") {
+				attr->scrolling.flagDefined = sl_true;
+				attr->scrolling.horizontal = sl_true;
+				attr->scrolling.vertical = sl_false;
+			}
 		}
 	} else if (op == OP_GENERATE_CPP) {
 		if (attr->scrolling.flagDefined) {
@@ -4742,6 +4743,14 @@ END_PROCESS_LAYOUT_CONTROL
 BEGIN_PROCESS_LAYOUT_CONTROL(Linear, LinearView)
 {
 	LAYOUT_CONTROL_GENERIC_ATTR_NOREDRAW(orientation, setOrientation)
+	if (!(attr->orientation.flagDefined)) {
+		if (op == OP_PARSE) {
+			if (resourceItem->element->getName() == "hlinear") {
+				attr->orientation.flagDefined = sl_true;
+				attr->orientation.value = LayoutOrientation::Horizontal;
+			}
+		}
+	}
 	
 	LAYOUT_CONTROL_PROCESS_SUPER(View)
 	

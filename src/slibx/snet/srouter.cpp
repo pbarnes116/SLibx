@@ -641,7 +641,13 @@ Ref<SRouter> SRouter::create(const SRouterParam& param)
 			ret->m_dispatchLoop = dispatchLoop;
 			ret->m_ioLoop = ioLoop;
 
-			Ref<AsyncUdpSocket> udpServer = AsyncUdpSocket::create(param.udp_server_port, ret.get(), MESSAGE_SIZE + 32, ioLoop, sl_false);
+			AsyncUdpSocketParam up;
+			up.bindAddress.port = param.udp_server_port;
+			up.listener.setPointer(ret.get());
+			up.packetSize = MESSAGE_SIZE + 32;
+			up.ioLoop = ioLoop;
+			up.flagAutoStart = sl_false;
+			Ref<AsyncUdpSocket> udpServer = AsyncUdpSocket::create(up);
 			if (udpServer.isNotNull()) {
 				ret->m_udpServer = udpServer;
 			} else {

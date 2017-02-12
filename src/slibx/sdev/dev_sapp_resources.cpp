@@ -439,7 +439,7 @@ SAppLayoutItemType SAppLayoutResource::getTypeFromName(const String &strType)
 		type = SAppLayoutItemType::Select;
 	} else if (strType == "scroll" || strType == "hscroll") {
 		type = SAppLayoutItemType::Scroll;
-	} else if (strType == "linear") {
+	} else if (strType == "linear" || strType == "hlinear") {
 		type = SAppLayoutItemType::Linear;
 	} else if (strType == "list") {
 		type = SAppLayoutItemType::List;
@@ -554,6 +554,10 @@ void SAppLayoutSimulationWindow::open(SAppDocument* doc, SAppLayoutResource* lay
 	setInitialized();
 	if (viewContent.isNotNull()) {
 		if (layout->layoutType != SAppLayoutType::Window) {
+			if (viewContent->getBackgroundColor().isZero()) {
+				viewContent->setBackgroundColor(Color::White, UIUpdateMode::Init);
+			}
+			setBackgroundColor(Color::Black);
 			addView(viewContent);
 		}
 		doc->_simulateLayoutCreateOrLayoutView(this, layout, sl_null, sl_null, sl_true);
