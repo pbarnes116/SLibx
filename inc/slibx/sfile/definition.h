@@ -3,7 +3,4 @@
 
 #include <slib/core/definition.h>
 
-#define SLIB_SFILE_NAMESPACE_BEGIN		SLIB_NAMESPACE_BEGIN
-#define SLIB_SFILE_NAMESPACE_END		SLIB_NAMESPACE_END
-
 #endif

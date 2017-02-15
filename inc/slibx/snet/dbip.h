@@ -16,47 +16,48 @@ For example,
 
 #include <slib/network/ip_address.h>
 
-SLIB_SNET_NAMESPACE_BEGIN
-
-class DbIp : public Object
+namespace slib
 {
-public:
-	const char* getCountryCode(const IPv4Address& ipv4);
-	
-	const char* getCountryCode(const IPv6Address& ipv6);
 
-public:
-	static Ref<DbIp> create(const void* dbCSV, sl_size size);
-	
-	static Ref<DbIp> create(const String& pathToCSVFile);
-
-public:
-	struct IPv4Item
+	class DbIp : public Object
 	{
-		sl_uint32 start;
-		sl_uint32 end;
-		char code[4];
-	};
-private:
-	List<IPv4Item> m_listIPv4;
-	IPv4Item* m_ipv4;
-	sl_uint32 m_countIPv4;
+	public:
+		const char* getCountryCode(const IPv4Address& ipv4);
+		
+		const char* getCountryCode(const IPv6Address& ipv6);
 
-public:
-	struct IPv6Item
-	{
-		IPv6Address start;
-		IPv6Address end;
-		char code[4];
-	};
-private:
-	List<IPv6Item> m_listIPv6;
-	IPv6Item* m_ipv6;
-	sl_uint32 m_countIPv6;
-	
-};
+	public:
+		static Ref<DbIp> create(const void* dbCSV, sl_size size);
+		
+		static Ref<DbIp> create(const String& pathToCSVFile);
 
-SLIB_SNET_NAMESPACE_END
+	public:
+		struct IPv4Item
+		{
+			sl_uint32 start;
+			sl_uint32 end;
+			char code[4];
+		};
+	private:
+		List<IPv4Item> m_listIPv4;
+		IPv4Item* m_ipv4;
+		sl_uint32 m_countIPv4;
+
+	public:
+		struct IPv6Item
+		{
+			IPv6Address start;
+			IPv6Address end;
+			char code[4];
+		};
+	private:
+		List<IPv6Item> m_listIPv6;
+		IPv6Item* m_ipv6;
+		sl_uint32 m_countIPv6;
+		
+	};
+
+}
 
 #endif
 
