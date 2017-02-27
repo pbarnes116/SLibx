@@ -412,8 +412,9 @@ namespace slib
 		return String::null();
 	}
 
-	SAppLayoutItemType SAppLayoutResource::getTypeFromName(const String &strType)
+	SAppLayoutItemType SAppLayoutResource::getTypeFromName(const String& _strType)
 	{
+		String strType = _strType.toLower();
 		SAppLayoutItemType type = SAppLayoutItemType::Unknown;
 		if (strType == "view") {
 			type = SAppLayoutItemType::View;
@@ -433,7 +434,7 @@ namespace slib
 			type = SAppLayoutItemType::Edit;
 		} else if (strType == "password") {
 			type = SAppLayoutItemType::Password;
-		} else if (strType == "textArea") {
+		} else if (strType == "textarea" || strType == "text-area") {
 			type = SAppLayoutItemType::TextArea;
 		} else if (strType == "image") {
 			type = SAppLayoutItemType::Image;
@@ -445,7 +446,7 @@ namespace slib
 			type = SAppLayoutItemType::Linear;
 		} else if (strType == "list") {
 			type = SAppLayoutItemType::List;
-		} else if (strType == "list-report") {
+		} else if (strType == "listreport" || strType == "list-report") {
 			type = SAppLayoutItemType::ListReport;
 		} else if (strType == "render") {
 			type = SAppLayoutItemType::Render;

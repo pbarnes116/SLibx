@@ -3851,6 +3851,7 @@ namespace slib
 			LAYOUT_CONTROL_GENERIC_ATTR_NOREDRAW(visibility, setVisibility)
 			LAYOUT_CONTROL_GENERIC_ATTR_NOREDRAW(visible, setVisible)
 			LAYOUT_CONTROL_GENERIC_ATTR_NOREDRAW(enabled, setEnabled)
+			LAYOUT_CONTROL_GENERIC_ATTR_NOREDRAW(clipping, setClipping)
 		}
 		LAYOUT_CONTROL_DRAWABLE_ATTR(background, setBackground)
 		LAYOUT_CONTROL_DRAWABLE_ATTR(pressedBackground, setPressedBackground)
@@ -3859,59 +3860,63 @@ namespace slib
 		LAYOUT_CONTROL_GENERIC_ATTR_NOREDRAW(backgroundAlign, setBackgroundAlignment)
 		LAYOUT_CONTROL_GENERIC_ATTR_NOREDRAW(backgroundColor, setBackgroundColor)
 		
-		LAYOUT_CONTROL_GENERIC_ATTR_NOREDRAW(border, setBorder)
-		if (op == OP_PARSE) {
-			if (flagRoot) {
-				LAYOUT_CONTROL_FLOAT_DIMENSION_ATTR_NOREDRAW(borderWidth, setBorderWidth, checkForRootViewScalarSize)
-			} else {
-				LAYOUT_CONTROL_FLOAT_DIMENSION_ATTR_NOREDRAW(borderWidth, setBorderWidth, checkScalarSize)
-			}
-			LAYOUT_CONTROL_GENERIC_ATTR_NOREDRAW(borderColor, setBorderColor)
-			LAYOUT_CONTROL_GENERIC_ATTR_NOREDRAW(borderStyle, setBorderStyle)
-		} else if (op == OP_GENERATE_CPP){
-			if (attr->borderWidth.flagDefined) {
-				if (Math::isAlmostZero(attr->borderWidth.amount)) {
-					params->sbDefineInit->add(String::format("%s%s->setBorder(slib::Ref<slib::Pen>::null(), slib::UIUpdateMode::Init);%n", strTab, name));
+		if (flagView) {
+			LAYOUT_CONTROL_GENERIC_ATTR_NOREDRAW(border, setBorder)
+			if (op == OP_PARSE) {
+				if (flagRoot) {
+					LAYOUT_CONTROL_FLOAT_DIMENSION_ATTR_NOREDRAW(borderWidth, setBorderWidth, checkForRootViewScalarSize)
 				} else {
-					if (attr->borderColor.flagDefined && attr->borderStyle.flagDefined) {
-						if (attr->borderWidth.isNeededOnLayoutFunction()) {
-							params->sbDefineLayout->add(String::format("%s%s->setBorder(slib::Pen::create(%s, %s, %s), slib::UIUpdateMode::NoRedraw);%n", strTab, name, attr->borderStyle.getAccessString(), attr->borderWidth.getAccessString(), attr->borderColor.getAccessString()));
+					LAYOUT_CONTROL_FLOAT_DIMENSION_ATTR_NOREDRAW(borderWidth, setBorderWidth, checkScalarSize)
+				}
+				LAYOUT_CONTROL_GENERIC_ATTR_NOREDRAW(borderColor, setBorderColor)
+				LAYOUT_CONTROL_GENERIC_ATTR_NOREDRAW(borderStyle, setBorderStyle)
+			} else if (op == OP_GENERATE_CPP){
+				if (attr->borderWidth.flagDefined) {
+					if (Math::isAlmostZero(attr->borderWidth.amount)) {
+						params->sbDefineInit->add(String::format("%s%s->setBorder(slib::Ref<slib::Pen>::null(), slib::UIUpdateMode::Init);%n", strTab, name));
+					} else {
+						if (attr->borderColor.flagDefined && attr->borderStyle.flagDefined) {
+							if (attr->borderWidth.isNeededOnLayoutFunction()) {
+								params->sbDefineLayout->add(String::format("%s%s->setBorder(slib::Pen::create(%s, %s, %s), slib::UIUpdateMode::NoRedraw);%n", strTab, name, attr->borderStyle.getAccessString(), attr->borderWidth.getAccessString(), attr->borderColor.getAccessString()));
+							} else {
+								params->sbDefineInit->add(String::format("%s%s->setBorder(slib::Pen::create(%s, %s, %s), slib::UIUpdateMode::Init);%n", strTab, name, attr->borderStyle.getAccessString(), attr->borderWidth.getAccessString(), attr->borderColor.getAccessString()));
+							}
 						} else {
-							params->sbDefineInit->add(String::format("%s%s->setBorder(slib::Pen::create(%s, %s, %s), slib::UIUpdateMode::Init);%n", strTab, name, attr->borderStyle.getAccessString(), attr->borderWidth.getAccessString(), attr->borderColor.getAccessString()));
+							LAYOUT_CONTROL_FLOAT_DIMENSION_ATTR_NOREDRAW(borderWidth, setBorderWidth, checkScalarSize)
+							LAYOUT_CONTROL_GENERIC_ATTR_NOREDRAW(borderColor, setBorderColor)
+							LAYOUT_CONTROL_GENERIC_ATTR_NOREDRAW(borderStyle, setBorderStyle)
 						}
-					} else {
-						LAYOUT_CONTROL_FLOAT_DIMENSION_ATTR_NOREDRAW(borderWidth, setBorderWidth, checkScalarSize)
-						LAYOUT_CONTROL_GENERIC_ATTR_NOREDRAW(borderColor, setBorderColor)
-						LAYOUT_CONTROL_GENERIC_ATTR_NOREDRAW(borderStyle, setBorderStyle)
-					}
-				}
-			} else {
-				LAYOUT_CONTROL_GENERIC_ATTR_NOREDRAW(borderColor, setBorderColor)
-				LAYOUT_CONTROL_GENERIC_ATTR_NOREDRAW(borderStyle, setBorderStyle)
-			}
-		} else if (op == OP_SIMULATE) {
-			if (attr->borderWidth.flagDefined) {
-				if (Math::isAlmostZero(attr->borderWidth.amount)) {
-					if (!flagOnLayout) {
-						view->setBorder(Ref<Pen>::null(), UIUpdateMode::Init);
 					}
 				} else {
-					if (attr->borderColor.flagDefined && attr->borderStyle.flagDefined) {
-						if (flagOnLayout) {
-							view->setBorder(Pen::create(attr->borderStyle.value, _getDimensionFloatValue(attr->borderWidth), attr->borderColor.value), UIUpdateMode::NoRedraw);
+					LAYOUT_CONTROL_GENERIC_ATTR_NOREDRAW(borderColor, setBorderColor)
+					LAYOUT_CONTROL_GENERIC_ATTR_NOREDRAW(borderStyle, setBorderStyle)
+				}
+			} else if (op == OP_SIMULATE) {
+				if (attr->borderWidth.flagDefined) {
+					if (Math::isAlmostZero(attr->borderWidth.amount)) {
+						if (!flagOnLayout) {
+							view->setBorder(Ref<Pen>::null(), UIUpdateMode::Init);
 						}
 					} else {
-						LAYOUT_CONTROL_FLOAT_DIMENSION_ATTR_NOREDRAW(borderWidth, setBorderWidth, checkScalarSize)
-						LAYOUT_CONTROL_GENERIC_ATTR_NOREDRAW(borderColor, setBorderColor)
-						LAYOUT_CONTROL_GENERIC_ATTR_NOREDRAW(borderStyle, setBorderStyle)
+						if (attr->borderColor.flagDefined && attr->borderStyle.flagDefined) {
+							if (flagOnLayout) {
+								view->setBorder(Pen::create(attr->borderStyle.value, _getDimensionFloatValue(attr->borderWidth), attr->borderColor.value), UIUpdateMode::NoRedraw);
+							}
+						} else {
+							LAYOUT_CONTROL_FLOAT_DIMENSION_ATTR_NOREDRAW(borderWidth, setBorderWidth, checkScalarSize)
+							LAYOUT_CONTROL_GENERIC_ATTR_NOREDRAW(borderColor, setBorderColor)
+							LAYOUT_CONTROL_GENERIC_ATTR_NOREDRAW(borderStyle, setBorderStyle)
+						}
 					}
+				} else {
+					LAYOUT_CONTROL_GENERIC_ATTR_NOREDRAW(borderColor, setBorderColor)
+					LAYOUT_CONTROL_GENERIC_ATTR_NOREDRAW(borderStyle, setBorderStyle)
 				}
-			} else {
-				LAYOUT_CONTROL_GENERIC_ATTR_NOREDRAW(borderColor, setBorderColor)
-				LAYOUT_CONTROL_GENERIC_ATTR_NOREDRAW(borderStyle, setBorderStyle)
 			}
 		}
 		
+		LAYOUT_CONTROL_GENERIC_ATTR_NOREDRAW(drawing, setDrawing)
+
 		if (flagView) {
 			LAYOUT_CONTROL_GENERIC_ATTR_NOREDRAW(boundShape, setBoundShape)
 			if (flagRoot) {
@@ -4094,7 +4099,7 @@ namespace slib
 		LAYOUT_CONTROL_GENERIC_ATTR(scrollingByMouseWheel, setContentScrollingByMouseWheel)
 		LAYOUT_CONTROL_GENERIC_ATTR(scrollingByKeyboard, setContentScrollingByKeyboard)
 		
-		LAYOUT_CONTROL_GENERIC_ATTR(multiTouch, setMultiTouchMode)
+		LAYOUT_CONTROL_GENERIC_ATTR(touchMultipleChildren, setTouchMultipleChildren)
 		if (flagView) {
 			LAYOUT_CONTROL_GENERIC_ATTR(tabStop, setProcessingTabStop)
 		}

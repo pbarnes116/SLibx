@@ -229,6 +229,8 @@ namespace slib
 		SAppVisibilityValue visibility;
 		SAppBooleanValue visible;
 		SAppBooleanValue enabled;
+		SAppBooleanValue clipping;
+		SAppBooleanValue drawing;
 		
 		SAppDrawableValue background;
 		SAppDrawableValue pressedBackground;
@@ -270,7 +272,7 @@ namespace slib
 		SAppBooleanValue scrollingByMouseWheel;
 		SAppBooleanValue scrollingByKeyboard;
 		
-		SAppBooleanValue multiTouch;
+		SAppBooleanValue touchMultipleChildren;
 		SAppBooleanValue tabStop;
 
 		SAppBooleanValue instance;
