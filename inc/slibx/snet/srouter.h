@@ -7,7 +7,6 @@
 #include <slib/network/capture.h>
 #include <slib/network/nat.h>
 #include <slib/network/async.h>
-#include <slib/network/datagram.h>
 #include <slib/network/ethernet.h>
 
 #include <slib/core/object.h>
@@ -15,7 +14,9 @@
 #include <slib/core/queue.h>
 #include <slib/core/thread.h>
 
-#include "slib/crypto/aes.h"
+#include <slib/crypto/aes.h>
+
+#include "datagram.h"
 
 namespace slib
 {

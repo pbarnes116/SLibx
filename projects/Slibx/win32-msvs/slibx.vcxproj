@@ -29,9 +29,13 @@
     <ClInclude Include="..\..\..\inc\slibx\sfile\definition.h" />
     <ClInclude Include="..\..\..\inc\slibx\sfile\secure_file_pack.h" />
     <ClInclude Include="..\..\..\inc\slibx\snet.h" />
+    <ClInclude Include="..\..\..\inc\slibx\snet\datagram.h" />
     <ClInclude Include="..\..\..\inc\slibx\snet\dbip.h" />
     <ClInclude Include="..\..\..\inc\slibx\snet\definition.h" />
     <ClInclude Include="..\..\..\inc\slibx\snet\srouter.h" />
+    <ClInclude Include="..\..\..\inc\slibx\soc.h" />
+    <ClInclude Include="..\..\..\inc\slibx\soc\certificate.h" />
+    <ClInclude Include="..\..\..\inc\slibx\soc\definition.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\src\slibx\sdev\dev_sapp_document.cpp" />
@@ -41,6 +45,7 @@
     <ClCompile Include="..\..\..\src\slibx\sfile\secure_file_pack.cpp" />
     <ClCompile Include="..\..\..\src\slibx\snet\snet_dbip.cpp" />
     <ClCompile Include="..\..\..\src\slibx\snet\srouter.cpp" />
+    <ClCompile Include="..\..\..\src\slibx\soc\soc_certificate.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{D01D773C-CF17-4C7C-AAB5-A16A694F852F}</ProjectGuid>
