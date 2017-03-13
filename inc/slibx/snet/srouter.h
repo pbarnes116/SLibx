@@ -350,7 +350,7 @@ namespace slib
 		
 		void _receiveRouterKeepAlive(const SocketAddress& address, TcpDatagramClient* client, void* data, sl_uint32 size);
 
-		void _onIdle();
+		void _onIdle(Timer* timer);
 
 	protected:
 		// override

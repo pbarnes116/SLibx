@@ -1214,7 +1214,7 @@ namespace slib
 		_receiveRemoteMessage(SocketAddress::none(), client, data, sizeReceived);
 	}
 
-	void SRouter::_onIdle()
+	void SRouter::_onIdle(Timer* timer)
 	{
 		{
 			MutexLocker lock(m_mapDevices.getLocker());
