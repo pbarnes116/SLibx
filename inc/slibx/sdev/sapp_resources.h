@@ -283,7 +283,7 @@ namespace slib
 	public:
 		SAppLayoutViewAttributes();
 		
-		sl_bool isNotRequiredNative();
+		sl_bool isNotRequiredNative(sl_bool flagCheckBackgroundColor);
 
 	};
 

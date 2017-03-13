@@ -32,9 +32,9 @@ namespace slib
 		finalFontUnderline = sl_false;
 	}
 
-	sl_bool SAppLayoutViewAttributes::isNotRequiredNative()
+	sl_bool SAppLayoutViewAttributes::isNotRequiredNative(sl_bool flagCheckBackgroundColor)
 	{
-		if (backgroundColor.flagDefined) {
+		if (flagCheckBackgroundColor && backgroundColor.flagDefined) {
 			return sl_true;
 		}
 		if (background.flagDefined) {

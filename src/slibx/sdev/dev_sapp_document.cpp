@@ -3211,14 +3211,31 @@ namespace slib
 
 #define LAYOUT_CONTROL_SET_NATIVE_WIDGET \
 	if (op == OP_GENERATE_CPP) { \
-		if (resourceItem->attrsView->isNotRequiredNative() || attr->isNotRequiredNative()) { \
+		if (resourceItem->attrsView->isNotRequiredNative(sl_false) || attr->isNotRequiredNative()) { \
 			if (!(resourceItem->attrsView->nativeWidget.flagDefined)) { \
 				params->sbDefineInit->add(String::format("%s%s->setCreatingNativeWidget(sl_false);%n", strTab, name)); \
 			} \
 		} \
 	} else if (op == OP_SIMULATE) { \
 		if (!flagOnLayout) { \
-			if (resourceItem->attrsView->isNotRequiredNative() || attr->isNotRequiredNative()) { \
+			if (resourceItem->attrsView->isNotRequiredNative(sl_false) || attr->isNotRequiredNative()) { \
+				if (!(resourceItem->attrsView->nativeWidget.flagDefined)) { \
+					view->setCreatingNativeWidget(sl_false); \
+				} \
+			} \
+		} \
+	}
+	
+#define LAYOUT_CONTROL_SET_NATIVE_WIDGET_CHECK_BACKGROUND_COLOR \
+	if (op == OP_GENERATE_CPP) { \
+		if (resourceItem->attrsView->isNotRequiredNative(sl_true) || attr->isNotRequiredNative()) { \
+			if (!(resourceItem->attrsView->nativeWidget.flagDefined)) { \
+				params->sbDefineInit->add(String::format("%s%s->setCreatingNativeWidget(sl_false);%n", strTab, name)); \
+			} \
+		} \
+	} else if (op == OP_SIMULATE) { \
+		if (!flagOnLayout) { \
+			if (resourceItem->attrsView->isNotRequiredNative(sl_true) || attr->isNotRequiredNative()) { \
 				if (!(resourceItem->attrsView->nativeWidget.flagDefined)) { \
 					view->setCreatingNativeWidget(sl_false); \
 				} \
@@ -4429,7 +4446,7 @@ namespace slib
 			}
 		}
 		
-		LAYOUT_CONTROL_SET_NATIVE_WIDGET
+		LAYOUT_CONTROL_SET_NATIVE_WIDGET_CHECK_BACKGROUND_COLOR
 		
 		LAYOUT_CONTROL_ADD_STATEMENT
 		
