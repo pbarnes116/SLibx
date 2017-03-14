@@ -30,13 +30,13 @@ namespace slib
 
 	void SRouterInterfaceParam::parseConfig(const Variant& varConfig)
 	{
-		fragment_expiring_seconds = varConfig.getField("fragment_expiring_seconds").getUint32(fragment_expiring_seconds);
-		mtu_outgoing = varConfig.getField("mtu_outgoing").getUint32(mtu_outgoing);
+		fragment_expiring_seconds = varConfig.getItem("fragment_expiring_seconds").getUint32(fragment_expiring_seconds);
+		mtu_outgoing = varConfig.getItem("mtu_outgoing").getUint32(mtu_outgoing);
 
-		use_nat = varConfig.getField("use_nat").getBoolean(use_nat);
-		nat_ip.parse(varConfig.getField("nat_ip").getString());
-		nat_port_begin = (sl_uint16)(varConfig.getField("nat_port_begin").getUint32(nat_port_begin));
-		nat_port_end = (sl_uint16)(varConfig.getField("nat_port_end").getUint32(nat_port_end));
+		use_nat = varConfig.getItem("use_nat").getBoolean(use_nat);
+		nat_ip.parse(varConfig.getItem("nat_ip").getString());
+		nat_port_begin = (sl_uint16)(varConfig.getItem("nat_port_begin").getUint32(nat_port_begin));
+		nat_port_end = (sl_uint16)(varConfig.getItem("nat_port_end").getUint32(nat_port_end));
 	}
 
 	SLIB_DEFINE_OBJECT(SRouterInterface, Object)
@@ -149,15 +149,15 @@ namespace slib
 		SRouterInterfaceParam::parseConfig(varConfig);
 
 	#if defined(SLIB_PLATFORM_IS_WINDOWS)
-		iface_name = varConfig.getField("iface_win").getString(iface_name);
+		iface_name = varConfig.getItem("iface_win").getString(iface_name);
 	#else
-		iface_name = varConfig.getField("iface_unix").getString(iface_name);
+		iface_name = varConfig.getItem("iface_unix").getString(iface_name);
 	#endif
-		use_pcap = varConfig.getField("use_pcap").getBoolean(use_pcap);
-		use_raw_socket = varConfig.getField("use_raw_socket").getBoolean(use_raw_socket);
-		is_ethernet = varConfig.getField("is_ethernet").getBoolean(is_ethernet);
-		subnet_broadcast.parse(varConfig.getField("subnet_broadcast").getString());
-		gateway_mac.parse(varConfig.getField("gateway_mac").getString());
+		use_pcap = varConfig.getItem("use_pcap").getBoolean(use_pcap);
+		use_raw_socket = varConfig.getItem("use_raw_socket").getBoolean(use_raw_socket);
+		is_ethernet = varConfig.getItem("is_ethernet").getBoolean(is_ethernet);
+		subnet_broadcast.parse(varConfig.getItem("subnet_broadcast").getString());
+		gateway_mac.parse(varConfig.getItem("gateway_mac").getString());
 
 	}
 
@@ -381,14 +381,14 @@ namespace slib
 	{
 		SRouterInterfaceParam::parseConfig(varConfig);
 
-		String protocol = varConfig.getField("protocol").getString();
+		String protocol = varConfig.getItem("protocol").getString();
 		if (protocol == "tcp") {
 			flagTcp = sl_true;
 		}
-		host_address.setHostAddress(varConfig.getField("host").getString());
-		key = varConfig.getField("key").getString();
-		flagCompressPacket = varConfig.getField("flag_compress_packet").getBoolean(flagCompressPacket);
-		tcp_send_buffer_size = varConfig.getField("tcp_send_buffer_size").getUint32(tcp_send_buffer_size);
+		host_address.setHostAddress(varConfig.getItem("host").getString());
+		key = varConfig.getItem("key").getString();
+		flagCompressPacket = varConfig.getItem("flag_compress_packet").getBoolean(flagCompressPacket);
+		tcp_send_buffer_size = varConfig.getItem("tcp_send_buffer_size").getUint32(tcp_send_buffer_size);
 	}
 
 	SLIB_DEFINE_OBJECT(SRouterRemote, SRouterInterface)
@@ -503,14 +503,14 @@ namespace slib
 
 	sl_bool SRouterRoute::parseConfig(SRouter* router, const Variant& conf)
 	{
-		Variant protocols = conf.getField("protocols");
+		Variant protocols = conf.getItem("protocols");
 		if (protocols.isNotNull()) {
 			flagCheckProtocol = sl_true;
 			flagTcp = sl_false;
 			flagUdp = sl_false;
 			flagIcmp = sl_false;
-			for (sl_size i = 0; i < protocols.getListElementsCount(); i++) {
-				String protocol = protocols.getListElement(i).getString().toLower();
+			for (sl_size i = 0; i < protocols.getElementsCount(); i++) {
+				String protocol = protocols.getElement(i).getString().toLower();
 				if (protocol == "tcp") {
 					flagTcp = sl_true;
 				} else if (protocol == "udp") {
@@ -525,7 +525,7 @@ namespace slib
 
 		String str;
 
-		str = conf.getField("dst_ip").getString();
+		str = conf.getItem("dst_ip").getString();
 		if (str.isNotEmpty()) {
 			if (!(SocketAddress::parseIPv4Range(str, &dst_ip_begin, &dst_ip_end))) {
 				return sl_false;
@@ -535,7 +535,7 @@ namespace slib
 			flagCheckDstIp = sl_false;
 		}
 
-		str = conf.getField("dst_port").getString();
+		str = conf.getItem("dst_port").getString();
 		if (str.isNotEmpty()) {
 			if (!(SocketAddress::parsePortRange(str, &dst_port_begin, &dst_port_end))) {
 				return sl_false;
@@ -545,7 +545,7 @@ namespace slib
 			flagCheckDstPort = sl_false;
 		}
 
-		str = conf.getField("src_ip").getString();
+		str = conf.getItem("src_ip").getString();
 		if (str.isNotEmpty()) {
 			if (!(SocketAddress::parseIPv4Range(str, &src_ip_begin, &src_ip_end))) {
 				return sl_false;
@@ -555,7 +555,7 @@ namespace slib
 			flagCheckSrcIp = sl_false;
 		}
 
-		str = conf.getField("src_port").getString();
+		str = conf.getItem("src_port").getString();
 		if (str.isNotEmpty()) {
 			if (!(SocketAddress::parsePortRange(str, &src_port_begin, &src_port_end))) {
 				return sl_false;
@@ -565,14 +565,14 @@ namespace slib
 			flagCheckSrcPort = sl_false;
 		}
 
-		Variant varTargets = conf.getField("targets");
+		Variant varTargets = conf.getItem("targets");
 		if (varTargets.isNotNull()) {
-			sl_uint32 n = (sl_uint32)(varTargets.getListElementsCount());
+			sl_uint32 n = (sl_uint32)(varTargets.getElementsCount());
 			arrTargets = Array< Ref<SRouterInterface> >::create(n);
 			targets = arrTargets.getData();
 			countTargets = (sl_uint32)(arrTargets.getCount());
 			for (sl_uint32 i = 0; i < n; i++) {
-				String target = varTargets.getListElement(i).getString();
+				String target = varTargets.getElement(i).getString();
 				targets[i] = router->getInterface(target);
 				if (targets[i].isNull()) {
 					LogError(TAG, "Failed to resolve route target: %s", target);
@@ -593,10 +593,10 @@ namespace slib
 
 	sl_bool SRouterArpProxy::parseConfig(SRouter* router, const Variant& conf)
 	{
-		String str = conf.getField("ip").getString();
+		String str = conf.getItem("ip").getString();
 		if (str.isNotEmpty()) {
 			if (SocketAddress::parseIPv4Range(str, &ip_begin, &ip_end)) {
-				str = conf.getField("device").getString();
+				str = conf.getItem("device").getString();
 				device = router->getDevice(str);
 				if (device.isNotNull()) {
 					return sl_true;
@@ -686,15 +686,15 @@ namespace slib
 	Ref<SRouter> SRouter::createFromConfiguration(const Variant& varConfig)
 	{
 		SRouterParam param;
-		param.name = varConfig.getField("name").getString();
+		param.name = varConfig.getItem("name").getString();
 
-		sl_uint32 fragment_expiring_seconds = varConfig.getField("fragment_expiring_seconds").getUint32(3600);
+		sl_uint32 fragment_expiring_seconds = varConfig.getItem("fragment_expiring_seconds").getUint32(3600);
 
-		param.udp_server_port = varConfig.getField("udp_server_port").getUint32(param.udp_server_port);
-		param.tcp_server_port = varConfig.getField("tcp_server_port").getUint32(param.tcp_server_port);
-		param.server_key = varConfig.getField("server_key").getString();
+		param.udp_server_port = varConfig.getItem("udp_server_port").getUint32(param.udp_server_port);
+		param.tcp_server_port = varConfig.getItem("tcp_server_port").getUint32(param.tcp_server_port);
+		param.server_key = varConfig.getItem("server_key").getString();
 
-		param.tcp_send_buffer_size = varConfig.getField("tcp_send_buffer_size").getUint32(param.tcp_send_buffer_size);
+		param.tcp_send_buffer_size = varConfig.getItem("tcp_send_buffer_size").getUint32(param.tcp_send_buffer_size);
 
 		Ref<SRouter> ret = SRouter::create(param);
 
