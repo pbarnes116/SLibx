@@ -233,7 +233,7 @@ namespace slib
 				writerBody.writeStringSection(getClientId(), SLIB_P2P_HOSTID_MAX_SIZE);
 				writerBody.writeStringSection(getClientCertificate(), SLIB_P2P_CERTIFICATE_MAX_SIZE);
 				AES aes;
-				aes.setKey_SHA256(m_serviceSecret);
+				aes.setKey(m_serviceSecret, 32);
 				sl_size size = aes.encrypt_CBC_PKCS7Padding(bufBody, writerBody.getOffset(), bufPacket + writer.getOffset());
 				writer.seek(size, SeekPosition::Current);
 			}
@@ -260,7 +260,7 @@ namespace slib
 			{
 				sl_size size = reader.getLength() - reader.getOffset();
 				AES aes;
-				aes.setKey_SHA256(m_sessionSecret);
+				aes.setKey(m_sessionSecret, 32);
 				char bufBody[PACKET_SIZE];
 				size = aes.decrypt_CBC_PKCS7Padding(reader.getBuffer() + reader.getOffset(), size, bufBody);
 				if (size == 0) {
@@ -305,7 +305,7 @@ namespace slib
 				writerBody.writeUint32(SHA256::make32bitChecksum(data, sizeData));
 				writerBody.write(data, sizeData);
 				AES aes;
-				aes.setKey_SHA256(m_sessionSecret);
+				aes.setKey(m_sessionSecret, 32);
 				writer.write(m_iv, 16);
 				sl_size size = aes.encrypt_CBC_PKCS7Padding(m_iv, bufBody, writerBody.getOffset(), bufPacket + writer.getOffset());
 				Base::copyMemory(m_iv, bufPacket + writer.getOffset(), 16);
@@ -340,7 +340,7 @@ namespace slib
 			{
 				char bufBody[PACKET_SIZE];
 				AES aes;
-				aes.setKey_SHA256(m_sessionSecret);
+				aes.setKey(m_sessionSecret, 32);
 				sl_uint32 size = (sl_uint32)(aes.decrypt_CBC_PKCS7Padding(data, sizeData, bufBody));
 				if (size <= 4) {
 					return;

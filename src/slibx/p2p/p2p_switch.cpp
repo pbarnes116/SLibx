@@ -7,6 +7,7 @@
 #include <slib/core/thread.h>
 #include <slib/core/io.h>
 #include <slib/core/mio.h>
+#include <slib/core/timer.h>
 #include <slib/core/log.h>
 
 #include <slib/crypto/aes.h>
@@ -50,7 +51,7 @@ namespace slib
 				m_flagConnected = sl_false;
 			}
 
-			String m_serviceId;
+			String m_serverId;
 			sl_bool m_flagConnected;
 
 			friend class _P2PSwitch_Impl;
@@ -98,6 +99,16 @@ namespace slib
 
 			friend class _P2PSwitch_Impl;
 		};
+		
+		class _Service : public Referable
+		{
+		public:
+			P2PSwitchServiceInfo param;
+			sl_bool flagDNS;
+			List<String> names;
+			AtomicRef<Timer> timer;
+		};
+		
 
 	private:
 		sl_bool m_flagRunning;
@@ -113,7 +124,8 @@ namespace slib
 		String m_hostCertificate;
 		String m_hostCertificateForServices;
 
-		Map< String, Ref<HnsClient> > m_services;
+		Map< String, Ref<_Service> > m_services;
+		Map< String, Ref<HnsClient> > m_serviceConnections;
 		Map< String, Ref<_Host> > m_hosts;
 		Map< sl_uint64, Ref<_DirectUdpSession> > m_sessionsDirectUdp;
 
@@ -128,7 +140,7 @@ namespace slib
 		{
 			MutexLocker lock(getLocker());
 			m_connectionTimeoutMilliseconds = millis;
-			ListLocker< Ref<HnsClient> > services(m_services.getAllValues());
+			ListLocker< Ref<HnsClient> > services(m_serviceConnections.getAllValues());
 			for (sl_size i = 0; i < services.count; i++) {
 				Ref<HnsClient> service = services[i];
 				if (service.isNotNull()) {
@@ -145,7 +157,7 @@ namespace slib
 		{
 			MutexLocker lock(getLocker());
 			m_keepAliveIntervalMilliseconds = millis;
-			ListLocker< Ref<HnsClient> > services(m_services.getAllValues());
+			ListLocker< Ref<HnsClient> > services(m_serviceConnections.getAllValues());
 			for (sl_size i = 0; i < services.count; i++) {
 				Ref<HnsClient> service = services[i];
 				if (service.isNotNull()) {
@@ -294,7 +306,7 @@ namespace slib
 
 				// run service intervals
 				{
-					ListLocker< Ref<HnsClient> > services(m_services.getAllValues());
+					ListLocker< Ref<HnsClient> > services(m_serviceConnections.getAllValues());
 					for (sl_size i = 0; i < services.count; i++) {
 						Ref<HnsClient> service = services[i];
 						if (service.isNotNull()) {
@@ -372,7 +384,7 @@ namespace slib
 							// query host
 							{
 								if ((now - host->m_timeLastUdpQueryHostRequest).getMillisecondsCount() > m_keepAliveIntervalMilliseconds) {
-									ListLocker< Ref<HnsClient> > services(m_services.getAllValues());
+									ListLocker< Ref<HnsClient> > services(m_serviceConnections.getAllValues());
 									for (sl_size i = 0; i < services.count; i++) {
 										Ref<HnsClient> service = services[i];
 										if (service.isNotNull() && service->isConnected()) {
@@ -505,7 +517,7 @@ namespace slib
 									_receive_direct_message_udp(address, bufPacket + 8, n - 8);
 								}
 							} else {
-								ListLocker< Ref<HnsClient> > services(m_services.getAllValues());
+								ListLocker< Ref<HnsClient> > services(m_serviceConnections.getAllValues());
 								for (sl_size i = 0; i < services.count; i++) {
 									Ref<HnsClient> service = services[i];
 									if (service.isNotNull()) {
@@ -555,45 +567,104 @@ namespace slib
 		{
 			return m_flagRunning;
 		}
+		
+		void onRefreshService(const WeakRef<_Service>& _service, Timer* timer)
+		{
+			Ref<_Service> service = _service;
+			if (service.isNull()) {
+				return;
+			}
+			if (service->flagDNS) {
+				const P2PSwitchServiceInfo& info = service->param;
+				List<IPAddress> addresses;
+				IPAddress address;
+				if (address.parse(info.serviceHost)) {
+					addresses.add(address);
+					service->flagDNS = sl_false;
+				} else {
+					addresses = Network::getIPAddressesFromHostName(service->param.serviceHost);
+				}
+				MutexLocker lock(getLocker());
+				for (IPAddress& address : addresses) {
+					String name = info.serviceId + "/" + address.toString();
+					service->names.addIfNotExist(name);
+					if (!(m_serviceConnections.contains(name))) {
+						HnsClientParam param;
+						param.name = name;
+						param.clientId = m_hostId;
+						param.clientCertificate = m_hostCertificateForServices;
+						param.serviceAddress.ip = address;
+						param.serviceAddress.port = info.servicePort;
+						param.servicePublicKey = info.servicePublicKey;
+						param.serviceSecret = info.serviceSecret;
+						param.keepAliveIntervalMilliseconds = m_keepAliveIntervalMilliseconds;
+						param.connectionTimeoutMilliseconds = m_connectionTimeoutMilliseconds;
+						param.listener = m_listenerServiceUdp;
+						if (param.serviceAddress.ip.isIPv6()) {
+							param.socket = m_socketUdpIPv6;
+						} else {
+							param.socket = m_socketUdp;
+						}
+						param.sessionSecret = param.serviceSecret;
+						Ref<HnsClient> connection = HnsClient::createUdp(param);
+						if (connection.isNotNull()) {
+							m_serviceConnections.put(name, connection);
+						}
+					}
+				}
+			}
 
-		sl_bool addService(const P2PSwitchServiceInfo& info)
+		}
+		
+		void _removeService(_Service* service)
+		{
+			service->timer.setNull();
+			ListLocker<String> names(service->names);
+			for (sl_size i = 0; i < names.count; i++) {
+				Ref<HnsClient> client = m_serviceConnections.getValue(names[i]);
+				if (client.isNotNull()) {
+					client->release();
+					m_serviceConnections.remove(names[i]);
+				}
+			}
+		}
+
+		sl_bool addService(const P2PSwitchServiceInfo& param)
 		{
 			MutexLocker lock(getLocker());
 			if (!m_flagRunning) {
 				return sl_false;
 			}
 
-			removeService(info.serviceId);
-			sl_uint32 servicePubKeyLen = info.servicePublicKey.getLength();
+			removeService(param.serviceId);
+			
+			if (param.servicePort == 0) {
+				logError("Connect To Service - Service port is not defined");
+				return sl_false;
+			}
+			
+			sl_uint32 servicePubKeyLen = param.servicePublicKey.getLength();
 			if (servicePubKeyLen < 128 || servicePubKeyLen > 512) {
 				logError("Connect To Service - Service RSA Key length can be between 1024~4096 bits");
 				return sl_false;
 			}
-			Ref<HnsClient> service;
-			if (info.flagUdp) {
-				HnsClientParam param;
-				param.name = info.serviceId;
-				param.clientId = m_hostId;
-				param.clientCertificate = m_hostCertificateForServices;
-				param.serviceAddress = info.serviceAddress;
-				param.servicePublicKey = info.servicePublicKey;
-				param.serviceSecret = info.serviceSecret;
-				param.keepAliveIntervalMilliseconds = m_keepAliveIntervalMilliseconds;
-				param.connectionTimeoutMilliseconds = m_connectionTimeoutMilliseconds;
-				param.listener = m_listenerServiceUdp;
-				if (param.serviceAddress.ip.isIPv6()) {
-					param.socket = m_socketUdpIPv6;
-				} else {
-					param.socket = m_socketUdp;
-				}
-				param.sessionSecret = param.serviceSecret;
-				service = HnsClient::createUdp(param);
-			}
-			if (service.isNull()) {
+			
+			if (!(param.flagUdp)) {
 				return sl_false;
 			}
 
-			m_services.put(info.serviceId, service);
+			Ref<_Service> service = new _Service;
+			if (service.isNull()) {
+				return sl_false;
+			}
+			
+			service->param = param;
+			service->flagDNS = sl_true;
+
+			onRefreshService(service, sl_null);
+			service->timer = Timer::start(SLIB_BIND_WEAKREF(void(Timer*), _P2PSwitch_Impl, onRefreshService, this, WeakRef<_Service>(service)), 10000);
+
+			m_services.put(param.serviceId, service);
 
 			return sl_true;
 		}
@@ -602,25 +673,31 @@ namespace slib
 		{
 			MutexLocker lock(getLocker());
 
-			Ref<HnsClient> service;
+			Ref<_Service> service;
 			m_services.get(serviceId, &service);
 			if (service.isNotNull()) {
-				service->release();
+				_removeService(service.get());
 				m_services.remove(serviceId);
 				return sl_true;
 			}
 			return sl_false;
 		}
 
-		Ref<HnsClient> getService(String serviceId)
+		List< Ref<HnsClient> > getServiceConnections(String serviceId)
 		{
-			Ref<HnsClient> service;
+			List< Ref<HnsClient> > ret;
+			Ref<_Service> service;
 			m_services.get(serviceId, &service);
 			if (service.isNotNull()) {
-				return service;
-			} else {
-				return Ref<HnsClient>::null();
+				ListLocker<String> names(service->names);
+				for (sl_size i = 0; i < names.count; i++) {
+					Ref<HnsClient> client = m_serviceConnections.getValue(names[i]);
+					if (client.isNotNull()) {
+						ret.add(client);
+					}
+				}
 			}
+			return ret;
 		}
 
 		Ref<P2PSwitchHost> addHost(String hostId)
@@ -663,7 +740,7 @@ namespace slib
 			if (n > SLIB_P2P_PACKET_MAX_SIZE) {
 				return;
 			}
-			ListLocker< Ref<HnsClient> > services(m_services.getAllValues());
+			ListLocker< Ref<HnsClient> > services(m_serviceConnections.getAllValues());
 			for (sl_size i = 0; i < services.count; i++) {
 				Ref<HnsClient> service = services[i];
 				if (service.isNotNull()) {
@@ -680,7 +757,7 @@ namespace slib
 			if (n > SLIB_P2P_PACKET_MAX_SIZE) {
 				return;
 			}
-			ListLocker< Ref<HnsClient> > services(m_services.getAllValues());
+			ListLocker< Ref<HnsClient> > services(m_serviceConnections.getAllValues());
 			for (sl_size i = 0; i < services.count; i++) {
 				Ref<HnsClient> service = services[i];
 				if (service.isNotNull()) {
@@ -709,12 +786,7 @@ namespace slib
 		{
 			PtrLocker<IP2PSwitchListener> listener(getListener());
 			if (listener.isNotNull()) {
-				P2PSwitchServiceInfo info;
-				info.flagUdp = sl_true;
-				info.serviceId = client->getServiceName();
-				info.serviceAddress = client->getServiceAddress();
-				info.servicePublicKey = client->getServicePublicKey();
-				listener->onServiceConnected(this, info);
+				listener->onServiceConnected(this, client);
 			}
 		}
 
@@ -861,14 +933,14 @@ namespace slib
 			return ret;
 		}
 
-		Ref<_TurningUdpSession> _getTurningUdpSession(_Host* host, String serviceId)
+		Ref<_TurningUdpSession> _getTurningUdpSession(_Host* host, String serverId)
 		{
 			Ref<_TurningUdpSession> ret;
 			{
 				ListLocker< Ref<_TurningUdpSession> > sessions(host->m_sessionsTurningUdp);
 				for (sl_size i = 0; i < sessions.count; i++) {
 					const Ref<_TurningUdpSession>& session = sessions[i];
-					if (session.isNotNull() && session->m_serviceId == serviceId) {
+					if (session.isNotNull() && session->m_serverId == serverId) {
 						ret = session;
 						break;
 					}
@@ -887,12 +959,12 @@ namespace slib
 			if (!host) {
 				return ret;
 			}
-			String serviceId = service->getServiceName();
+			String serverId = service->getServiceName();
 			{
 				ListLocker< Ref<_TurningUdpSession> > sessions(host->m_sessionsTurningUdp);
 				for (sl_size i = 0; i < sessions.count; i++) {
 					const Ref<_TurningUdpSession>& session = sessions[i];
-					if (session.isNotNull() && session->m_serviceId == serviceId) {
+					if (session.isNotNull() && session->m_serverId == serverId) {
 						return session;
 					}
 				}
@@ -900,7 +972,7 @@ namespace slib
 			ret = new _TurningUdpSession;
 			if (ret.isNotNull()) {
 				ret->m_host = host;
-				ret->m_serviceId = serviceId;
+				ret->m_serverId = serverId;
 				host->m_sessionsTurningUdp.add(ret);
 			}
 			return ret;
@@ -914,7 +986,7 @@ namespace slib
 			if (!session) {
 				return;
 			}
-			Ref<HnsClient> service = getService(session->m_serviceId);
+			Ref<HnsClient> service = m_serviceConnections.getValue(session->m_serverId);
 			if (service.isNull()) {
 				return;
 			}

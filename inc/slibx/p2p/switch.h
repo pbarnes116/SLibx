@@ -68,7 +68,8 @@ namespace slib
 	public:
 		sl_bool flagUdp;
 		String serviceId;
-		SocketAddress serviceAddress;
+		String serviceHost;
+		sl_uint32 servicePort;
 		RSAPublicKey servicePublicKey;
 		String serviceSecret;
 
@@ -76,10 +77,11 @@ namespace slib
 		SLIB_INLINE P2PSwitchServiceInfo()
 		{
 			flagUdp = sl_true;
+			servicePort = 0;
 			serviceSecret = "HNS_SERVICE";
 		}
 	};
-
+		
 	class P2PSwitchSession : public Referable
 	{
 	public:
@@ -198,7 +200,7 @@ namespace slib
 	class IP2PSwitchListener
 	{
 	public:
-		virtual void onServiceConnected(P2PSwitch* p2p, const P2PSwitchServiceInfo& serviceInfo) {}
+		virtual void onServiceConnected(P2PSwitch* p2p, HnsClient* connection) {}
 
 		virtual void onReceiveBroadcast(P2PSwitch* p2p, String senderId, sl_uint64 messageId, const void* data, sl_uint32 size) {}
 
@@ -244,12 +246,17 @@ namespace slib
 		
 		virtual sl_bool addService(const P2PSwitchServiceInfo& service) = 0;
 		virtual sl_bool removeService(String serviceId) = 0;
-		virtual Ref<HnsClient> getService(String serviceId) = 0;
+		virtual List< Ref<HnsClient> > getServiceConnections(String serviceId) = 0;
 		SLIB_INLINE sl_bool checkServiceConnection(String serviceId)
 		{
-			Ref<HnsClient> service = getService(serviceId);
-			if (service.isNotNull()) {
-				return service->isConnected();
+			ListLocker< Ref<HnsClient> > services(getServiceConnections(serviceId));
+			for (sl_size i = 0; i < services.count; i++) {
+				Ref<HnsClient>& service = services[i];
+				if (service.isNotNull()) {
+					if (service->isConnected()) {
+						return sl_true;
+					}
+				}
 			}
 			return sl_false;
 		}
