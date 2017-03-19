@@ -1,4 +1,16 @@
+/*
+ *  Copyright (c) 2008-2017 SLIBIO. All Rights Reserved.
+ *
+ *  This file is part of the SLib.io project.
+ *
+ *  This Source Code Form is subject to the terms of the Mozilla Public
+ *  License, v. 2.0. If a copy of the MPL was not distributed with this
+ *  file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ */
+
 #include "../../../inc/slibx/sdev/util.h"
+
+#include <slib/core/file.h>
 
 namespace slib
 {
@@ -92,6 +104,57 @@ namespace slib
 		}
 		sz[pos++] = 0;
 		return s;
+	}
+	
+	void SDevUtil::applyCopyrightNoticeToSourceFile(const String& pathFile, const String& copyrightNotice)
+	{
+		Memory mem = File::readAllBytes(pathFile);
+		if (mem.isNotNull()) {
+			char* sz = (char*)(mem.getData());
+			sl_size n = mem.getSize();
+			sl_size posEndCopyright = 0;
+			if (n > 8 && sz[0] == '/' && sz[1] == '*') {
+				const char t[] = "Copyright";
+				sl_size m = sizeof(t) - 1;
+				sl_bool flagFoundCopyright = sl_false;
+				sl_bool flagFoundEnd = sl_false;
+				sl_size i = 2;
+				for (; i < n; i++) {
+					if (!flagFoundCopyright) {
+						if (i + m <= n) {
+							if (Base::compareMemory((sl_int8*)(sz + i), (sl_int8*)t, m) == 0) {
+								flagFoundCopyright = sl_true;
+							}
+						}
+					}
+					if (i + 6 <= n) {
+						if (sz[i] == '*' && sz[i+1] == '/' && sz[i+2] == '\r' && sz[i+3] == '\n' && sz[i+4] == '\r' && sz[i+5] == '\n') {
+							flagFoundEnd = sl_true;
+							break;
+						}
+					}
+				}
+				if (flagFoundEnd && flagFoundCopyright) {
+					posEndCopyright = i + 6;
+				}
+			}
+			MemoryBuffer out;
+			out.addStatic(copyrightNotice.getData(), copyrightNotice.getLength());
+			out.addStatic("\r\n\r\n", 4);
+			out.addStatic((char*)(mem.getData()) + posEndCopyright, n - posEndCopyright);
+			mem = out.merge();
+			File::writeAllBytes(pathFile, mem);
+		}
+	}
+	
+	void SDevUtil::applyCopyrightNoticeToAllSourceFilesInPath(const String& pathDir, const String& copyrightNotice)
+	{
+		for (auto& file : File::getAllDescendantFiles(pathDir)) {
+			String name = File::getFileNameOnly(file);
+			if (name.isNotEmpty() && !(name.startsWith('.'))) {
+				applyCopyrightNoticeToSourceFile(pathDir + "/" + file, copyrightNotice);
+			}
+		}
 	}
 
 }
