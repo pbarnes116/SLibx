@@ -376,6 +376,7 @@ namespace slib
 		SAppBooleanValue readOnly;
 		SAppBooleanValue multiLine;
 		SAppColorValue textColor;
+		SAppColorValue hintTextColor;
 		SAppUIReturnKeyTypeValue returnKey;
 		SAppUIKeyboardTypeValue keyboard;
 		SAppUIAutoCapitalizationType autoCap;

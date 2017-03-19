@@ -4527,6 +4527,7 @@ namespace slib
 		LAYOUT_CONTROL_GENERIC_ATTR_NOREDRAW(readOnly, setReadOnly)
 		LAYOUT_CONTROL_GENERIC_ATTR_NOREDRAW(multiLine, setMultiLine)
 		LAYOUT_CONTROL_GENERIC_ATTR_NOREDRAW(textColor, setTextColor)
+		LAYOUT_CONTROL_GENERIC_ATTR_NOREDRAW(hintTextColor, setHintTextColor)
 		LAYOUT_CONTROL_GENERIC_ATTR(returnKey, setReturnKeyType)
 		LAYOUT_CONTROL_GENERIC_ATTR(keyboard, setKeyboardType)
 		LAYOUT_CONTROL_GENERIC_ATTR(autoCap, setAutoCapitalizationType)
